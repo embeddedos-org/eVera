@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voca — AI Buddy</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Chat Panel -->
+        <div class="chat-panel">
+            <div class="chat-header">
+                <h1>💬 Voca</h1>
+                <div class="listen-mode-selector" id="listenModeSelector">
+                    <button class="mode-btn" data-mode="push" title="Push to talk">🔇 Push</button>
+                    <button class="mode-btn" data-mode="wake" title="Wake word (Hey Voca)">🎙️ Wake</button>
+                    <button class="mode-btn active" data-mode="always" title="Always listening">📡 Always</button>
+                </div>
+                <div class="connection-badge" id="connectionBadge">
+                    <span class="dot"></span>
+                    <span class="label">Connecting…</span>
+                </div>
+            </div>
+
+            <!-- Face Area -->
+            <div class="face-area">
+                <div class="face-glow-ring" id="faceGlowRing">
+                    <canvas id="faceCanvas"></canvas>
+                </div>
+                <div class="waveform-container">
+                    <canvas id="waveformCanvas"></canvas>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="system-message">
+                    Hey there! 👋 I'm Voca, your AI buddy. Tell me your name and let's get started!
+                </div>
+            </div>
+
+            <div class="typing-indicator" id="typingIndicator" hidden>
+                <span class="dot-1"></span>
+                <span class="dot-2"></span>
+                <span class="dot-3"></span>
+                <span class="typing-label">Voca is thinking…</span>
+            </div>
+
+            <div class="chat-input-bar">
+                <button class="mic-btn" id="micBtn" title="Toggle microphone">
+                    <span class="mic-icon">🎤</span>
+                </button>
+                <input
+                    type="text"
+                    id="chatInput"
+                    placeholder="Type a message…"
+                    autocomplete="off"
+                >
+                <button class="send-btn" id="sendBtn" title="Send message">➤</button>
+                <button class="tts-btn" id="ttsBtn" title="Toggle voice output">
+                    <span class="tts-icon">🔊</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Dashboard Panel -->
+        <div class="dashboard-panel" id="dashboardPanel">
+            <div class="dashboard-header">
+                <h2>📊 Dashboard</h2>
+                <button class="toggle-dashboard" id="toggleDashboard" title="Toggle dashboard">◀</button>
+            </div>
+
+            <div class="dashboard-content">
+                <!-- Status Card -->
+                <div class="card">
+                    <h3>Status</h3>
+                    <div class="card-body">
+                        <div class="stat-row">
+                            <span class="stat-label">Connection</span>
+                            <span class="stat-value" id="statConnection">—</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Uptime</span>
+                            <span class="stat-value" id="statUptime">—</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Messages</span>
+                            <span class="stat-value" id="statMessages">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Agent Usage Card -->
+                <div class="card">
+                    <h3>Agents</h3>
+                    <div class="card-body" id="agentUsageBody">
+                        <div class="placeholder-text">No activity yet</div>
+                    </div>
+                </div>
+
+                <!-- Tier Distribution Card -->
+                <div class="card">
+                    <h3>Tier Usage</h3>
+                    <div class="card-body" id="tierUsageBody">
+                        <div class="tier-bar">
+                            <span class="tier-label">T0 Reflex</span>
+                            <div class="bar-track"><div class="bar-fill tier-0" id="tierBar0" style="width:0%"></div></div>
+                            <span class="tier-count" id="tierCount0">0</span>
+                        </div>
+                        <div class="tier-bar">
+                            <span class="tier-label">T1 Executor</span>
+                            <div class="bar-track"><div class="bar-fill tier-1" id="tierBar1" style="width:0%"></div></div>
+                            <span class="tier-count" id="tierCount1">0</span>
+                        </div>
+                        <div class="tier-bar">
+                            <span class="tier-label">T2 Specialist</span>
+                            <div class="bar-track"><div class="bar-fill tier-2" id="tierBar2" style="width:0%"></div></div>
+                            <span class="tier-count" id="tierCount2">0</span>
+                        </div>
+                        <div class="tier-bar">
+                            <span class="tier-label">T3 Strategist</span>
+                            <div class="bar-track"><div class="bar-fill tier-3" id="tierBar3" style="width:0%"></div></div>
+                            <span class="tier-count" id="tierCount3">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Memory Card -->
+                <div class="card">
+                    <h3>Memory</h3>
+                    <div class="card-body" id="memoryBody">
+                        <div class="stat-row">
+                            <span class="stat-label">Working</span>
+                            <span class="stat-value" id="memWorking">0 turns</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Episodic</span>
+                            <span class="stat-value" id="memEpisodic">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Facts</span>
+                            <span class="stat-value" id="memFacts">0</span>
+                        </div>
+                        <div class="facts-list" id="factsList"></div>
+                    </div>
+                </div>
+
+                <!-- Event Log Card -->
+                <div class="card card-event-log">
+                    <h3>Event Log</h3>
+                    <div class="card-body event-log" id="eventLog">
+                        <div class="placeholder-text">Waiting for events…</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/face.js"></script>
+    <script src="/static/waveform.js"></script>
+    <script src="/static/listener.js"></script>
+    <script src="/static/app.js"></script>
+</body>
+</html>
