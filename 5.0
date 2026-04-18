@@ -1,0 +1,15 @@
+Collecting duckduckgo-search
+  Downloading duckduckgo_search-8.1.1-py3-none-any.whl.metadata (16 kB)
+Requirement already satisfied: click>=8.1.8 in \\wsl$\ubuntu-20.04\home\spatchava\evoca\.venv\lib\site-packages (from duckduckgo-search) (8.3.2)
+Collecting primp>=0.15.0 (from duckduckgo-search)
+  Downloading primp-1.2.2-cp310-abi3-win_amd64.whl.metadata (3.7 kB)
+Collecting lxml>=5.3.0 (from duckduckgo-search)
+  Downloading lxml-6.0.4-cp312-cp312-win_amd64.whl.metadata (3.2 kB)
+Requirement already satisfied: colorama in \\wsl$\ubuntu-20.04\home\spatchava\evoca\.venv\lib\site-packages (from click>=8.1.8->duckduckgo-search) (0.4.6)
+Downloading duckduckgo_search-8.1.1-py3-none-any.whl (18 kB)
+Downloading lxml-6.0.4-cp312-cp312-win_amd64.whl (4.0 MB)
+   ---------------------------------------- 4.0/4.0 MB 64.3 MB/s eta 0:00:00
+Downloading primp-1.2.2-cp310-abi3-win_amd64.whl (3.9 MB)
+   ---------------------------------------- 3.9/3.9 MB 82.8 MB/s eta 0:00:00
+Installing collected packages: primp, lxml, duckduckgo-search
+Successfully installed duckduckgo-search-8.1.1 lxml-6.0.4 primp-1.2.2

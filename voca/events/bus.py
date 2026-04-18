@@ -6,12 +6,16 @@ import asyncio
 import logging
 import time
 from collections import deque
+from collections.abc import Callable, Coroutine
 from enum import Enum
-from typing import Any, Callable, Coroutine
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 MAX_EVENT_LOG = 100
+
+# Global queue for agent status events (consumed by SSE endpoint)
+_agent_status_queue = asyncio.Queue(maxsize=500)
 
 
 class EventType(str, Enum):
@@ -84,7 +88,7 @@ class EventBus:
         while self._running:
             try:
                 event_type, data = await asyncio.wait_for(self._queue.get(), timeout=0.1)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
 
             self._event_log.append({

@@ -80,7 +80,7 @@ class AudioStream:
             try:
                 chunk = await asyncio.wait_for(self._queue.get(), timeout=0.1)
                 yield chunk
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
 
     @property

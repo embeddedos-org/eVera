@@ -45,7 +45,7 @@ def _load_home_state() -> dict:
     if path.exists():
         try:
             return json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, IOError):
+        except (OSError, json.JSONDecodeError):
             pass
     return {
         "lights": {"living_room": {"on": False, "brightness": 100}, "bedroom": {"on": False, "brightness": 100}, "kitchen": {"on": False, "brightness": 100}},

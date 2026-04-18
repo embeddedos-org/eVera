@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass
-from typing import Any
 
 from voca.providers.manager import ProviderManager
 from voca.providers.models import ModelTier
@@ -131,6 +130,16 @@ INTENT_AGENT_MAP: dict[str, str] = {
     "see": "operator",
     "look": "operator",
     "vision": "operator",
+    "git": "git",
+    "commit": "git",
+    "push": "git",
+    "pull": "git",
+    "branch": "git",
+    "merge": "git",
+    "stash": "git",
+    "diff": "git",
+    "repo": "git",
+    "review": "git",
     "browse": "browser",
     "website": "browser",
     "webpage": "browser",
@@ -213,7 +222,6 @@ KEYWORD_PATTERNS: list[tuple[re.Pattern, str, str]] = [
      "income", "market"),
     (re.compile(r"\b(?:watchlist|watch\s+list|add\s+to\s+(?:my\s+)?watch)\b", re.I),
      "income", "market"),
-]
 
     # Coder
     (re.compile(r"\b(?:create|write|make)\s+(?:a\s+)?(?:python|javascript|html|css|java|c\+\+|rust|go)\s+(?:file|script|program|class|function)\b", re.I),

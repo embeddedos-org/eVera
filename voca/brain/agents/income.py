@@ -29,7 +29,7 @@ def _load_json(name: str) -> dict:
     if path.exists():
         try:
             return json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, IOError):
+        except (OSError, json.JSONDecodeError):
             pass
     return {}
 
@@ -243,6 +243,7 @@ class PaperTradeTool(Tool):
             "timestamp": datetime.now().isoformat(),
         }
         portfolio["history"].append(trade)
+        portfolio["history"] = portfolio["history"][-500:]  # Keep last 500 trades
         _save_portfolio(portfolio)
 
         return {

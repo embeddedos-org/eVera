@@ -1,6 +1,6 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/Agents-9-blue?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Tools-69-green?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Agents-10+-blue?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Tools-78+-green?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Security-Hardened-brightgreen?style=for-the-badge&logo=shield" />
   <img src="https://img.shields.io/badge/Python-3.11+-yellow?style=for-the-badge&logo=python" />
   <img src="https://img.shields.io/badge/License-MIT-red?style=for-the-badge" />
@@ -8,7 +8,7 @@
 
 # 🎙️ Voca — Your AI Buddy That Controls Everything
 
-> **Voice-first, always-listening, multi-agent AI system** with an animated face, 9 specialized agents, 69 real tools, and integrations for system control, web browsing, stock trading, smart home, and more.
+> **Voice-first, always-listening, multi-agent AI system** with an animated face, 10+ specialized agents, 78+ real tools, multi-agent crews, workflow automation, and integrations for system control, web browsing, stock trading, smart home, Git, and more.
 
 Voca isn't a chatbot. It's a **living AI buddy** that sees your screen, browses the web, trades stocks, manages your files, controls your smart home, and remembers everything about you — all through natural voice commands.
 
@@ -27,19 +27,32 @@ Voca isn't a chatbot. It's a **living AI buddy** that sees your screen, browses 
 | 🏠 **Smart Home** | Home Controller | 6 | Lights, thermostat, locks, security, media (Home Assistant) |
 | 📈 **Stock Trading** | Income | 14 | Real-time prices, paper trading, Alpaca, IBKR, TradingView |
 | 💻 **Code Editing** | Coder | 5 | Read/write/edit files, search code, VS Code integration |
+| 📦 **Git & Code Review** | Git | 9 | Status, diff, commit, push, branch, AI code review, stash |
 
 ### 🔥 Killer Features
 
-- **🎭 Animated Face** — 8 expressions (idle, listening, thinking, speaking, happy, sad, excited, error) with blinking, bobbing, mouth sync
-- **📡 Always Listening** — 3 modes: Always On, Wake Word ("Hey Voca"), Push-to-Talk
-- **👁️ Screen Vision** — Captures screen → sends to GPT-4o/Gemini vision → understands what you see
-- **🌐 Browser Automation** — Full Playwright integration: login to any site, post on social media, fill forms
-- **📊 Real Stock Trading** — Alpaca (free), Interactive Brokers, TradingView webhooks, paper trading
-- **🧠 4-Layer Memory** — Working (conversation), Episodic (FAISS), Semantic (facts), Secure (encrypted)
-- **🔧 Native Function Calling** — OpenAI-compatible tool schemas, regex fallback for Ollama
-- **🛡️ Safety Engine** — PII redaction, policy rules (ALLOW/CONFIRM/DENY), dangerous command blocking
-- **🏠 Home Assistant** — Real IoT control with JSON simulation fallback
-- **🤝 Buddy Personality** — Learns your name, uses emoji, celebrates wins, empathizes with frustrations
+- **🎭 Animated Face** — 8 expressions with blinking, bobbing, mouth sync
+- **📡 Always Listening** — 3 modes: Always On, Wake Word, Push-to-Talk
+- **👁️ Screen Vision** — Captures screen → GPT-4o/Gemini vision analysis
+- **🌐 Browser Automation** — Playwright: login, social media, form filling
+- **📊 Real Stock Trading** — Alpaca, IBKR, TradingView, paper trading
+- **🧠 4-Layer Memory** — Working, Episodic (FAISS), Semantic, Encrypted
+- **🔧 Native Function Calling** — OpenAI tool schemas + regex fallback
+- **🛡️ Security Hardened** — API auth, PII redaction, path sandboxing
+- **🏠 Home Assistant** — Real IoT + local simulation fallback
+- **🤝 Buddy Personality** — Name detection, emoji, 19 languages
+
+### 🆕 v0.4.0 — Enterprise & Orchestration
+
+- **👥 Multi-Agent Crews** — CrewAI/AutoGen-style: sequential, parallel, hierarchical, debate
+- **⚡ Workflow Engine** — n8n-style JSON pipelines with conditions, triggers, templates
+- **🔐 Enterprise RBAC** — Users, roles (admin/user/viewer), API keys, audit logging
+- **🔌 Plugin System** — Drop `.py` in `plugins/` → auto-discovered, hot-reload
+- **📦 Git Agent** — 9 tools: status, diff, commit, push, AI code review, stash
+- **⏰ Proactive Scheduler** — Background: reminders, calendar, stock alerts, daily briefing
+- **💬 Messaging Bots** — Slack, Discord, Telegram: commands + push notifications
+- **🌍 19 Languages** — Speech recognition + LLM responses in user's language
+- **⌨️ Spell Correction** — Auto-fixes voice mistakes ("crome" → "chrome")
 
 ---
 
@@ -266,24 +279,50 @@ docker exec -it evoca-ollama-1 ollama pull llama3.2
 
 ---
 
-## 🧪 Testing
+## 🧪 Testing — 200+ Tests
 
 ```bash
+# Pre-push verification (runs everything)
+python verify.py
+
 # All tests
 pytest tests/ -v
 
-# Skip slow tests
-pytest tests/ -v -m "not slow"
+# By category
+pytest tests/test_sanity.py -v            # Quick smoke tests
+pytest tests/test_foundation.py -v        # Core system integrity
+pytest tests/test_data_breach.py -v       # Security & data leak prevention
+pytest tests/test_security.py -v          # Command injection, path traversal
+pytest tests/test_performance.py -v       # Response time benchmarks
+pytest tests/test_agents.py -v            # Agent registration & tools
+pytest tests/test_tools.py -v             # Tool execution
+pytest tests/test_language.py -v          # Multi-language & spelling
+pytest tests/test_rbac.py -v              # RBAC & audit
+pytest tests/test_workflow.py -v          # Workflow engine
+pytest tests/test_plugins.py -v           # Plugin system
 
-# Coverage report
+# Coverage
 pytest tests/ --cov=voca --cov-report=html
 
 # Lint
 ruff check .
-
-# Format
 ruff format .
 ```
+
+| Test Category | Tests | What's Verified |
+|---|---|---|
+| Sanity | 19 | All imports, agent basics, router patterns |
+| Foundational | 13 | Singleton, state fields, config defaults, tiers |
+| Data Breach | 38 | Auth bypass, data leaks, path traversal, injection, audit, encryption |
+| Security | 19 | Policy engine, PII, command blocking, sandboxing |
+| Performance | 10 | Tier0 <1ms, spell <5ms, PII <2ms, policy <0.5ms |
+| Agents | 14 | Registration, tools, schemas |
+| Tools | 14 | File CRUD, calendar, todos, home state |
+| Language | 18 | 19 languages, spell correction |
+| RBAC | 11 | Users, roles, permissions, audit |
+| Workflow | 5 | Create, execute, templates, persistence |
+| Plugins | 4 | Discovery, loading, hot-reload |
+| Others | 35+ | Router, memory, API, scheduler |
 
 ---
 
@@ -413,7 +452,9 @@ See [CHANGELOG.md](CHANGELOG.md) for version history.
 
 | Version | Date | Highlights |
 |---------|------|-----------|
-| **0.3.1** | 2026-04-17 | Security hardening: API auth, encrypted credentials, path sandboxing, command injection fixes |
+| **0.4.1** | 2026-04-18 | 200+ tests: foundational, security/data breach, sanity, performance. Self-recovery, verify script |
+| **0.4.0** | 2026-04-18 | Multi-agent crews, workflow engine, RBAC, Git agent, plugins, scheduler, messaging bots |
+| **0.3.1** | 2026-04-17 | Security hardening: API auth, encrypted credentials, path sandboxing |
 | **0.3.0** | 2026-04-17 | Browser agent, stock trading, screen vision, code editing |
 | **0.2.0** | 2026-04-17 | Animated face, always-listening, buddy personality, tool execution |
 | **0.1.0** | 2026-04-16 | Initial release: 7 agents, LangGraph pipeline, memory vault |

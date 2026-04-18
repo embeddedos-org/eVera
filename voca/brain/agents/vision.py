@@ -108,6 +108,7 @@ class AnalyzeScreenTool(Tool):
 
             # Call vision LLM via litellm
             import litellm
+
             from config import settings
 
             # Try GPT-4o first (best vision), then Gemini

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
@@ -12,9 +11,9 @@ from pydantic_settings import BaseSettings
 class LLMSettings(BaseSettings):
     ollama_url: str = Field("http://localhost:11434", description="Ollama API URL")
     ollama_model: str = Field("llama3.2", description="Default Ollama model")
-    openai_api_key: Optional[str] = Field(None, description="OpenAI API key")
+    openai_api_key: str | None = Field(None, description="OpenAI API key")
     openai_model: str = Field("gpt-4o-mini", description="Default OpenAI model")
-    gemini_api_key: Optional[str] = Field(None, description="Google Gemini API key")
+    gemini_api_key: str | None = Field(None, description="Google Gemini API key")
     gemini_model: str = Field("gemini/gemini-2.0-flash", description="Default Gemini model")
     fallback_order: list[str] = Field(
         default=["ollama", "openai", "gemini"],
@@ -75,11 +74,21 @@ class SafetySettings(BaseSettings):
 
 
 class ServerSettings(BaseSettings):
-    host: str = Field("127.0.0.1", description="Server bind host (use 127.0.0.1 for local-only, 0.0.0.0 for network)")
+    host: str = Field(
+        "127.0.0.1",
+        description="Server bind host (127.0.0.1 for local, 0.0.0.0 for network)",
+    )
     port: int = Field(8000, description="Server bind port")
-    cors_origins: list[str] = Field(default=["http://localhost:8000", "http://127.0.0.1:8000"], description="CORS allowed origins")
-    api_key: str = Field("", description="API key for authenticating requests (empty = no auth)")
-    webhook_secret: str = Field("", description="Shared secret for TradingView webhook verification")
+    cors_origins: list[str] = Field(
+        default=["http://localhost:8000", "http://127.0.0.1:8000"],
+        description="CORS allowed origins",
+    )
+    api_key: str = Field(
+        "", description="API key for authenticating requests (empty = no auth)",
+    )
+    webhook_secret: str = Field(
+        "", description="Shared secret for TradingView webhook verification",
+    )
 
     model_config = {"env_prefix": "VOCA_SERVER_"}
 

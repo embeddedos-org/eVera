@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from voca.safety.policy import PolicyAction, PolicyService
 from voca.safety.privacy import PrivacyGuard
 

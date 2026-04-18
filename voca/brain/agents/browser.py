@@ -11,7 +11,6 @@ from __future__ import annotations
 import base64
 import json
 import logging
-import os
 from pathlib import Path
 from typing import Any
 
@@ -323,6 +322,7 @@ class AnalyzePageTool(Tool):
                 img_b64 = base64.b64encode(f.read()).decode()
 
             import litellm
+
             from config import settings
 
             models = []

@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Any
 
 from voca.brain.agents.base import BaseAgent, Tool
-from voca.brain.state import VocaState
 from voca.providers.models import ModelTier
 
 logger = logging.getLogger(__name__)
@@ -29,7 +28,7 @@ def _load_json(filename: str) -> list[dict]:
     if path.exists():
         try:
             return json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, IOError):
+        except (OSError, json.JSONDecodeError):
             return []
     return []
 

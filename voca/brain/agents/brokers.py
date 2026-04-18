@@ -54,6 +54,7 @@ def _log_trade(broker: str, trade: dict):
     trade["broker"] = broker
     trade["timestamp"] = datetime.now().isoformat()
     trades.append(trade)
+    trades = trades[-1000:]  # Keep last 1000 trades
     log_path.write_text(json.dumps(trades, indent=2, default=str))
 
 
@@ -236,41 +237,41 @@ class IBKRTradeTool(Tool):
             return {"status": "error", "message": "Symbol and positive quantity required"}
 
         try:
-            from ib_insync import IB, Stock, MarketOrder, LimitOrder
+            from ib_insync import IB, LimitOrder, MarketOrder, Stock
 
             ib = IB()
-            await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
+            try:
+                await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
 
-            contract = Stock(symbol, "SMART", "USD")
-            await ib.qualifyContractsAsync(contract)
+                contract = Stock(symbol, "SMART", "USD")
+                await ib.qualifyContractsAsync(contract)
 
-            if order_type == "limit" and limit_price:
-                order = LimitOrder(action.upper(), qty, limit_price)
-            else:
-                order = MarketOrder(action.upper(), qty)
+                if order_type == "limit" and limit_price:
+                    order = LimitOrder(action.upper(), qty, limit_price)
+                else:
+                    order = MarketOrder(action.upper(), qty)
 
-            trade = ib.placeOrder(contract, order)
-            await ib.sleep(2)
+                trade = ib.placeOrder(contract, order)
+                await ib.sleep(2)
 
-            trade_data = {
-                "action": action, "symbol": symbol, "quantity": qty,
-                "order_type": order_type, "order_id": trade.order.orderId,
-                "status": trade.orderStatus.status,
-            }
-            _log_trade("ibkr", trade_data)
+                trade_data = {
+                    "action": action, "symbol": symbol, "quantity": qty,
+                    "order_type": order_type, "order_id": trade.order.orderId,
+                    "status": trade.orderStatus.status,
+                }
+                _log_trade("ibkr", trade_data)
 
-            result = {
-                "status": "success",
-                "order_id": trade.order.orderId,
-                "order_status": trade.orderStatus.status,
-                "symbol": symbol,
-                "side": action,
-                "qty": qty,
-                "mode": "paper" if IBKR_PORT == 7497 else "LIVE",
-            }
-
-            ib.disconnect()
-            return result
+                return {
+                    "status": "success",
+                    "order_id": trade.order.orderId,
+                    "order_status": trade.orderStatus.status,
+                    "symbol": symbol,
+                    "side": action,
+                    "qty": qty,
+                    "mode": "paper" if IBKR_PORT == 7497 else "LIVE",
+                }
+            finally:
+                ib.disconnect()
         except ImportError:
             return {"status": "error", "message": "Install: pip install ib_insync"}
         except Exception as e:
@@ -292,34 +293,35 @@ class IBKRAccountTool(Tool):
             from ib_insync import IB
 
             ib = IB()
-            await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
+            try:
+                await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
 
-            account_values = ib.accountSummary()
-            positions = ib.positions()
+                account_values = ib.accountSummary()
+                positions = ib.positions()
 
-            acct_data = {}
-            for av in account_values:
-                if av.tag in ("NetLiquidation", "TotalCashValue", "BuyingPower", "GrossPositionValue"):
-                    acct_data[av.tag] = float(av.value)
+                acct_data = {}
+                for av in account_values:
+                    if av.tag in ("NetLiquidation", "TotalCashValue", "BuyingPower", "GrossPositionValue"):
+                        acct_data[av.tag] = float(av.value)
 
-            pos_data = [
-                {
-                    "symbol": p.contract.symbol,
-                    "quantity": int(p.position),
-                    "avg_cost": float(p.avgCost),
-                    "market_value": float(p.position) * float(p.avgCost),
+                pos_data = [
+                    {
+                        "symbol": p.contract.symbol,
+                        "quantity": int(p.position),
+                        "avg_cost": float(p.avgCost),
+                        "market_value": float(p.position) * float(p.avgCost),
+                    }
+                    for p in positions
+                ]
+
+                return {
+                    "status": "success",
+                    "account": acct_data,
+                    "positions": pos_data,
+                    "mode": "paper" if IBKR_PORT == 7497 else "live",
                 }
-                for p in positions
-            ]
-
-            ib.disconnect()
-
-            return {
-                "status": "success",
-                "account": acct_data,
-                "positions": pos_data,
-                "mode": "paper" if IBKR_PORT == 7497 else "live",
-            }
+            finally:
+                ib.disconnect()
         except ImportError:
             return {"status": "error", "message": "Install: pip install ib_insync"}
         except Exception as e:
@@ -430,12 +432,12 @@ class BrokerAppAutomationTool(Tool):
                 "app": app,
                 "steps": [
                     f"1. Make sure {app} is open and logged in",
-                    f"2. Navigate to the trade/order entry screen",
+                    "2. Navigate to the trade/order entry screen",
                     f"3. Enter symbol: {symbol}",
                     f"4. Set quantity: {qty}",
-                    f"5. Select order type: Market",
+                    "5. Select order type: Market",
                     f"6. Click '{action.upper()}' button",
-                    f"7. Review and confirm the order",
+                    "7. Review and confirm the order",
                 ],
                 "note": f"I can't directly click buttons in {app} yet without screen vision. "
                         "Want me to open the app and guide you step by step?",

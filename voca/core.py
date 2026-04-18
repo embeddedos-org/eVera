@@ -56,6 +56,10 @@ class VocaBrain:
         self.policy_service = PolicyService()
         self.privacy_guard = PrivacyGuard()
 
+        # Proactive scheduler
+        from voca.scheduler import ProactiveScheduler
+        self.scheduler = ProactiveScheduler()
+
         # Build the LangGraph processing pipeline
         self.graph = build_graph(
             provider_manager=self.provider_manager,
@@ -144,10 +148,12 @@ class VocaBrain:
     async def start(self) -> None:
         """Start background services."""
         await self.event_bus.start()
-        logger.info("VocaBrain started")
+        await self.scheduler.start()
+        logger.info("VocaBrain started (scheduler active)")
 
     async def stop(self) -> None:
         """Gracefully shut down."""
+        await self.scheduler.stop()
         await self.event_bus.stop()
         self.memory_vault.save_all()
         logger.info("VocaBrain stopped — memory saved")

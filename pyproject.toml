@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "voca"
-version = "0.3.1"
+version = "0.4.1"
 description = "Voice-first multi-agent AI buddy with 9 agents, 69 tools, and integrations for system control, web browsing, stock trading, smart home, and more"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -28,7 +28,7 @@ dependencies = [
     "litellm>=1.40",
     "langchain>=0.3.0",
     "langchain-core>=0.3.0",
-    "langgraph>=0.2.0",
+    "langgraph>=0.0.8",
     "sentence-transformers>=2.2",
     "faiss-cpu>=1.7",
     "cryptography>=41.0",

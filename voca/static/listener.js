@@ -25,8 +25,21 @@ const VocaListener = (function () {
     let _onTranscript = null; // (text: string) => void
     let _onStateChange = null; // (state: "idle"|"listening"|"wake_listening"|"processing") => void
     let _onWakeWord = null; // () => void
-    let _onMicStream = null; // (stream: MediaStream) => void
-    let _onInterim = null; // (text: string) => void
+    let _onTranscript = null;
+    let _onStateChange = null;
+    let _onWakeWord = null;
+    let _onMicStream = null;
+    let _onInterim = null;
+    let _language = "en-US";
+
+    // Supported languages for speech recognition
+    const LANGUAGES = {
+        "en": "en-US", "es": "es-ES", "fr": "fr-FR", "de": "de-DE",
+        "hi": "hi-IN", "te": "te-IN", "ta": "ta-IN", "ja": "ja-JP",
+        "ko": "ko-KR", "zh": "zh-CN", "pt": "pt-BR", "ru": "ru-RU",
+        "ar": "ar-SA", "it": "it-IT", "nl": "nl-NL", "pl": "pl-PL",
+        "tr": "tr-TR", "vi": "vi-VN", "th": "th-TH",
+    };
 
     function init(options) {
         _onTranscript = options.onTranscript || null;
@@ -34,6 +47,7 @@ const VocaListener = (function () {
         _onWakeWord = options.onWakeWord || null;
         _onMicStream = options.onMicStream || null;
         _onInterim = options.onInterim || null;
+        _language = options.language || "en-US";
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
@@ -43,13 +57,29 @@ const VocaListener = (function () {
 
         _supported = true;
         _recognition = new SpeechRecognition();
-        _recognition.lang = "en-US";
+        _recognition.lang = _language;
 
         _recognition.onresult = _handleResult;
         _recognition.onend = _handleEnd;
         _recognition.onerror = _handleError;
 
         return true;
+    }
+
+    function setLanguage(langCode) {
+        _language = LANGUAGES[langCode] || langCode;
+        if (_recognition) {
+            _recognition.lang = _language;
+        }
+        // Restart if active
+        if (_active) {
+            stop();
+            start();
+        }
+    }
+
+    function getLanguage() {
+        return _language;
     }
 
     function setMode(mode) {
@@ -251,9 +281,12 @@ const VocaListener = (function () {
 
     return {
         MODE,
+        LANGUAGES,
         init,
         setMode,
         getMode,
+        setLanguage,
+        getLanguage,
         isSupported,
         start,
         stop,

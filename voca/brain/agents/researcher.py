@@ -8,7 +8,6 @@ from typing import Any
 from urllib.parse import quote_plus
 
 from voca.brain.agents.base import BaseAgent, Tool
-from voca.brain.state import VocaState
 from voca.providers.models import ModelTier
 
 logger = logging.getLogger(__name__)

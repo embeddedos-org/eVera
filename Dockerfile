@@ -36,7 +36,7 @@ EXPOSE 8000
 # Labels
 LABEL org.opencontainers.image.title="Voca AI Buddy"
 LABEL org.opencontainers.image.description="Voice-first multi-agent AI assistant"
-LABEL org.opencontainers.image.version="0.3.1"
+LABEL org.opencontainers.image.version="0.4.1"
 
 # Default: server mode
 CMD ["python", "main.py", "--mode", "server", "--host", "0.0.0.0", "--port", "8000"]

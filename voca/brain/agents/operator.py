@@ -2,18 +2,17 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import platform
 import re
 import shutil
 import subprocess
-import logging
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from voca.brain.agents.base import BaseAgent, Tool
-from voca.brain.agents.vision import AnalyzeScreenTool, ScreenCaptureTool, OCRScreenTool
+from voca.brain.agents.vision import AnalyzeScreenTool, OCRScreenTool, ScreenCaptureTool
 from voca.brain.state import VocaState
 from voca.providers.models import ModelTier
 
@@ -156,7 +155,7 @@ class ExecuteScriptTool(Tool):
         lower_cmd = command.lower().replace(" ", "")
         for d in dangerous_patterns:
             if d.replace(" ", "") in lower_cmd:
-                return {"status": "denied", "message": f"Blocked potentially dangerous command pattern. Ask the user to run it manually."}
+                return {"status": "denied", "message": "Blocked potentially dangerous command pattern. Ask the user to run it manually."}
 
         # Block shell metacharacter injection for non-shell languages
         if language in ("python", "powershell"):

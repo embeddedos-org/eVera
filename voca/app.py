@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -128,7 +128,6 @@ def create_app(brain: VocaBrain | None = None) -> FastAPI:
             action = body.get("action", "")
             symbol = body.get("symbol", "")
             quantity = body.get("quantity", 0)
-            broker = data.get("broker", "alpaca")
 
             if not action or not symbol or not quantity:
                 return {"status": "error", "message": "Webhook needs action, symbol, quantity"}
@@ -143,6 +142,89 @@ def create_app(brain: VocaBrain | None = None) -> FastAPI:
         except Exception as e:
             logger.exception("TradingView webhook error: %s", e)
             return {"status": "error", "message": str(e)}
+
+    # --- Messaging webhooks (Slack, Discord, Telegram) ---
+
+    @app.post("/webhook/slack")
+    async def slack_webhook(request: Request):
+        """Slack Events API webhook."""
+        body = await request.json()
+        headers = dict(request.headers)
+        from voca.messaging import handle_slack_event
+        return await handle_slack_event(body, headers, brain_instance)
+
+    @app.post("/webhook/discord")
+    async def discord_webhook(request: Request):
+        """Discord Interactions webhook."""
+        body = await request.json()
+        from voca.messaging import handle_discord_interaction
+        return await handle_discord_interaction(body, brain_instance)
+
+    @app.post("/webhook/telegram")
+    async def telegram_webhook(request: Request):
+        """Telegram Bot webhook."""
+        body = await request.json()
+        from voca.messaging import handle_telegram_update
+        return await handle_telegram_update(body, brain_instance)
+
+    # --- Crew / Multi-agent endpoint ---
+
+    @app.post("/crew")
+    async def run_crew_endpoint(request: Request):
+        """Run a multi-agent crew on a complex task."""
+        body = await request.json()
+        from voca.brain.crew import run_crew
+        result = await run_crew(
+            brain_instance,
+            task=body.get("task", ""),
+            agents=body.get("agents"),
+            strategy=body.get("strategy", "sequential"),
+        )
+        return {
+            "response": result.final_response,
+            "strategy": result.strategy,
+            "agents_used": result.agents_used,
+            "tasks": len(result.tasks),
+            "time_ms": round(result.total_time_ms),
+        }
+
+    # --- Workflow engine endpoints ---
+
+    @app.get("/workflows")
+    async def list_workflows():
+        """List all saved workflows."""
+        from voca.brain.workflow import WorkflowEngine
+        engine = WorkflowEngine()
+        return engine.list_all()
+
+    @app.post("/workflows")
+    async def create_workflow(request: Request):
+        """Create a new workflow."""
+        body = await request.json()
+        from voca.brain.workflow import WorkflowEngine
+        engine = WorkflowEngine()
+        wf = engine.create(body)
+        return {"status": "created", "name": wf.name, "steps": len(wf.steps)}
+
+    @app.post("/workflows/{name}/run")
+    async def run_workflow(name: str, request: Request):
+        """Execute a workflow by name."""
+        body = await request.json() if await request.body() else {}
+        from voca.brain.workflow import WorkflowEngine
+        engine = WorkflowEngine()
+        return await engine.execute(name, brain_instance, variables=body.get("variables"))
+
+    # --- RBAC endpoints ---
+
+    @app.get("/admin/users")
+    async def list_users():
+        from voca.rbac import RBACManager
+        return RBACManager().list_users()
+
+    @app.get("/admin/audit")
+    async def audit_log():
+        from voca.rbac import RBACManager
+        return RBACManager().get_audit_log(limit=100)
 
     @app.get("/status")
     async def status():
@@ -204,6 +286,26 @@ def create_app(brain: VocaBrain | None = None) -> FastAPI:
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
 
+    @app.get("/agents/stream")
+    async def agent_status_stream():
+        """SSE endpoint streaming real-time agent status events."""
+        from voca.events.bus import _agent_status_queue
+
+        async def generate():
+            while True:
+                try:
+                    event = await asyncio.wait_for(_agent_status_queue.get(), timeout=5.0)
+                    data = json.dumps(event, default=str)
+                    yield f"data: {data}\n\n"
+                except TimeoutError:
+                    yield f"data: {json.dumps({'type': 'heartbeat'})}\n\n"
+
+        return StreamingResponse(
+            generate(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
     # --- WebSocket endpoint ---
 
     @app.websocket("/ws")
@@ -230,6 +332,26 @@ def create_app(brain: VocaBrain | None = None) -> FastAPI:
             "needs_confirmation": False,
             "mood": mood,
         })
+
+        # Register proactive notification handler for this WebSocket
+        async def push_notification(notification: dict) -> None:
+            try:
+                await websocket.send_json({
+                    "type": "response",
+                    "response": notification.get("message", ""),
+                    "agent": "scheduler",
+                    "tier": 0,
+                    "intent": notification.get("type", "notification"),
+                    "needs_confirmation": False,
+                    "mood": notification.get("mood", "neutral"),
+                })
+                # Also broadcast to messaging platforms
+                from voca.messaging import broadcast_notification
+                await broadcast_notification(notification.get("message", ""))
+            except Exception:
+                pass
+
+        brain_instance.scheduler.add_notification_handler(push_notification)
 
         try:
             while True:
@@ -312,5 +434,10 @@ def create_app(brain: VocaBrain | None = None) -> FastAPI:
                 await websocket.send_json({"type": "error", "message": str(e)})
             except Exception:
                 pass
+        finally:
+            # Clean up: remove notification handler and pending actions
+            brain_instance.scheduler.remove_notification_handler(push_notification)
+            if hasattr(brain_instance, "_pending_actions"):
+                brain_instance._pending_actions.pop(session_id, None)
 
     return app

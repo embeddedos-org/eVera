@@ -146,6 +146,15 @@ class BaseAgent(abc.ABC):
             return None
         return [t.to_openai_schema() for t in self._tools]
 
+    async def _broadcast_status(self, status: str, **kwargs: Any) -> None:
+        """Broadcast agent status to the global agent status stream."""
+        from voca.events.bus import _agent_status_queue
+        event = {"agent": self.name, "status": status, **kwargs}
+        try:
+            _agent_status_queue.put_nowait(event)
+        except Exception:
+            pass
+
     async def run(self, state: VocaState) -> VocaState:
         """Execute the agent with native function calling + regex fallback."""
         from voca.providers.manager import ProviderManager
@@ -161,10 +170,13 @@ class BaseAgent(abc.ABC):
             {"role": "user", "content": transcript},
         ]
 
+        await self._broadcast_status("working", progress=0)
+
         try:
             all_tool_results = []
 
             for loop_idx in range(MAX_TOOL_LOOPS):
+                progress = loop_idx / MAX_TOOL_LOOPS
                 result = await provider.complete(
                     messages=messages, tier=self.tier, tools=tools_schema,
                 )
@@ -173,6 +185,10 @@ class BaseAgent(abc.ABC):
                 if result.tool_calls:
                     tool_outputs = []
                     for tc in result.tool_calls:
+                        await self._broadcast_status(
+                            "working", tool=tc.name, args=tc.arguments,
+                            progress=progress + 0.1,
+                        )
                         tool = self.get_tool(tc.name)
                         if tool is None:
                             tool_result = {"error": f"Unknown tool: {tc.name}"}
@@ -204,11 +220,15 @@ class BaseAgent(abc.ABC):
                 if regex_calls:
                     tool_output_parts = []
                     for tool_name, raw_args in regex_calls:
+                        parsed_args = self._parse_tool_args(raw_args)
+                        await self._broadcast_status(
+                            "working", tool=tool_name, args=parsed_args,
+                            progress=progress + 0.1,
+                        )
                         tool = self.get_tool(tool_name)
                         if tool is None:
                             tool_result = {"error": f"Unknown tool: {tool_name}"}
                         else:
-                            parsed_args = self._parse_tool_args(raw_args)
                             try:
                                 tool_result = await tool.execute(**parsed_args)
                             except Exception as e:
@@ -238,10 +258,15 @@ class BaseAgent(abc.ABC):
                 state["metadata"]["tier_used"] = result.tier
                 state["metadata"]["latency_ms"] = result.latency_ms
                 state["metadata"]["tool_calls"] = len(all_tool_results)
+
+                await self._broadcast_status(
+                    "done", result=response_text[:100], progress=1,
+                )
                 break
             else:
                 state["agent_response"] = "I tried several tools but couldn't complete the task. Can you try rephrasing? 🤔"
                 state["mood"] = "thinking"
+                await self._broadcast_status("done", progress=1)
 
         except Exception as e:
             logger.warning("Agent '%s' LLM failed: %s — trying offline response", self.name, e)
@@ -251,6 +276,7 @@ class BaseAgent(abc.ABC):
             state["metadata"] = state.get("metadata", {})
             state["metadata"]["tier_used"] = ModelTier.REFLEX
             state["metadata"]["offline_mode"] = True
+            await self._broadcast_status("done", progress=1)
 
         return state
 

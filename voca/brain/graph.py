@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import logging
 import re
-import time
 from datetime import datetime
-from typing import Any
 
 from langgraph.graph import END, START, StateGraph
 
+from voca.brain.language import correct_spelling, detect_language
 from voca.brain.state import VocaState
 from voca.brain.supervisor import SupervisorAgent
 from voca.memory.vault import MemoryVault
@@ -44,8 +43,21 @@ def build_graph(
     # --- Node functions ---
 
     async def enrich_memory_node(state: VocaState) -> VocaState:
-        """Query memory for relevant context and detect user name."""
+        """Query memory for relevant context, correct spelling, detect language."""
         transcript = state.get("transcript", "")
+
+        # Spell correction for voice input mistakes
+        corrected = correct_spelling(transcript)
+        if corrected != transcript.lower():
+            logger.info("Spell corrected: '%s' → '%s'", transcript, corrected)
+            state["transcript"] = corrected
+            transcript = corrected
+
+        # Language detection
+        lang = detect_language(transcript)
+        if lang != "en":
+            logger.info("Detected language: %s", lang)
+
         ctx = memory_vault.enrich(transcript)
 
         # Detect and store user name

@@ -1,4 +1,4 @@
-/* === Voca Web UI — Client Application === */
+/* === Voca Web UI — Client Application (Glassmorphism Edition) === */
 
 (function () {
     "use strict";
@@ -17,10 +17,11 @@
         tierUsage: { 0: 0, 1: 0, 2: 0, 3: 0 },
         statusPollInterval: null,
         eventSource: null,
+        agentEventSource: null,
         listenMode: "always",
+        currentAgentView: "cards",
     };
 
-    // Mood → Face expression mapping
     const MOOD_TO_EXPRESSION = {
         happy: "happy",
         thinking: "thinking",
@@ -39,12 +40,13 @@
         ttsBtn: document.getElementById("ttsBtn"),
         typingIndicator: document.getElementById("typingIndicator"),
         connectionBadge: document.getElementById("connectionBadge"),
-        toggleDashboard: document.getElementById("toggleDashboard"),
-        dashboardPanel: document.getElementById("dashboardPanel"),
+        toggleAgentPanel: document.getElementById("toggleAgentPanel"),
+        agentPanel: document.getElementById("agentPanel"),
+        agentViewContainer: document.getElementById("agentViewContainer"),
+        viewSwitcher: document.getElementById("viewSwitcher"),
         statConnection: document.getElementById("statConnection"),
         statUptime: document.getElementById("statUptime"),
         statMessages: document.getElementById("statMessages"),
-        agentUsageBody: document.getElementById("agentUsageBody"),
         tierBar0: document.getElementById("tierBar0"),
         tierBar1: document.getElementById("tierBar1"),
         tierBar2: document.getElementById("tierBar2"),
@@ -59,7 +61,28 @@
         factsList: document.getElementById("factsList"),
         eventLog: document.getElementById("eventLog"),
         listenModeSelector: document.getElementById("listenModeSelector"),
+        langSelector: document.getElementById("langSelector"),
+        expressionLabel: document.getElementById("expressionLabel"),
+        particleField: document.getElementById("particleField"),
     };
+
+    // --- Particle Background ---
+
+    function initParticles() {
+        const field = dom.particleField;
+        if (!field) return;
+        const count = 20;
+        for (let i = 0; i < count; i++) {
+            const p = document.createElement("div");
+            p.className = "particle";
+            p.style.left = Math.random() * 100 + "%";
+            p.style.animationDuration = (8 + Math.random() * 12) + "s";
+            p.style.animationDelay = (Math.random() * 10) + "s";
+            p.style.width = p.style.height = (2 + Math.random() * 3) + "px";
+            p.style.opacity = (0.15 + Math.random() * 0.3).toString();
+            field.appendChild(p);
+        }
+    }
 
     // --- WebSocket Connection ---
 
@@ -117,7 +140,9 @@
             error: "Disconnected",
         };
         label.textContent = labels[status] || "Unknown";
-        dom.statConnection.textContent = labels[status] || "—";
+        if (dom.statConnection) {
+            dom.statConnection.textContent = labels[status] || "—";
+        }
     }
 
     // --- Message Handling ---
@@ -128,8 +153,7 @@
         appendMessage("user", text);
         dom.chatInput.value = "";
         showTyping(true);
-        VocaFace.setExpression("thinking");
-        VocaWaveform.setColor("thinking");
+        setExpression("thinking");
 
         state.ws.send(JSON.stringify({
             type: "transcript",
@@ -147,31 +171,30 @@
             });
 
             state.messageCount++;
-            dom.statMessages.textContent = state.messageCount;
+            if (dom.statMessages) dom.statMessages.textContent = state.messageCount;
 
-            // Track agent & tier usage
             state.agentUsage[msg.agent] = (state.agentUsage[msg.agent] || 0) + 1;
             state.tierUsage[msg.tier] = (state.tierUsage[msg.tier] || 0) + 1;
-            updateAgentUsage();
             updateTierUsage();
 
-            // Drive face expression from mood
             const mood = msg.mood || "neutral";
             const expression = MOOD_TO_EXPRESSION[mood] || "idle";
-            VocaFace.setExpression(expression);
-            VocaWaveform.setColor(expression);
+            setExpression(expression);
 
-            // Reset face to idle after a delay
             setTimeout(() => {
-                if (VocaFace.getExpression() === expression) {
-                    VocaFace.setExpression(VocaListener.isActive() ? "listening" : "idle");
-                    VocaWaveform.setColor(VocaListener.isActive() ? "listening" : "idle");
+                if (typeof VocaFace !== "undefined" && VocaFace.getExpression() === expression) {
+                    const nextExpr = (typeof VocaListener !== "undefined" && VocaListener.isActive()) ? "listening" : "idle";
+                    setExpression(nextExpr);
                 }
             }, 4000);
 
-            // TTS
             if (state.ttsEnabled && msg.response) {
                 speak(msg.response);
+            }
+
+            // Update agent view with response info
+            if (typeof VocaAgentsView !== "undefined") {
+                VocaAgentsView.agentDone(msg.agent, msg.response);
             }
         } else if (msg.type === "status") {
             updateDashboardFromStatus(msg);
@@ -180,12 +203,20 @@
         } else if (msg.type === "error") {
             showTyping(false);
             appendMessage("assistant", `⚠ Error: ${msg.message}`, { agent: "system", tier: 0 });
-            VocaFace.setExpression("error");
-            VocaWaveform.setColor("error");
-            setTimeout(() => {
-                VocaFace.setExpression("idle");
-                VocaWaveform.setColor("idle");
-            }, 3000);
+            setExpression("error");
+            setTimeout(() => setExpression("idle"), 3000);
+        }
+    }
+
+    function setExpression(expr) {
+        if (typeof VocaFace !== "undefined") {
+            VocaFace.setExpression(expr);
+        }
+        if (typeof VocaWaveform !== "undefined") {
+            VocaWaveform.setColor(expr);
+        }
+        if (dom.expressionLabel) {
+            dom.expressionLabel.textContent = expr;
         }
     }
 
@@ -193,7 +224,6 @@
         const msgDiv = document.createElement("div");
         msgDiv.className = `message ${role}`;
 
-        // Header
         const header = document.createElement("div");
         header.className = "message-header";
 
@@ -205,7 +235,7 @@
 
             const badge = document.createElement("span");
             badge.className = `agent-badge tier-${meta.tier}`;
-            badge.textContent = `${meta.agent}|T${meta.tier}`;
+            badge.textContent = `${meta.agent} · T${meta.tier}`;
 
             if (meta.tier === 0) {
                 const bolt = document.createElement("span");
@@ -218,12 +248,10 @@
             header.appendChild(badge);
         }
 
-        // Bubble
         const bubble = document.createElement("div");
         bubble.className = "message-bubble";
         bubble.textContent = text;
 
-        // Time
         const timeEl = document.createElement("div");
         timeEl.className = "message-time";
         timeEl.textContent = formatTime(new Date());
@@ -253,21 +281,24 @@
         if (!window.speechSynthesis) return;
         window.speechSynthesis.cancel();
 
-        VocaFace.setExpression("speaking");
-        VocaWaveform.setColor("speaking");
+        setExpression("speaking");
 
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.rate = 1.0;
         utterance.pitch = 1.0;
 
         utterance.onboundary = function () {
-            VocaFace.setSpeakAmplitude(0.6 + Math.random() * 0.4);
+            if (typeof VocaFace !== "undefined") {
+                VocaFace.setSpeakAmplitude(0.6 + Math.random() * 0.4);
+            }
         };
 
         utterance.onend = function () {
-            VocaFace.setSpeakAmplitude(0);
-            VocaFace.setExpression(VocaListener.isActive() ? "listening" : "idle");
-            VocaWaveform.setColor(VocaListener.isActive() ? "listening" : "idle");
+            if (typeof VocaFace !== "undefined") {
+                VocaFace.setSpeakAmplitude(0);
+            }
+            const nextExpr = (typeof VocaListener !== "undefined" && VocaListener.isActive()) ? "listening" : "idle";
+            setExpression(nextExpr);
         };
 
         window.speechSynthesis.speak(utterance);
@@ -286,29 +317,31 @@
     // --- Listener Integration ---
 
     function initListener() {
+        if (typeof VocaListener === "undefined") return;
+
         const supported = VocaListener.init({
             onTranscript: function (text) {
                 sendMessage(text);
             },
             onStateChange: function (listenerState) {
                 if (listenerState === "listening" || listenerState === "wake_listening") {
-                    VocaFace.setExpression("listening");
-                    VocaWaveform.setColor("listening");
+                    setExpression("listening");
                     dom.micBtn.classList.add("active");
                 } else {
-                    if (VocaFace.getExpression() === "listening") {
-                        VocaFace.setExpression("idle");
-                        VocaWaveform.setColor("idle");
+                    if (typeof VocaFace !== "undefined" && VocaFace.getExpression() === "listening") {
+                        setExpression("idle");
                     }
                     dom.micBtn.classList.remove("active");
                 }
             },
             onWakeWord: function () {
-                VocaFace.setExpression("excited");
-                setTimeout(() => VocaFace.setExpression("listening"), 800);
+                setExpression("excited");
+                setTimeout(() => setExpression("listening"), 800);
             },
             onMicStream: function (stream) {
-                VocaWaveform.connectMic(stream);
+                if (typeof VocaWaveform !== "undefined") {
+                    VocaWaveform.connectMic(stream);
+                }
             },
         });
 
@@ -318,7 +351,6 @@
             dom.micBtn.style.cursor = "not-allowed";
             dom.listenModeSelector.style.display = "none";
         } else {
-            // Auto-start in always-on mode
             VocaListener.setMode("always");
         }
     }
@@ -331,7 +363,37 @@
                 state.listenMode = mode;
                 buttons.forEach(b => b.classList.remove("active"));
                 btn.classList.add("active");
-                VocaListener.setMode(mode);
+                if (typeof VocaListener !== "undefined") {
+                    VocaListener.setMode(mode);
+                }
+            });
+        });
+    }
+
+    function initLanguageSelector() {
+        if (dom.langSelector) {
+            dom.langSelector.addEventListener("change", function () {
+                if (typeof VocaListener !== "undefined") {
+                    VocaListener.setLanguage(dom.langSelector.value);
+                }
+            });
+        }
+    }
+
+    // --- View Switcher ---
+
+    function initViewSwitcher() {
+        if (!dom.viewSwitcher) return;
+        const buttons = dom.viewSwitcher.querySelectorAll(".view-btn");
+        buttons.forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                const view = btn.dataset.view;
+                state.currentAgentView = view;
+                buttons.forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                if (typeof VocaAgentsView !== "undefined") {
+                    VocaAgentsView.switchView(view);
+                }
             });
         });
     }
@@ -355,37 +417,14 @@
 
     function updateDashboardFromStatus(data) {
         if (data.memory) {
-            dom.memWorking.textContent = `${data.memory.working_turns || 0} turns`;
-            dom.memEpisodic.textContent = data.memory.episodic_events || 0;
-            dom.memFacts.textContent = data.memory.semantic_facts || 0;
+            if (dom.memWorking) dom.memWorking.textContent = `${data.memory.working_turns || 0} turns`;
+            if (dom.memEpisodic) dom.memEpisodic.textContent = data.memory.episodic_events || 0;
+            if (dom.memFacts) dom.memFacts.textContent = data.memory.semantic_facts || 0;
         }
 
         if (data.memory_facts) {
             renderFacts(data.memory_facts);
         }
-    }
-
-    function updateAgentUsage() {
-        const entries = Object.entries(state.agentUsage).sort((a, b) => b[1] - a[1]);
-        const maxCount = entries.length > 0 ? entries[0][1] : 1;
-
-        if (entries.length === 0) {
-            dom.agentUsageBody.innerHTML = '<div class="placeholder-text">No activity yet</div>';
-            return;
-        }
-
-        dom.agentUsageBody.innerHTML = entries.map(([name, count]) => {
-            const pct = Math.round((count / maxCount) * 100);
-            return `
-                <div class="agent-row">
-                    <span class="agent-name">${escapeHtml(name)}</span>
-                    <div class="agent-bar-track">
-                        <div class="agent-bar-fill" style="width:${pct}%"></div>
-                    </div>
-                    <span class="agent-count">${count}</span>
-                </div>
-            `;
-        }).join("");
     }
 
     function updateTierUsage() {
@@ -402,6 +441,7 @@
     }
 
     function renderFacts(facts) {
+        if (!dom.factsList) return;
         const entries = Object.entries(facts);
         if (entries.length === 0) {
             dom.factsList.innerHTML = "";
@@ -433,7 +473,7 @@
             uptimeStr = `${seconds}s`;
         }
 
-        dom.statUptime.textContent = uptimeStr;
+        if (dom.statUptime) dom.statUptime.textContent = uptimeStr;
     }
 
     // --- SSE Event Log ---
@@ -456,6 +496,7 @@
     }
 
     function appendEventLog(event) {
+        if (!dom.eventLog) return;
         const placeholder = dom.eventLog.querySelector(".placeholder-text");
         if (placeholder) placeholder.remove();
 
@@ -471,7 +512,7 @@
         row.innerHTML = `
             <span class="event-time">${timeStr}</span>
             <span class="event-type">${escapeHtml(eventType)}</span>
-            <span class="event-data" title="${escapeHtml(dataStr)}">${escapeHtml(dataStr.substring(0, 80))}</span>
+            <span class="event-data" title="${escapeHtml(dataStr)}">${escapeHtml(dataStr.substring(0, 60))}</span>
         `;
 
         dom.eventLog.appendChild(row);
@@ -483,11 +524,36 @@
         dom.eventLog.scrollTop = dom.eventLog.scrollHeight;
     }
 
+    // --- Agent Status SSE ---
+
+    function connectAgentStream() {
+        try {
+            state.agentEventSource = new EventSource("/agents/stream");
+
+            state.agentEventSource.onmessage = function (event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (typeof VocaAgentsView !== "undefined") {
+                        VocaAgentsView.handleAgentEvent(data);
+                    }
+                } catch (e) {
+                    // skip malformed events
+                }
+            };
+
+            state.agentEventSource.onerror = function () {
+                // Will auto-reconnect, or endpoint doesn't exist yet
+            };
+        } catch (e) {
+            // Agent stream not available
+        }
+    }
+
     // --- Heartbeat ---
 
     function startHeartbeat() {
         setInterval(function () {
-            if (state.connected && state.ws.readyState === WebSocket.OPEN) {
+            if (state.connected && state.ws && state.ws.readyState === WebSocket.OPEN) {
                 state.ws.send(JSON.stringify({ type: "ping" }));
             }
         }, 30000);
@@ -497,6 +563,7 @@
 
     function startAmplitudeSync() {
         setInterval(function () {
+            if (typeof VocaFace === "undefined" || typeof VocaWaveform === "undefined") return;
             if (VocaFace.getExpression() === "speaking") return;
             const amp = VocaWaveform.getAmplitude();
             if (amp > 0.01) {
@@ -513,6 +580,16 @@
         return div.innerHTML;
     }
 
+    // --- PWA Service Worker ---
+
+    function registerServiceWorker() {
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("/static/sw.js").catch(function () {
+                // SW registration failed — not critical
+            });
+        }
+    }
+
     // --- Event Listeners ---
 
     dom.sendBtn.addEventListener("click", function () {
@@ -527,30 +604,42 @@
     });
 
     dom.micBtn.addEventListener("click", function () {
-        VocaListener.toggle();
+        if (typeof VocaListener !== "undefined") {
+            VocaListener.toggle();
+        }
     });
 
     dom.ttsBtn.addEventListener("click", toggleTts);
 
-    dom.toggleDashboard.addEventListener("click", function () {
-        dom.dashboardPanel.classList.toggle("collapsed");
-        const collapsed = dom.dashboardPanel.classList.contains("collapsed");
-        dom.toggleDashboard.textContent = collapsed ? "▶" : "◀";
-    });
+    if (dom.toggleAgentPanel) {
+        dom.toggleAgentPanel.addEventListener("click", function () {
+            dom.agentPanel.classList.toggle("collapsed");
+            const collapsed = dom.agentPanel.classList.contains("collapsed");
+            dom.toggleAgentPanel.textContent = collapsed ? "▶" : "◀";
+        });
+    }
 
     // --- Initialize ---
 
-    VocaFace.init("faceCanvas", "faceGlowRing");
-    VocaWaveform.init("waveformCanvas");
+    initParticles();
+
+    if (typeof VocaFace !== "undefined") {
+        VocaFace.init("faceCanvas", "faceGlowRing");
+    }
+    if (typeof VocaWaveform !== "undefined") {
+        VocaWaveform.init("waveformCanvas");
+    }
+
     initListener();
     initModeSelector();
+    initLanguageSelector();
+    initViewSwitcher();
     connectWebSocket();
     startStatusPolling();
     startHeartbeat();
     connectEventStream();
+    connectAgentStream();
     startAmplitudeSync();
+    registerServiceWorker();
     setInterval(updateUptime, 1000);
-
-    // Set initial TTS button state
-    dom.ttsBtn.classList.add("active");
 })();

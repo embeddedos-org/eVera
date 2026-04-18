@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import subprocess
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -119,7 +118,7 @@ class ToolExecutor:
                 "stderr": stderr.decode().strip(),
                 "returncode": proc.returncode,
             }
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return {"status": "error", "message": f"Script timed out after {timeout}s"}
         except Exception as e:
             return {"status": "error", "message": str(e)}

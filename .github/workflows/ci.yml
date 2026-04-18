@@ -31,7 +31,7 @@ jobs:
         run: pip install ruff
 
       - name: Lint check
-        run: ruff check . --output-format=github || true
+        run: ruff check . --output-format=github
 
       - name: Format check
         run: ruff format --check . || true
@@ -68,11 +68,11 @@ jobs:
           pip install pytest pytest-asyncio pytest-cov httpx ruff
 
       - name: Run tests
-        run: pytest tests/ -v -m "not slow" --tb=short || true
+        run: pytest tests/ -v -m "not slow" --tb=short
 
       - name: Run tests with coverage
         if: matrix.python-version == '3.12' && matrix.os == 'ubuntu-latest'
-        run: pytest tests/ --cov=voca --cov-report=xml --cov-report=term -m "not slow" || true
+        run: pytest tests/ --cov=voca --cov-report=xml --cov-report=term -m "not slow"
 
       - name: Upload coverage
         if: matrix.python-version == '3.12' && matrix.os == 'ubuntu-latest'

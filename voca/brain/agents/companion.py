@@ -9,7 +9,6 @@ from voca.brain.agents.base import BaseAgent, Tool
 from voca.brain.state import VocaState
 from voca.providers.models import ModelTier
 
-
 JOKES = [
     "Why do programmers prefer dark mode? Because light attracts bugs! 🐛",
     "Why was the JavaScript developer sad? Because he didn't Node how to Express himself. 😅",

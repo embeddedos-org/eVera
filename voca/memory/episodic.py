@@ -66,15 +66,38 @@ class EpisodicMemory:
             return np.zeros((len(texts), self._dimension), dtype=np.float32)
         return self._embedder.encode(texts, convert_to_numpy=True).astype(np.float32)
 
+    MAX_EVENTS = 10000
+
     def store(self, text: str, agent: str | None = None, metadata: dict[str, Any] | None = None) -> None:
         self._ensure_loaded()
         event = EpisodicEvent(text=text, agent=agent, metadata=metadata or {})
         self._events.append(event)
 
+        # Prune old events to prevent unbounded growth
+        if len(self._events) > self.MAX_EVENTS:
+            self._events = self._events[-self.MAX_EVENTS:]
+            # Rebuild FAISS index
+            if self._index is not None:
+                self._rebuild_index()
+            return
+
         if self._index is not None:
             embedding = self._embed([text])
             self._index.add(embedding)
             logger.debug("Stored episodic event: %s (total: %d)", text[:50], len(self._events))
+
+    def _rebuild_index(self) -> None:
+        """Rebuild FAISS index from current events."""
+        try:
+            import faiss
+            self._index = faiss.IndexFlatL2(self._dimension)
+            if self._events:
+                texts = [e.text for e in self._events]
+                embeddings = self._embed(texts)
+                self._index.add(embeddings)
+            logger.info("Rebuilt FAISS index with %d events", len(self._events))
+        except Exception as e:
+            logger.warning("Failed to rebuild FAISS index: %s", e)
 
     def recall(self, query: str, k: int = 5) -> list[EpisodicEvent]:
         self._ensure_loaded()
