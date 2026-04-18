@@ -6,10 +6,11 @@ import logging
 import re
 from datetime import datetime
 
+from langgraph.graph import END, StateGraph
+
 try:
-    from langgraph.graph import END, START, StateGraph
+    from langgraph.graph import START
 except ImportError:
-    from langgraph.graph import END, StateGraph
     START = "__start__"
 
 from voca.brain.language import correct_spelling, detect_language
