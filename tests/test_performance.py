@@ -6,8 +6,9 @@ Run with: pytest tests/test_performance.py -v
 
 from __future__ import annotations
 
-import pytest
 import time
+
+import pytest
 
 
 class TestResponseTime:
