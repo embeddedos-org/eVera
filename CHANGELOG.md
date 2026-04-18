@@ -2,6 +2,57 @@
 
 All notable changes to Voca are documented here.
 
+## [0.5.0] — 2026-04-18
+
+### ✨ Glassmorphism UI Redesign
+- Complete visual overhaul with **glassmorphism theme** — frosted glass panels, `backdrop-filter: blur(20px)`, semi-transparent surfaces
+- **Animated particle background** — floating CSS particles with orbital nebula effects
+- **Gradient glow ring** around face canvas with rotating border animation
+- New layout: face panel (left), agent panel (right), floating input bar (bottom)
+- Smooth **spring-based animations** throughout — message bubbles, agent cards, timeline entries
+- **Shimmer progress bars** with gradient fills for agent tool execution
+- SVG send button, pulsing mic ripple effect, improved responsive breakpoints
+
+### 👁️ Live Agent Visualization (3 Modes)
+- **Card View** — Glass-effect agent cards showing real-time status (working/idle/done), current tool call, animated progress bar
+- **Timeline View** — Vertical timeline with timestamps, agent icons, color-coded entries, staggered slide-in animations
+- **Constellation View** — Canvas-based network graph with agent nodes, connection lines, animated particles along edges, pulsing glow on active agents
+- View switcher in agent panel header (Cards | Timeline | Graph)
+
+### 📡 Agent Status Streaming
+- New `/agents/stream` SSE endpoint broadcasting real-time agent events
+- `BaseAgent.run()` now emits status events: `working` (with tool name/args), `done` (with result preview)
+- `_agent_status_queue` in EventBus for cross-component agent status transport
+- Frontend `agents-view.js` consumes SSE stream and updates all 3 visualization modes live
+
+### 🖥️ Electron Desktop App
+- **Standalone desktop app** via Electron (`electron/` directory)
+- Frameless window with system tray icon and context menu (Show/Hide, Always on Top, Start on Boot, Quit)
+- **Global shortcut** `Ctrl+Shift+V` to toggle window
+- Desktop notifications for proactive scheduler alerts
+- Single-instance lock prevents multiple windows
+- Build script for Windows `.exe`, macOS `.app`, Linux `.deb` via electron-builder
+
+### 📱 PWA Support
+- `manifest.json` with app name, theme colors, icons, shortcuts
+- `sw.js` service worker — cache-first for static assets, network-first for API, SSE/WebSocket bypass
+- Installable from Chrome/Edge/Safari as standalone app
+
+### 🔧 Fixes
+- Fixed Python 3.8 compatibility: `dict[str, Any]` → `Dict[str, Any]` in `bus.py` runtime expressions
+- Applied 126 ruff auto-fixes across codebase
+
+### 📁 New Files
+- `voca/static/agents-view.js` — Live agent visualization (cards, timeline, constellation)
+- `voca/static/manifest.json` — PWA manifest
+- `voca/static/sw.js` — Service worker for offline caching
+- `electron/main.js` — Electron main process (window, tray, shortcuts)
+- `electron/preload.js` — Secure context bridge
+- `electron/package.json` — Electron dependencies + build config
+- `electron/build.js` — Packaging script
+
+---
+
 ## [0.4.1] — 2026-04-18
 
 ### 🧪 Comprehensive Test Suite (200+ tests)

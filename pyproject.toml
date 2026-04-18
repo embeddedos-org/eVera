@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "voca"
-version = "0.4.1"
-description = "Voice-first multi-agent AI buddy with 9 agents, 69 tools, and integrations for system control, web browsing, stock trading, smart home, and more"
+version = "0.5.0"
+description = "Voice-first multi-agent AI buddy with 10 agents, 78+ tools, glassmorphism UI, live agent visualization, Electron desktop app, and PWA support"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
