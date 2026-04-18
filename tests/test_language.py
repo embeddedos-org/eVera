@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from voca.brain.language import (
     correct_spelling,
     detect_language,
