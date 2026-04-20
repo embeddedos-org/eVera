@@ -182,7 +182,7 @@ Modes:
    \ V / (_) | (__| (_| |
     \_/ \___/ \___|\__,_|
 
-  Voice-first AI Assistant v0.4.0
+  Voice-first AI Assistant v0.5.0
     """)
 
     max_retries = 10

@@ -1,0 +1,2 @@
+# Documentation generation dependencies
+doxypypy>=0.8.8       # Python docstring filter for Doxygen

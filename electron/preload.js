@@ -26,4 +26,8 @@ contextBridge.exposeInMainWorld("vocaDesktop", {
 
     // App info
     getVersion: () => ipcRenderer.invoke("get-version"),
+
+    // Backend management
+    getBackendStatus: () => ipcRenderer.invoke("get-backend-status"),
+    restartBackend: () => ipcRenderer.invoke("restart-backend"),
 });

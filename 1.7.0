@@ -1,9 +1,0 @@
-Collecting faiss-cpu
-  Using cached faiss_cpu-1.13.2-cp312-cp312-win_amd64.whl.metadata (7.6 kB)
-Collecting numpy<3.0,>=1.25.0 (from faiss-cpu)
-  Using cached numpy-2.4.4-cp312-cp312-win_amd64.whl.metadata (6.6 kB)
-Requirement already satisfied: packaging in \\wsl$\ubuntu-20.04\home\spatchava\evoca\.venv\lib\site-packages (from faiss-cpu) (26.1)
-Using cached faiss_cpu-1.13.2-cp312-cp312-win_amd64.whl (18.9 MB)
-Using cached numpy-2.4.4-cp312-cp312-win_amd64.whl (12.3 MB)
-Installing collected packages: numpy, faiss-cpu
-Successfully installed faiss-cpu-1.13.2 numpy-2.4.4

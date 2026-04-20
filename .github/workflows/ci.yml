@@ -9,12 +9,11 @@ on:
 
 env:
   PYTHON_VERSION: '3.12'
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  NODE_VERSION: '20'
 
 jobs:
   # ============================================================
-  # 1. LINT & TYPE CHECK
+  # 1. LINT & FORMAT CHECK
   # ============================================================
   lint:
     name: 🧹 Lint & Format
@@ -40,7 +39,7 @@ jobs:
   # 2. TEST
   # ============================================================
   test:
-    name: 🧪 Test (Python ${{ matrix.python-version }})
+    name: 🧪 Test (Python ${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -105,58 +104,79 @@ jobs:
         run: bandit -r voca/ -ll --skip B101 || true
 
   # ============================================================
-  # 4. DOCKER BUILD
+  # 4. BUILD — Cross-Platform Standalone Installers
   # ============================================================
-  docker:
-    name: 🐳 Docker Build
-    runs-on: ubuntu-latest
+  build:
+    name: 📦 Build (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
     needs: [lint, test]
-    if: github.event_name == 'push'
-    permissions:
-      contents: read
-      packages: write
+    if: startsWith(github.ref, 'refs/tags/v')
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win
+            artifact_pattern: "Voca-Setup-*.exe"
+            artifact_name: voca-windows
+          - os: macos-latest
+            platform: mac
+            artifact_pattern: "Voca-*.dmg"
+            artifact_name: voca-macos
+          - os: ubuntu-latest
+            platform: linux
+            artifact_pattern: "Voca-*.AppImage"
+            artifact_name: voca-linux
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GitHub Container Registry
-        if: github.event_name == 'push'
-        uses: docker/login-action@v3
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha
+          node-version: ${{ env.NODE_VERSION }}
 
-      - name: Build and push
-        uses: docker/build-push-action@v5
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build Python backend (PyInstaller)
+        run: python build_backend.py --clean
+
+      - name: Verify backend build
+        run: |
+          ls dist/voca-server/
+        shell: bash
+
+      - name: Install Electron dependencies
+        working-directory: electron
+        run: npm install
+
+      - name: Build Electron app
+        working-directory: electron
+        run: npx electron-builder --${{ matrix.platform }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
         with:
-          context: .
-          push: ${{ github.event_name == 'push' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          name: ${{ matrix.artifact_name }}
+          path: electron/dist/${{ matrix.artifact_pattern }}
+          if-no-files-found: warn
 
   # ============================================================
-  # 5. RELEASE
+  # 5. RELEASE — Create GitHub Release with all platform installers
   # ============================================================
   release:
     name: 🚀 Release
     runs-on: ubuntu-latest
-    needs: [lint, test]
+    needs: [build]
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: write
@@ -165,10 +185,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+          merge-multiple: true
+
+      - name: List artifacts
+        run: find release-artifacts -type f | head -20
+
       - name: Generate changelog
         id: changelog
         run: |
-          # Get changes since last tag
           PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           if [ -z "$PREV_TAG" ]; then
             CHANGES=$(git log --oneline --pretty=format:"- %s" HEAD)
@@ -182,17 +210,23 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          files: release-artifacts/**/*
           body: |
             ## What's Changed
             ${{ steps.changelog.outputs.CHANGES }}
 
-            ## Docker Image
-            ```bash
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
-            ```
+            ## 📥 Download & Install
 
-            ## Quick Install
+            | Platform | Download | Install |
+            |----------|----------|---------|
+            | **Windows** | `Voca-Setup-*.exe` | Run the installer |
+            | **macOS** | `Voca-*.dmg` | Open DMG → drag to Applications |
+            | **Linux** | `Voca-*.AppImage` | `chmod +x Voca-*.AppImage && ./Voca-*.AppImage` |
+
+            ## 🐍 From Source
             ```bash
+            git clone https://github.com/patchava-sr/eVoca.git && cd eVoca
+            python -m venv .venv && source .venv/bin/activate
             pip install -r requirements.txt
             python main.py --mode server
             ```

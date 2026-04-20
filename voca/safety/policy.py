@@ -1,4 +1,13 @@
-"""Safety policy engine — action approval rules."""
+"""Safety policy engine — action approval rules.
+
+@file voca/safety/policy.py
+@brief Rule-based policy engine that determines whether agent actions
+       should be allowed, require user confirmation, or be denied.
+
+Each rule maps an `agent.tool` pattern to a PolicyAction (ALLOW/CONFIRM/DENY).
+The PolicyService checks specific rules first, then wildcards, then falls back
+to the config-level lists in SafetySettings.
+"""
 
 from __future__ import annotations
 
@@ -77,6 +86,21 @@ DEFAULT_RULES: dict[str, PolicyAction] = {
     "operator.execute_script": PolicyAction.CONFIRM,
     "operator.manage_files": PolicyAction.CONFIRM,
     "operator.type_text": PolicyAction.CONFIRM,
+    # Operator — mouse & GUI (low risk)
+    "operator.mouse_click": PolicyAction.ALLOW,
+    "operator.mouse_move": PolicyAction.ALLOW,
+    "operator.mouse_drag": PolicyAction.ALLOW,
+    "operator.scroll": PolicyAction.ALLOW,
+    "operator.press_hotkey": PolicyAction.ALLOW,
+    # Operator — window management
+    "operator.manage_window": PolicyAction.CONFIRM,
+    # Operator — system admin
+    "operator.manage_process": PolicyAction.CONFIRM,
+    "operator.system_info": PolicyAction.ALLOW,
+    "operator.manage_service": PolicyAction.CONFIRM,
+    "operator.network_info": PolicyAction.ALLOW,
+    "operator.clipboard": PolicyAction.CONFIRM,
+    "operator.send_notification": PolicyAction.ALLOW,
     # Income — high-risk
     "income.*": PolicyAction.ALLOW,
     "income.scan_markets": PolicyAction.ALLOW,
@@ -124,7 +148,13 @@ DEFAULT_RULES: dict[str, PolicyAction] = {
 
 
 class PolicyService:
-    """Evaluates whether an agent action should be allowed, confirmed, or denied."""
+    """Evaluates whether an agent action should be allowed, confirmed, or denied.
+
+    Uses a rules dictionary keyed by `agent.tool` patterns (e.g., "operator.execute_script").
+    Supports wildcards (e.g., "companion.*") and falls back to SafetySettings lists.
+
+    @param custom_rules: Optional dictionary to override or extend DEFAULT_RULES.
+    """
 
     def __init__(self, custom_rules: dict[str, PolicyAction] | None = None) -> None:
         self._rules = dict(DEFAULT_RULES)
@@ -132,6 +162,16 @@ class PolicyService:
             self._rules.update(custom_rules)
 
     def check(self, agent_name: str, tool_name: str, args: dict[str, Any] | None = None) -> PolicyDecision:
+        """Check whether an action is allowed by policy.
+
+        Evaluation order: specific rule (agent.tool) → wildcard (agent.*) →
+        SafetySettings denied list → confirm list → allowed list → default CONFIRM.
+
+        @param agent_name: Name of the agent requesting the action.
+        @param tool_name: Name of the tool/intent to be executed.
+        @param args: Optional arguments for context-aware rule evaluation.
+        @return PolicyDecision with action (ALLOW/CONFIRM/DENY) and reason.
+        """
         # Check specific rule first: "agent.tool"
         specific_key = f"{agent_name}.{tool_name}"
         if specific_key in self._rules:

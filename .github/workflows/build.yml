@@ -1,0 +1,156 @@
+name: Build & Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  # ─── Desktop (Electron) ─────────────────────────────────────
+  build-desktop:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win
+            artifact: "electron/dist/*.exe"
+          - os: macos-latest
+            platform: mac
+            artifact: "electron/dist/*.dmg"
+          - os: ubuntu-latest
+            platform: linux
+            artifact: "electron/dist/*.AppImage"
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build Python backend
+        run: python build_backend.py --clean
+
+      - name: Install Electron dependencies
+        run: cd electron && npm install
+
+      - name: Build Electron installer
+        run: cd electron && node build.js --skip-backend ${{ matrix.platform }}
+
+      - name: Upload desktop artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.platform }}
+          path: ${{ matrix.artifact }}
+
+  # ─── Mobile Android (APK) ───────────────────────────────────
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install mobile dependencies
+        run: cd mobile && npm install
+
+      - name: Generate Android project
+        run: |
+          cd mobile
+          npx react-native init VocaMobileTemp --template react-native-template-typescript --skip-install
+          cp -r VocaMobileTemp/android ./android
+          rm -rf VocaMobileTemp
+          # Copy our source files
+          cp -r src/* android/app/src/main/java/ 2>/dev/null || true
+
+      - name: Build release APK
+        run: |
+          cd mobile/android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: mobile/android/app/build/outputs/apk/release/*.apk
+
+  # ─── Mobile iOS (IPA) ──────────────────────────────────────
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install mobile dependencies
+        run: cd mobile && npm install
+
+      - name: Generate iOS project
+        run: |
+          cd mobile
+          npx react-native init VocaMobileTemp --template react-native-template-typescript --skip-install
+          cp -r VocaMobileTemp/ios ./ios
+          rm -rf VocaMobileTemp
+
+      - name: Install CocoaPods
+        run: cd mobile/ios && pod install
+
+      - name: Build iOS archive
+        run: |
+          cd mobile/ios
+          xcodebuild -workspace VocaMobile.xcworkspace \
+            -scheme VocaMobile \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath build/VocaMobile.xcarchive \
+            archive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload iOS archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-archive
+          path: mobile/ios/build/VocaMobile.xcarchive
+
+  # ─── Create GitHub Release ─────────────────────────────────
+  release:
+    needs: [build-desktop, build-android, build-ios]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            desktop-win/**
+            desktop-mac/**
+            desktop-linux/**
+            android-apk/**
+          draft: true
+          generate_release_notes: true

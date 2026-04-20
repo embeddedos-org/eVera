@@ -1,4 +1,12 @@
-"""Base agent class for all Voca agents."""
+"""Base agent class for all Voca agents.
+
+@file voca/brain/agents/base.py
+@brief Defines the BaseAgent abstract class and Tool dataclass used by all agents.
+
+Every Voca agent extends BaseAgent and registers Tool instances. The base class
+handles LLM interaction with native function calling and a regex fallback,
+mood extraction, system prompt construction, and offline response generation.
+"""
 
 from __future__ import annotations
 
@@ -60,7 +68,16 @@ MAX_TOOL_LOOPS = 5
 
 @dataclass
 class Tool:
-    """A tool available to an agent."""
+    """A tool available to an agent.
+
+    Tools are callable units of functionality with typed parameters.
+    Each tool has an OpenAI-compatible function calling schema and
+    an async execute() method.
+
+    @param name: Unique tool identifier.
+    @param description: Human-readable description for LLM prompts.
+    @param parameters: Dict of parameter definitions with type and description.
+    """
 
     name: str
     description: str
@@ -103,7 +120,14 @@ class Tool:
 
 
 class BaseAgent(abc.ABC):
-    """Abstract base class for all Voca agents."""
+    """Abstract base class for all Voca agents.
+
+    Provides the core tool execution loop: sends the system prompt +
+    conversation + transcript to an LLM, handles native function calling
+    and regex-based fallback tool calls, and manages mood extraction.
+
+    Subclasses must implement `_setup_tools()` to register available tools.
+    """
 
     name: str = ""
     description: str = ""
@@ -156,7 +180,14 @@ class BaseAgent(abc.ABC):
             pass
 
     async def run(self, state: VocaState) -> VocaState:
-        """Execute the agent with native function calling + regex fallback."""
+        """Execute the agent with native function calling + regex fallback.
+
+        Sends the conversation to the LLM, handles tool calls in a loop
+        (up to MAX_TOOL_LOOPS iterations), and returns the final response.
+
+        @param state: Current pipeline state with transcript and context.
+        @return Updated state with agent_response, mood, and metadata.
+        """
         from voca.providers.manager import ProviderManager
 
         provider = ProviderManager()

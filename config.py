@@ -1,4 +1,12 @@
-"""Voca configuration — Pydantic Settings loading from .env."""
+"""Voca configuration — Pydantic Settings loading from .env.
+
+@file config.py
+@brief Central configuration module using Pydantic BaseSettings.
+
+All settings are loaded from environment variables and/or a `.env` file.
+Each settings group (LLM, Voice, Memory, Safety, Server) uses a prefix
+(e.g., VOCA_LLM_, VOCA_VOICE_) to namespace env vars.
+"""
 
 from __future__ import annotations
 
@@ -9,6 +17,20 @@ from pydantic_settings import BaseSettings
 
 
 class LLMSettings(BaseSettings):
+    """LLM provider configuration.
+
+    Controls which language model providers are available and their
+    connection parameters. Supports Ollama (local), OpenAI, and
+    Google Gemini with configurable fallback order.
+
+    @param ollama_url: Base URL for local Ollama API server.
+    @param ollama_model: Default model name for Ollama inference.
+    @param openai_api_key: API key for OpenAI (optional).
+    @param openai_model: Default OpenAI model identifier.
+    @param gemini_api_key: API key for Google Gemini (optional).
+    @param gemini_model: Default Gemini model identifier.
+    @param fallback_order: Provider priority list for automatic fallback.
+    """
     ollama_url: str = Field("http://localhost:11434", description="Ollama API URL")
     ollama_model: str = Field("llama3.2", description="Default Ollama model")
     openai_api_key: str | None = Field(None, description="OpenAI API key")
@@ -24,6 +46,20 @@ class LLMSettings(BaseSettings):
 
 
 class VoiceSettings(BaseSettings):
+    """Voice input/output configuration.
+
+    Controls speech-to-text (faster-whisper), text-to-speech (pyttsx3),
+    and voice activity detection parameters.
+
+    @param stt_model: Whisper model size (tiny/base/small/medium/large).
+    @param stt_device: Compute device for STT inference (cpu/cuda).
+    @param stt_compute_type: Quantization level for STT model.
+    @param tts_rate: Speaking rate in words per minute.
+    @param vad_aggressiveness: VAD sensitivity level 0-3 (higher = more aggressive).
+    @param vad_trailing_silence_ms: Silence duration before speech endpoint.
+    @param sample_rate: Audio sample rate in Hz.
+    @param chunk_duration_ms: Audio chunk size for VAD processing.
+    """
     stt_model: str = Field("small", description="faster-whisper model size")
     stt_device: str = Field("cpu", description="STT compute device")
     stt_compute_type: str = Field("int8", description="STT quantization")
@@ -37,6 +73,18 @@ class VoiceSettings(BaseSettings):
 
 
 class MemorySettings(BaseSettings):
+    """Memory subsystem configuration.
+
+    Configures paths and parameters for the 4-layer memory system:
+    Working (conversation buffer), Episodic (FAISS vectors),
+    Semantic (key-value facts), and Secure (Fernet-encrypted vault).
+
+    @param faiss_index_path: File path for the FAISS vector index.
+    @param embedding_model: sentence-transformers model name for embeddings.
+    @param semantic_store_path: JSON file path for semantic memory.
+    @param secure_vault_path: Encrypted vault file path.
+    @param working_memory_max_turns: Max conversation turns to retain.
+    """
     faiss_index_path: Path = Field(
         Path("data/faiss_index"), description="FAISS index storage path"
     )
@@ -57,6 +105,16 @@ class MemorySettings(BaseSettings):
 
 
 class SafetySettings(BaseSettings):
+    """Safety policy configuration.
+
+    Defines lists of actions categorized by risk level:
+    allowed (no confirmation), confirm (user approval needed),
+    and denied (always blocked).
+
+    @param allowed_actions: Actions that execute without confirmation.
+    @param confirm_actions: Actions requiring explicit user approval.
+    @param denied_actions: Actions that are always blocked.
+    """
     allowed_actions: list[str] = Field(
         default=["chat", "check_mood", "suggest_activity", "tell_joke", "get_time"],
         description="Actions that need no confirmation",
@@ -74,6 +132,16 @@ class SafetySettings(BaseSettings):
 
 
 class ServerSettings(BaseSettings):
+    """FastAPI server configuration.
+
+    Controls the HTTP server binding, CORS policy, and authentication.
+
+    @param host: IP address to bind (127.0.0.1 for local-only, 0.0.0.0 for network).
+    @param port: TCP port for the FastAPI server.
+    @param cors_origins: List of allowed CORS origins.
+    @param api_key: Bearer token for API authentication (empty = disabled).
+    @param webhook_secret: Shared secret for TradingView webhook verification.
+    """
     host: str = Field(
         "127.0.0.1",
         description="Server bind host (127.0.0.1 for local, 0.0.0.0 for network)",
@@ -94,6 +162,19 @@ class ServerSettings(BaseSettings):
 
 
 class Settings(BaseSettings):
+    """Root settings — aggregates all configuration groups.
+
+    Loads configuration from environment variables with the VOCA_ prefix
+    and from a `.env` file. Supports nested delimiter `__` for sub-settings.
+
+    @param llm: LLM provider settings.
+    @param voice: Voice I/O settings.
+    @param memory: Memory subsystem settings.
+    @param safety: Safety policy settings.
+    @param server: FastAPI server settings.
+    @param debug: Enable verbose debug logging.
+    @param data_dir: Root directory for persistent data storage.
+    """
     llm: LLMSettings = Field(default_factory=LLMSettings)
     voice: VoiceSettings = Field(default_factory=VoiceSettings)
     memory: MemorySettings = Field(default_factory=MemorySettings)

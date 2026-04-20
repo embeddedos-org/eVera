@@ -53,7 +53,7 @@ def run_cmd(cmd, timeout=60):
 def main():
     print("""
 ╔══════════════════════════════════════════╗
-║  🔍 Voca Pre-Push Verification v0.4.0   ║
+║  🔍 Voca Pre-Push Verification v0.5.0   ║
 ╚══════════════════════════════════════════╝
 """)
 
@@ -329,7 +329,6 @@ def main():
     required_files = [
         "main.py", "config.py", "setup_voca.py",
         "requirements.txt", "pyproject.toml",
-        "Dockerfile", "docker-compose.yml",
         "README.md", "CHANGELOG.md",
         ".env.example",
         ".github/workflows/ci.yml",
@@ -395,7 +394,7 @@ def main():
 
     if results["failed"] == 0:
         print("🚀 READY TO PUSH! Run:")
-        print('  git add -A && git commit -m "v0.4.0" && git tag v0.4.0 && git push origin master --tags')
+        print('  git add -A && git commit -m "v0.5.0" && git tag v0.5.0 && git push origin master --tags')
     else:
         print(f"🛑 FIX {results['failed']} ISSUE(S) BEFORE PUSHING")
 

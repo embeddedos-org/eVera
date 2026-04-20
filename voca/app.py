@@ -1,4 +1,13 @@
-"""FastAPI application with REST + WebSocket endpoints."""
+"""FastAPI application with REST + WebSocket endpoints.
+
+@file voca/app.py
+@brief Application factory that creates the FastAPI app with all routes.
+
+Endpoints include REST API (health, status, chat, agents, memory, workflows,
+RBAC admin), WebSocket (real-time chat with confirmation flow), SSE streams
+(events and agent status), and webhook handlers (TradingView, Slack, Discord,
+Telegram).
+"""
 
 from __future__ import annotations
 
@@ -11,7 +20,7 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -54,7 +63,15 @@ class FactResponse(BaseModel):
 # --- App factory ---
 
 def create_app(brain: VocaBrain | None = None) -> FastAPI:
-    """Create and configure the FastAPI application."""
+    """Create and configure the FastAPI application.
+
+    Factory function that sets up all routes, middleware, authentication,
+    and lifespan events.
+
+    @param brain: Optional pre-initialized VocaBrain instance.
+                  If None, a new singleton is created.
+    @return Configured FastAPI application instance.
+    """
     brain_instance = brain or VocaBrain()
 
     @asynccontextmanager
@@ -66,7 +83,7 @@ def create_app(brain: VocaBrain | None = None) -> FastAPI:
     app = FastAPI(
         title="Voca API",
         description="Voice-first multi-agent AI assistant",
-        version="0.1.0",
+        version="0.5.0",
         lifespan=lifespan,
     )
 
@@ -78,20 +95,25 @@ def create_app(brain: VocaBrain | None = None) -> FastAPI:
         allow_headers=["*"],
     )
 
-    # --- Authentication ---
+    # --- Authentication middleware ---
 
-    async def verify_api_key(request: Request):
+    @app.middleware("http")
+    async def api_key_middleware(request: Request, call_next):
         """Verify API key if configured. Skip for static files and health check."""
-        if not settings.server.api_key:
-            return  # No auth configured — allow all
-        path = request.url.path
-        if path in ("/", "/health") or path.startswith("/static"):
-            return  # Public endpoints
-        auth_header = request.headers.get("Authorization", "")
-        api_key = request.query_params.get("api_key", "")
-        if auth_header == f"Bearer {settings.server.api_key}" or api_key == settings.server.api_key:
-            return
-        raise HTTPException(status_code=401, detail="Invalid or missing API key")
+        if settings.server.api_key:
+            path = request.url.path
+            if path not in ("/", "/health") and not path.startswith("/static"):
+                auth_header = request.headers.get("Authorization", "")
+                query_key = request.query_params.get("api_key", "")
+                if (
+                    auth_header != f"Bearer {settings.server.api_key}"
+                    and query_key != settings.server.api_key
+                ):
+                    return JSONResponse(
+                        status_code=401,
+                        content={"detail": "Invalid or missing API key"},
+                    )
+        return await call_next(request)
 
     def verify_webhook_secret(request: Request):
         """Verify webhook secret for trading webhooks."""
@@ -306,13 +328,50 @@ def create_app(brain: VocaBrain | None = None) -> FastAPI:
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
 
+    # --- Streaming chat endpoint ---
+
+    @app.post("/chat/stream")
+    async def chat_stream(request: ChatRequest):
+        """Stream LLM response tokens via SSE for faster perceived response."""
+        from voca.brain.agents.base import BUDDY_PERSONALITY
+        from voca.providers.models import ModelTier
+
+        async def generate():
+            try:
+                provider = brain_instance.provider_manager
+                messages = [
+                    {"role": "system", "content": BUDDY_PERSONALITY},
+                    {"role": "user", "content": request.transcript},
+                ]
+                async for chunk in provider.stream(messages, tier=ModelTier.SPECIALIST):
+                    yield f"data: {json.dumps({'type': 'token', 'content': chunk})}\n\n"
+                yield f"data: {json.dumps({'type': 'done'})}\n\n"
+            except Exception as e:
+                yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+
+        return StreamingResponse(
+            generate(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
     # --- WebSocket endpoint ---
 
     @app.websocket("/ws")
     async def websocket_endpoint(websocket: WebSocket):
+        # Verify API key on WebSocket handshake
+        if settings.server.api_key:
+            ws_api_key = websocket.query_params.get("api_key", "")
+            if ws_api_key != settings.server.api_key:
+                await websocket.close(code=4001, reason="Invalid or missing API key")
+                return
+
         await websocket.accept()
         session_id = f"ws-{id(websocket)}"
         logger.info("WebSocket connected: %s", session_id)
+
+        # Restore previous conversation history for this session
+        brain_instance.memory_vault.load_session(session_id)
 
         # Send a buddy greeting on connect
         user_name = brain_instance.memory_vault.recall_fact("user_name")
@@ -393,6 +452,36 @@ def create_app(brain: VocaBrain | None = None) -> FastAPI:
                         continue
 
                     result = await brain_instance.process(transcript, session_id)
+
+                    # Stream tokens if client requested streaming
+                    if msg.get("stream"):
+                        try:
+                            from voca.brain.agents.base import BUDDY_PERSONALITY
+                            from voca.providers.models import ModelTier as MT
+                            provider = brain_instance.provider_manager
+                            messages = [
+                                {"role": "system", "content": BUDDY_PERSONALITY},
+                                {"role": "user", "content": transcript},
+                            ]
+                            full_response = ""
+                            async for chunk in provider.stream(messages, tier=MT.SPECIALIST):
+                                full_response += chunk
+                                await websocket.send_json({
+                                    "type": "stream_token",
+                                    "content": chunk,
+                                })
+                            await websocket.send_json({
+                                "type": "stream_end",
+                                "response": full_response,
+                                "agent": result.agent,
+                                "tier": result.tier,
+                                "intent": result.intent,
+                                "mood": result.mood,
+                            })
+                            continue
+                        except Exception:
+                            pass  # Fall through to non-streaming response
+
                     await websocket.send_json({
                         "type": "response",
                         "response": result.response,
@@ -435,9 +524,10 @@ def create_app(brain: VocaBrain | None = None) -> FastAPI:
             except Exception:
                 pass
         finally:
-            # Clean up: remove notification handler and pending actions
+            # Clean up: remove notification handler, pending actions, and session memory
             brain_instance.scheduler.remove_notification_handler(push_notification)
             if hasattr(brain_instance, "_pending_actions"):
                 brain_instance._pending_actions.pop(session_id, None)
+            brain_instance.memory_vault.working.remove_session(session_id)
 
     return app

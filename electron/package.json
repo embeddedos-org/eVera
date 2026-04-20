@@ -1,7 +1,8 @@
 {
   "name": "voca-desktop",
-  "version": "1.0.0",
-  "description": "Voca AI Buddy — Desktop App",
+  "version": "0.5.0",
+  "description": "Voca - Voice-first AI Assistant Desktop App",
+  "author": "Srikanth Patchava",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -13,6 +14,7 @@
   "build": {
     "appId": "com.voca.desktop",
     "productName": "Voca",
+    "icon": "icon",
     "directories": {
       "output": "dist"
     },
@@ -20,23 +22,42 @@
       "main.js",
       "preload.js",
       "icon.png",
+      "icon.ico",
       "tray-icon.png"
+    ],
+    "extraResources": [
+      {
+        "from": "../dist/voca-server/",
+        "to": "backend",
+        "filter": ["**/*"]
+      }
     ],
     "win": {
       "target": "nsis",
-      "icon": "icon.png"
+      "icon": "icon.ico"
     },
     "mac": {
       "target": "dmg",
-      "icon": "icon.png"
+      "icon": "icon.png",
+      "category": "public.app-category.productivity"
     },
     "linux": {
-      "target": "deb",
-      "icon": "icon.png"
+      "target": ["AppImage", "deb"],
+      "icon": "icon.png",
+      "category": "Utility"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
+    },
+    "dmg": {
+      "contents": [
+        { "x": 130, "y": 220 },
+        { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
+      ]
+    },
+    "appImage": {
+      "artifactName": "Voca-${version}-${arch}.AppImage"
     }
   },
   "dependencies": {

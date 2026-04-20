@@ -1,13 +1,12 @@
-# Data directory
-data/
-
 # Python
 __pycache__/
 *.py[cod]
+*$py.class
 *.egg-info/
+*.egg
 dist/
 build/
-.eggs/
+*.spec
 
 # Virtual environments
 .venv/
@@ -17,18 +16,45 @@ env/
 # Environment
 .env
 
+# Data (user-specific)
+data/
+
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Testing
+# Electron
+electron/node_modules/
+electron/dist/
+electron/out/
+electron/package-lock.json
+
+# Mobile
+mobile/node_modules/
+mobile/android/build/
+mobile/android/app/build/
+mobile/ios/build/
+mobile/ios/Pods/
+mobile/package-lock.json
+
+# Docs generated
+docs/html/
+docs/latex/
+docs/images/*.png
+
+# Coverage
 htmlcov/
 .coverage
-.pytest_cache/
+coverage.xml
 
-# FAISS
-*.faiss
+# Misc
+*.log
+*.bak
+*.tmp

@@ -39,6 +39,9 @@ dependencies = [
     "duckduckgo-search>=5.0",
     "beautifulsoup4>=4.12",
     "yfinance>=0.2.30",
+    "pyautogui>=0.9.54",
+    "psutil>=5.9.0",
+    "pyperclip>=1.8.0",
 ]
 
 [project.optional-dependencies]
@@ -67,6 +70,7 @@ dev = [
     "ruff>=0.3",
     "safety>=3.0",
     "bandit>=1.7",
+    "pyinstaller>=6.0",
 ]
 
 [project.scripts]

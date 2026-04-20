@@ -1,4 +1,14 @@
-"""Tier-based intent routing for Voca."""
+"""Tier-based intent routing for Voca.
+
+@file voca/brain/router.py
+@brief TierRouter classifies user transcripts into intents and routes
+       them to the appropriate agent via a 4-tier system.
+
+Tier 0: Regex-based instant responses (no LLM, free)
+Tier 1: Local LLM (Ollama) classification
+Tier 2: Cloud LLM (GPT-4o-mini / Gemini Flash) classification
+Tier K: Keyword-based offline fallback
+"""
 
 from __future__ import annotations
 
@@ -270,7 +280,14 @@ User message: {transcript}"""
 
 
 class TierRouter:
-    """Routes user transcripts to the appropriate agent via tiered classification."""
+    """Routes user transcripts to the appropriate agent via tiered classification.
+
+    Uses a cascading approach: Tier 0 (regex) → Tier 1 (local LLM) →
+    Tier 2 (cloud LLM) → keyword fallback. Each tier is tried in order;
+    if confidence is sufficient, routing stops.
+
+    @param provider_manager: ProviderManager for LLM-based classification.
+    """
 
     def __init__(self, provider_manager: ProviderManager) -> None:
         self._provider = provider_manager

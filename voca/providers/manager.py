@@ -178,3 +178,63 @@ class ProviderManager:
 
     def get_usage(self) -> dict[str, TokenUsage]:
         return {tier.name: usage for tier, usage in self._usage.items()}
+
+    async def stream(
+        self,
+        messages: list[dict[str, Any]],
+        tier: ModelTier,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+    ):
+        """Stream completion tokens from the LLM.
+
+        Yields partial content strings as they arrive from the model.
+        Falls back through available models on failure.
+
+        @param messages: Conversation messages.
+        @param tier: Model tier to use.
+        @param max_tokens: Maximum tokens to generate.
+        @param temperature: Sampling temperature.
+        @return AsyncGenerator yielding content string chunks.
+        """
+        if tier == ModelTier.REFLEX:
+            raise ValueError("Tier 0 (REFLEX) does not use LLM")
+
+        models = self.get_models_for_tier(tier)
+        if not models:
+            for fallback_tier in ModelTier:
+                if fallback_tier > tier:
+                    models = self.get_models_for_tier(fallback_tier)
+                    if models:
+                        break
+
+        if not models:
+            raise RuntimeError(f"No models available for tier {tier} or higher")
+
+        last_error: Exception | None = None
+        for model_config in models:
+            try:
+                kwargs: dict = {
+                    "model": model_config.model_name,
+                    "messages": messages,
+                    "max_tokens": max_tokens or model_config.max_tokens,
+                    "temperature": temperature if temperature is not None else model_config.temperature,
+                    "stream": True,
+                }
+                if model_config.provider == "ollama":
+                    kwargs["api_base"] = settings.llm.ollama_url
+
+                response = await litellm.acompletion(**kwargs)
+
+                async for chunk in response:
+                    delta = chunk.choices[0].delta
+                    if delta and delta.content:
+                        yield delta.content
+
+                return
+            except Exception as e:
+                logger.warning("Streaming model %s failed: %s", model_config.model_name, e)
+                last_error = e
+                continue
+
+        raise RuntimeError(f"All streaming models failed for tier {tier}: {last_error}")

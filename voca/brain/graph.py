@@ -1,4 +1,16 @@
-"""LangGraph StateGraph — the heart of Voca's processing pipeline."""
+"""LangGraph StateGraph — the heart of Voca's processing pipeline.
+
+@file voca/brain/graph.py
+@brief Builds and compiles the LangGraph StateGraph that processes all user input.
+
+Pipeline stages:
+  enrich_memory → classify → safety_check → [tier0_handler | agent | confirmation] → store_memory → synthesize
+
+Each stage is an async node function that reads/writes VocaState.
+Conditional routing after safety_check determines whether to handle
+the request as a Tier 0 regex response, delegate to an agent,
+or ask for user confirmation.
+"""
 
 from __future__ import annotations
 
@@ -33,7 +45,14 @@ def build_graph(
 ) -> StateGraph:
     """Build and compile the Voca processing graph.
 
-    Pipeline: enrich → classify → safety → (tier0 | agent) → store → synthesize
+    Creates a LangGraph StateGraph with 7 nodes and conditional routing.
+    Pipeline: enrich → classify → safety → (tier0 | agent | confirmation) → store → synthesize.
+
+    @param provider_manager: Multi-LLM provider for agent inference.
+    @param memory_vault: 4-layer memory system for context enrichment and storage.
+    @param policy_service: Safety policy engine for action approval.
+    @param privacy_guard: PII detection and anonymization.
+    @return Compiled LangGraph StateGraph ready for invocation.
     """
     supervisor = SupervisorAgent(provider_manager)
 
@@ -58,7 +77,7 @@ def build_graph(
         if lang != "en":
             logger.info("Detected language: %s", lang)
 
-        ctx = memory_vault.enrich(transcript)
+        ctx = memory_vault.enrich(transcript, session_id=state.get("session_id"))
 
         # Detect and store user name
         for pattern in NAME_PATTERNS:
@@ -197,6 +216,7 @@ def build_graph(
             response=response,
             agent=agent,
             metadata=state.get("metadata"),
+            session_id=state.get("session_id"),
         )
         return state
 

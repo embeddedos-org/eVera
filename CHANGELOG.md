@@ -2,7 +2,31 @@
 
 All notable changes to Voca are documented here.
 
-## [0.5.0] — 2026-04-18
+## [0.5.0] — 2026-04-19
+
+### 🖥️ Standalone Desktop App
+- **Cross-platform installers**: Windows `.exe` (NSIS), macOS `.dmg`, Linux `.AppImage` + `.deb`
+- No Python or Node.js installation required — everything bundled via PyInstaller + electron-builder
+- CI/CD build pipeline via GitHub Actions for automated releases
+
+### 💻 12 New System Control Tools (Operator Agent)
+- `mouse_click`, `mouse_move`, `mouse_drag`, `scroll` — full mouse automation via pyautogui
+- `press_hotkey` — keyboard shortcuts (Ctrl+C, Alt+Tab, Win+D)
+- `manage_window` — list, focus, minimize, maximize, close windows (pygetwindow)
+- `manage_process` — list, inspect, kill processes (psutil)
+- `system_info` — CPU, memory, disk, battery, OS details (psutil)
+- `manage_service` — list, start, stop, restart system services
+- `network_info` — IP addresses, active connections, ping test
+- `clipboard` — read/write system clipboard (pyperclip)
+- `send_notification` — OS-level desktop notifications
+- Total tools now: **90+** across 10 agents
+
+### 📚 Documentation & Doxygen
+- Full `docs/` folder with 9 structured documentation pages
+- Doxygen configuration for HTML + PDF generation from docstrings
+- 7 Mermaid architecture diagrams (system, pipeline, agents, memory, safety, build, routing)
+- Doxygen-compatible `@param`/`@return` docstrings on all key modules
+- Formal product release notes document
 
 ### ✨ Glassmorphism UI Redesign
 - Complete visual overhaul with **glassmorphism theme** — frosted glass panels, `backdrop-filter: blur(20px)`, semi-transparent surfaces
@@ -191,4 +215,4 @@ All notable changes to Voca are documented here.
 - FastAPI + WebSocket + SSE
 - Safety: policy engine + PII detection + privacy guard
 - Dark theme web UI with chat + dashboard
-- Docker + docker-compose support
+- Native Python setup (venv + pip)

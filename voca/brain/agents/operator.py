@@ -1,4 +1,13 @@
-"""Operator Agent — controls PC operations, file management, and automation."""
+"""Operator Agent — controls PC operations, file management, and automation.
+
+@file voca/brain/agents/operator.py
+@brief OperatorAgent with 20 tools for desktop automation, GUI control,
+       file management, system administration, and screen vision.
+
+Supports Windows, macOS, and Linux via platform-specific implementations.
+Includes mouse/keyboard automation (pyautogui), window management
+(pygetwindow), process/service management (psutil), and clipboard access.
+"""
 
 from __future__ import annotations
 
@@ -99,11 +108,18 @@ class OpenAppTool(Tool):
             if SYSTEM == "Windows":
                 if exe:
                     if exe.startswith("ms-"):
-                        subprocess.Popen(["start", exe], shell=True)
+                        # ms-settings: URIs need cmd /c start — no shell=True
+                        subprocess.Popen(["cmd", "/c", "start", "", exe])
                     else:
                         os.startfile(exe)
                 else:
-                    subprocess.Popen(["start", app_name], shell=True)
+                    # Unknown app — only attempt if it passed the regex sanitization above.
+                    # Use os.startfile which searches PATH without a shell.
+                    try:
+                        os.startfile(app_name)
+                    except OSError:
+                        # Fallback: use cmd /c start with empty title to avoid shell injection
+                        subprocess.Popen(["cmd", "/c", "start", "", app_name])
             elif SYSTEM == "Darwin":
                 target = exe or app_name
                 subprocess.Popen(["open", "-a", target])
@@ -365,17 +381,427 @@ class TypeTextTool(Tool):
             return {"status": "error", "message": str(e)}
 
 
+# ============================================================
+# NEW — Mouse & GUI Automation Tools
+# ============================================================
+
+class MouseClickTool(Tool):
+    def __init__(self) -> None:
+        super().__init__(name="mouse_click", description="Click the mouse at screen coordinates (x, y)", parameters={
+            "x": {"type": "int", "description": "X coordinate"}, "y": {"type": "int", "description": "Y coordinate"},
+            "button": {"type": "str", "description": "Button: left, right, middle (default: left)"},
+            "clicks": {"type": "int", "description": "Number of clicks (1=single, 2=double)"},
+        })
+
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
+        x, y = int(kwargs.get("x", 0)), int(kwargs.get("y", 0))
+        button = kwargs.get("button", "left").lower()
+        clicks = int(kwargs.get("clicks", 1))
+        try:
+            import pyautogui
+            pyautogui.click(x=x, y=y, button=button, clicks=clicks)
+            return {"status": "success", "clicked": {"x": x, "y": y, "button": button, "clicks": clicks}}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+class MouseMoveTool(Tool):
+    def __init__(self) -> None:
+        super().__init__(name="mouse_move", description="Move mouse cursor to screen coordinates", parameters={
+            "x": {"type": "int", "description": "X coordinate"}, "y": {"type": "int", "description": "Y coordinate"},
+            "duration": {"type": "float", "description": "Movement duration in seconds (default: 0.25)"},
+        })
+
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
+        try:
+            import pyautogui
+            pyautogui.moveTo(x=int(kwargs.get("x", 0)), y=int(kwargs.get("y", 0)), duration=float(kwargs.get("duration", 0.25)))
+            return {"status": "success", "moved_to": {"x": kwargs.get("x"), "y": kwargs.get("y")}}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+class MouseDragTool(Tool):
+    def __init__(self) -> None:
+        super().__init__(name="mouse_drag", description="Click and drag from (x1,y1) to (x2,y2)", parameters={
+            "x1": {"type": "int", "description": "Start X"}, "y1": {"type": "int", "description": "Start Y"},
+            "x2": {"type": "int", "description": "End X"}, "y2": {"type": "int", "description": "End Y"},
+            "button": {"type": "str", "description": "Mouse button (default: left)"},
+            "duration": {"type": "float", "description": "Drag duration in seconds (default: 0.5)"},
+        })
+
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
+        x1, y1 = int(kwargs.get("x1", 0)), int(kwargs.get("y1", 0))
+        x2, y2 = int(kwargs.get("x2", 0)), int(kwargs.get("y2", 0))
+        try:
+            import pyautogui
+            pyautogui.moveTo(x1, y1)
+            pyautogui.drag(x2 - x1, y2 - y1, duration=float(kwargs.get("duration", 0.5)), button=kwargs.get("button", "left"))
+            return {"status": "success", "dragged": {"from": [x1, y1], "to": [x2, y2]}}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+class ScrollTool(Tool):
+    def __init__(self) -> None:
+        super().__init__(name="scroll", description="Scroll mouse wheel up/down", parameters={
+            "amount": {"type": "int", "description": "Scroll amount (positive=up, negative=down)"},
+            "x": {"type": "int", "description": "Optional X coordinate"}, "y": {"type": "int", "description": "Optional Y coordinate"},
+        })
+
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
+        amount = int(kwargs.get("amount", 3))
+        try:
+            import pyautogui
+            x, y = kwargs.get("x"), kwargs.get("y")
+            if x is not None and y is not None:
+                pyautogui.scroll(amount, x=int(x), y=int(y))
+            else:
+                pyautogui.scroll(amount)
+            return {"status": "success", "scrolled": "up" if amount > 0 else "down", "amount": abs(amount)}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+class HotkeyTool(Tool):
+    def __init__(self) -> None:
+        super().__init__(name="press_hotkey", description="Press a keyboard shortcut (e.g. Ctrl+C, Alt+Tab)", parameters={
+            "keys": {"type": "str", "description": "Key combination separated by + (e.g. 'ctrl+c', 'alt+tab')"},
+        })
+
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
+        keys = kwargs.get("keys", "")
+        if not keys:
+            return {"status": "error", "message": "No keys provided"}
+        key_map = {"ctrl": "ctrl", "control": "ctrl", "alt": "alt", "option": "alt", "shift": "shift",
+                   "win": "win", "windows": "win", "cmd": "command", "command": "command",
+                   "tab": "tab", "enter": "enter", "return": "enter", "esc": "escape",
+                   "space": "space", "delete": "delete", "del": "delete", "backspace": "backspace"}
+        mapped = [key_map.get(k.strip().lower(), k.strip().lower()) for k in keys.split("+")]
+        try:
+            import pyautogui
+            pyautogui.hotkey(*mapped)
+            return {"status": "success", "pressed": keys}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+class WindowManageTool(Tool):
+    def __init__(self) -> None:
+        super().__init__(name="manage_window", description="Manage windows: list, focus, minimize, maximize, close", parameters={
+            "action": {"type": "str", "description": "Action: list, focus, minimize, maximize, close"},
+            "title": {"type": "str", "description": "Window title (partial match)"},
+        })
+
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
+        action = kwargs.get("action", "list").lower()
+        title = kwargs.get("title", "")
+        try:
+            if SYSTEM == "Windows":
+                import pygetwindow as gw
+                if action == "list":
+                    windows = [{"title": w.title} for w in gw.getAllWindows() if w.title.strip()]
+                    return {"status": "success", "windows": windows[:30]}
+                if not title:
+                    return {"status": "error", "message": "Window title required"}
+                matches = [w for w in gw.getAllWindows() if title.lower() in w.title.lower()]
+                if not matches:
+                    return {"status": "error", "message": f"No window matching '{title}'"}
+                win = matches[0]
+                if action == "focus": win.activate()
+                elif action == "minimize": win.minimize()
+                elif action == "maximize": win.maximize()
+                elif action == "close": win.close()
+                return {"status": "success", "action": action, "window": win.title}
+            elif SYSTEM == "Darwin":
+                if action == "list":
+                    result = subprocess.run(["osascript", "-e", 'tell application "System Events" to get name of every process whose visible is true'], capture_output=True, text=True, timeout=10)
+                    return {"status": "success", "windows": [a.strip() for a in result.stdout.split(",")][:30]}
+                if not title:
+                    return {"status": "error", "message": "Window title required"}
+                scripts = {"focus": f'tell application "{title}" to activate', "close": f'tell application "{title}" to close first window'}
+                if action in scripts:
+                    subprocess.run(["osascript", "-e", scripts[action]], timeout=10)
+                return {"status": "success", "action": action, "window": title}
+            else:
+                if action == "list":
+                    result = subprocess.run(["wmctrl", "-l"], capture_output=True, text=True, timeout=10)
+                    windows = [{"title": " ".join(l.split()[3:])} for l in result.stdout.split("\n") if l.strip()]
+                    return {"status": "success", "windows": windows[:30]}
+                cmds = {"focus": ["wmctrl", "-a", title], "close": ["wmctrl", "-c", title]}
+                if action in cmds:
+                    subprocess.run(cmds[action], timeout=10)
+                return {"status": "success", "action": action, "window": title}
+        except ImportError as e:
+            return {"status": "error", "message": f"Missing dependency: {e}"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+# ============================================================
+# NEW — System Admin Tools
+# ============================================================
+
+class ProcessManagerTool(Tool):
+    def __init__(self) -> None:
+        super().__init__(name="manage_process", description="List processes, kill by name/PID, get process info", parameters={
+            "action": {"type": "str", "description": "Action: list, info, kill"},
+            "name": {"type": "str", "description": "Process name filter or target"},
+            "pid": {"type": "int", "description": "Process ID"},
+        })
+
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
+        action = kwargs.get("action", "list").lower()
+        try:
+            import psutil
+            if action == "list":
+                name_filter = kwargs.get("name", "").lower()
+                procs = []
+                for p in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent"]):
+                    try:
+                        info = p.info
+                        if name_filter and name_filter not in info["name"].lower():
+                            continue
+                        procs.append({"pid": info["pid"], "name": info["name"], "cpu": round(info.get("cpu_percent", 0) or 0, 1), "mem": round(info.get("memory_percent", 0) or 0, 1)})
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        pass
+                procs.sort(key=lambda p: p.get("cpu", 0), reverse=True)
+                return {"status": "success", "processes": procs[:30], "total": len(procs)}
+            elif action == "info":
+                pid = int(kwargs.get("pid", 0))
+                if not pid:
+                    return {"status": "error", "message": "PID required"}
+                p = psutil.Process(pid)
+                return {"status": "success", "pid": pid, "name": p.name(), "cpu": p.cpu_percent(), "mem_mb": round(p.memory_info().rss / 1024**2, 1), "status": p.status()}
+            elif action == "kill":
+                pid, name = kwargs.get("pid"), kwargs.get("name", "")
+                killed = []
+                if pid:
+                    p = psutil.Process(int(pid)); p.terminate(); killed.append({"pid": int(pid), "name": p.name()})
+                elif name:
+                    for p in psutil.process_iter(["pid", "name"]):
+                        if name.lower() in p.info["name"].lower():
+                            p.terminate(); killed.append({"pid": p.info["pid"], "name": p.info["name"]})
+                else:
+                    return {"status": "error", "message": "Provide PID or name"}
+                return {"status": "success", "killed": killed}
+            return {"status": "error", "message": f"Unknown action: {action}"}
+        except ImportError:
+            return {"status": "error", "message": "psutil not installed"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+class SystemInfoTool(Tool):
+    def __init__(self) -> None:
+        super().__init__(name="system_info", description="Get CPU, memory, disk, battery, OS details", parameters={
+            "category": {"type": "str", "description": "Category: all, cpu, memory, disk, battery, os (default: all)"},
+        })
+
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
+        category = kwargs.get("category", "all").lower()
+        try:
+            import psutil
+            info: dict[str, Any] = {}
+            if category in ("all", "os"):
+                info["os"] = {"system": SYSTEM, "release": platform.release(), "machine": platform.machine(), "hostname": platform.node()}
+            if category in ("all", "cpu"):
+                info["cpu"] = {"percent": psutil.cpu_percent(interval=0.5), "cores": psutil.cpu_count(), "physical": psutil.cpu_count(logical=False)}
+            if category in ("all", "memory"):
+                m = psutil.virtual_memory()
+                info["memory"] = {"total_gb": round(m.total / 1024**3, 1), "used_gb": round(m.used / 1024**3, 1), "percent": m.percent}
+            if category in ("all", "disk"):
+                disks = []
+                for part in psutil.disk_partitions():
+                    try:
+                        u = psutil.disk_usage(part.mountpoint)
+                        disks.append({"device": part.device, "total_gb": round(u.total / 1024**3, 1), "free_gb": round(u.free / 1024**3, 1), "percent": u.percent})
+                    except (PermissionError, OSError):
+                        pass
+                info["disk"] = disks
+            if category in ("all", "battery"):
+                bat = psutil.sensors_battery()
+                info["battery"] = {"percent": bat.percent, "plugged": bat.power_plugged} if bat else None
+            return {"status": "success", **info}
+        except ImportError:
+            return {"status": "error", "message": "psutil not installed"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+class ServiceManagerTool(Tool):
+    def __init__(self) -> None:
+        super().__init__(name="manage_service", description="List/start/stop/restart system services", parameters={
+            "action": {"type": "str", "description": "Action: list, start, stop, restart, status"},
+            "name": {"type": "str", "description": "Service name"},
+        })
+
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
+        action, name = kwargs.get("action", "list").lower(), kwargs.get("name", "")
+        try:
+            if SYSTEM == "Windows":
+                if action == "list":
+                    r = subprocess.run(["sc", "query", "state=", "all"], capture_output=True, text=True, timeout=15)
+                    return {"status": "success", "output": r.stdout[:2000]}
+                if not name:
+                    return {"status": "error", "message": "Service name required"}
+                cmds = {"start": ["sc", "start", name], "stop": ["sc", "stop", name], "status": ["sc", "query", name]}
+                if action == "restart":
+                    subprocess.run(["sc", "stop", name], capture_output=True, timeout=15)
+                    import time; time.sleep(2)
+                    r = subprocess.run(["sc", "start", name], capture_output=True, text=True, timeout=15)
+                else:
+                    cmd = cmds.get(action)
+                    if not cmd:
+                        return {"status": "error", "message": f"Unknown action: {action}"}
+                    r = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+                return {"status": "success", "action": action, "service": name, "output": r.stdout[:500]}
+            elif SYSTEM == "Linux":
+                if action == "list":
+                    r = subprocess.run(["systemctl", "list-units", "--type=service", "--no-pager", "-q"], capture_output=True, text=True, timeout=15)
+                    return {"status": "success", "output": r.stdout[:2000]}
+                if not name:
+                    return {"status": "error", "message": "Service name required"}
+                cmds = {"start": ["sudo", "systemctl", "start", name], "stop": ["sudo", "systemctl", "stop", name], "restart": ["sudo", "systemctl", "restart", name], "status": ["systemctl", "status", name]}
+                cmd = cmds.get(action)
+                if not cmd:
+                    return {"status": "error", "message": f"Unknown action: {action}"}
+                r = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+                return {"status": "success", "action": action, "service": name, "output": r.stdout[:500]}
+            else:
+                if action == "list":
+                    r = subprocess.run(["launchctl", "list"], capture_output=True, text=True, timeout=15)
+                    return {"status": "success", "output": r.stdout[:2000]}
+                if not name:
+                    return {"status": "error", "message": "Service name required"}
+                cmds = {"start": ["launchctl", "start", name], "stop": ["launchctl", "stop", name], "status": ["launchctl", "list", name]}
+                if action == "restart":
+                    subprocess.run(["launchctl", "stop", name], capture_output=True, timeout=15)
+                    import time; time.sleep(1)
+                    r = subprocess.run(["launchctl", "start", name], capture_output=True, text=True, timeout=15)
+                else:
+                    cmd = cmds.get(action)
+                    if not cmd:
+                        return {"status": "error", "message": f"Unknown action: {action}"}
+                    r = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+                return {"status": "success", "action": action, "service": name, "output": r.stdout[:500]}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+class NetworkInfoTool(Tool):
+    def __init__(self) -> None:
+        super().__init__(name="network_info", description="Get IP, DNS, connections, ping", parameters={
+            "action": {"type": "str", "description": "Action: info, connections, ping"},
+            "host": {"type": "str", "description": "Host to ping"},
+        })
+
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
+        action = kwargs.get("action", "info").lower()
+        try:
+            import psutil
+            if action == "info":
+                addrs = {}
+                for iface, snics in psutil.net_if_addrs().items():
+                    for snic in snics:
+                        if snic.family.name == "AF_INET":
+                            addrs[iface] = snic.address
+                c = psutil.net_io_counters()
+                return {"status": "success", "interfaces": addrs, "sent_mb": round(c.bytes_sent / 1024**2, 1), "recv_mb": round(c.bytes_recv / 1024**2, 1)}
+            elif action == "connections":
+                conns = [{"local": f"{c.laddr.ip}:{c.laddr.port}" if c.laddr else "", "remote": f"{c.raddr.ip}:{c.raddr.port}" if c.raddr else "", "status": c.status} for c in psutil.net_connections(kind="inet")[:20]]
+                return {"status": "success", "connections": conns}
+            elif action == "ping":
+                host = kwargs.get("host", "8.8.8.8")
+                flag = "-n" if SYSTEM == "Windows" else "-c"
+                r = subprocess.run(["ping", flag, "4", host], capture_output=True, text=True, timeout=15)
+                return {"status": "success", "host": host, "output": r.stdout[:500]}
+            return {"status": "error", "message": f"Unknown action: {action}"}
+        except ImportError:
+            return {"status": "error", "message": "psutil not installed"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+class ClipboardTool(Tool):
+    def __init__(self) -> None:
+        super().__init__(name="clipboard", description="Read or write system clipboard", parameters={
+            "action": {"type": "str", "description": "Action: read, write"},
+            "text": {"type": "str", "description": "Text to write (for write action)"},
+        })
+
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
+        action = kwargs.get("action", "read").lower()
+        try:
+            import pyperclip
+            if action == "read":
+                return {"status": "success", "content": pyperclip.paste()[:2000]}
+            elif action == "write":
+                text = kwargs.get("text", "")
+                if not text:
+                    return {"status": "error", "message": "No text provided"}
+                pyperclip.copy(text)
+                return {"status": "success", "written": text[:100]}
+            return {"status": "error", "message": f"Unknown action: {action}"}
+        except ImportError:
+            return {"status": "error", "message": "pyperclip not installed"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+class NotificationTool(Tool):
+    def __init__(self) -> None:
+        super().__init__(name="send_notification", description="Send OS-level desktop notification", parameters={
+            "title": {"type": "str", "description": "Notification title"},
+            "message": {"type": "str", "description": "Notification body"},
+        })
+
+    async def execute(self, **kwargs: Any) -> dict[str, Any]:
+        title = kwargs.get("title", "Voca")
+        message = kwargs.get("message", "")
+        if not message:
+            return {"status": "error", "message": "No message provided"}
+        try:
+            if SYSTEM == "Windows":
+                ps = f'Add-Type -AssemblyName System.Windows.Forms; $n = New-Object System.Windows.Forms.NotifyIcon; $n.Icon = [System.Drawing.SystemIcons]::Information; $n.Visible = $true; $n.ShowBalloonTip(5000, "{title}", "{message}", [System.Windows.Forms.ToolTipIcon]::Info)'
+                subprocess.run(["powershell", "-NoProfile", "-Command", ps], timeout=10)
+            elif SYSTEM == "Darwin":
+                subprocess.run(["osascript", "-e", f'display notification "{message}" with title "{title}"'], timeout=10)
+            else:
+                subprocess.run(["notify-send", title, message], timeout=10)
+            return {"status": "success", "sent": {"title": title, "message": message[:100]}}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
 class OperatorAgent(BaseAgent):
-    """Controls PC operations, file management, and automation."""
+    """Controls PC operations, file management, GUI automation, and system admin.
+
+    The Operator is the most tool-rich agent with 20 tools spanning:
+    - App launching (cross-platform app maps)
+    - Shell command execution (with dangerous pattern blocking)
+    - File operations (copy, move, delete, list, mkdir)
+    - Mouse automation (click, move, drag, scroll)
+    - Keyboard shortcuts (hotkey combos)
+    - Window management (list, focus, minimize, maximize, close)
+    - Process management (list, info, kill)
+    - System info (CPU, memory, disk, battery, OS)
+    - Service management (list, start, stop, restart)
+    - Network info (IP, connections, ping)
+    - Clipboard access (read, write)
+    - Desktop notifications
+    - Screen capture and AI vision analysis
+    """
 
     name = "operator"
-    description = "Controls PC operations, file management, and automation"
+    description = "Controls PC operations, file management, GUI automation, and system admin"
     tier = ModelTier.SPECIALIST
     system_prompt = (
         "You are a PC automation operator. You can open apps, execute scripts, "
         "manage files, take screenshots, type text, capture the screen and analyze "
-        "what's visible using AI vision. For simple requests like "
-        "'open chrome', use tools directly. For complex automation, chain multiple tools. "
+        "what's visible using AI vision. You can also control the mouse (click, move, drag, scroll), "
+        "press keyboard shortcuts, manage windows, manage processes, get system info, "
+        "manage services, check network, access clipboard, and send notifications. "
         f"Current platform: {SYSTEM}. "
         "When the user asks 'what's on my screen' or 'what do you see', use analyze_screen. "
         "Always confirm destructive operations before proceeding."
@@ -398,19 +824,55 @@ class OperatorAgent(BaseAgent):
             ScreenCaptureTool(),
             AnalyzeScreenTool(),
             OCRScreenTool(),
+            # Mouse & GUI automation
+            MouseClickTool(),
+            MouseMoveTool(),
+            MouseDragTool(),
+            ScrollTool(),
+            HotkeyTool(),
+            WindowManageTool(),
+            # System admin
+            ProcessManagerTool(),
+            SystemInfoTool(),
+            ServiceManagerTool(),
+            NetworkInfoTool(),
+            ClipboardTool(),
+            NotificationTool(),
         ]
 
     async def run(self, state: VocaState) -> VocaState:
-        """Handle operator actions — direct execution for simple commands, LLM for complex."""
+        """Handle operator actions — direct execution for simple commands, LLM for complex.
+
+        Simple commands (open_app, screenshot) are executed directly without LLM
+        but still go through safety policy verification.
+        """
+        from voca.safety.policy import PolicyAction, PolicyService
+
         transcript = state.get("transcript", "").lower()
         intent = state.get("intent", "")
         user_name = state.get("user_name", "")
         name_part = f", {user_name}" if user_name else ""
 
+        policy = PolicyService()
+
         # Direct app opening — no LLM needed
         if intent == "open_app" or re.search(r'\b(?:open|launch|start)\b', transcript):
             app_name = self._extract_app_name(transcript)
             if app_name:
+                decision = policy.check(self.name, "open_application")
+                if decision.action == PolicyAction.DENY:
+                    state["agent_response"] = f"Sorry{name_part}, I can't open apps right now. {decision.reason}"
+                    state["mood"] = "error"
+                    return state
+                if decision.action == PolicyAction.CONFIRM and not state.get("safety_approved"):
+                    state["agent_response"] = (
+                        f"Hey{name_part}! I'd like to open {app_name} for you. "
+                        "Should I go ahead? 🤔 (yes/no)"
+                    )
+                    state["mood"] = "thinking"
+                    state["needs_confirmation"] = True
+                    return state
+
                 tool = self.get_tool("open_application")
                 result = await tool.execute(app_name=app_name)
                 if result.get("status") == "success":
@@ -426,6 +888,12 @@ class OperatorAgent(BaseAgent):
 
         # Direct screenshot
         if intent == "screenshot" or "screenshot" in transcript:
+            decision = policy.check(self.name, "take_screenshot")
+            if decision.action == PolicyAction.DENY:
+                state["agent_response"] = f"Sorry{name_part}, screenshots are not allowed. {decision.reason}"
+                state["mood"] = "error"
+                return state
+
             tool = self.get_tool("take_screenshot")
             result = await tool.execute()
             if result.get("status") == "success":

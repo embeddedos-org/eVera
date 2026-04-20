@@ -1,0 +1,44 @@
+{
+  "name": "voca-mobile",
+  "displayName": "Voca",
+  "expo": {
+    "name": "Voca",
+    "slug": "voca-mobile",
+    "version": "0.5.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "backgroundColor": "#0a0a1a"
+    },
+    "ios": {
+      "bundleIdentifier": "com.patchava.voca",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Voca needs microphone access for voice commands",
+        "NSCameraUsageDescription": "Voca needs camera access for visual analysis",
+        "NSContactsUsageDescription": "Voca needs contacts access to help manage your contacts",
+        "NSCalendarsUsageDescription": "Voca needs calendar access to manage your schedule",
+        "NSLocationWhenInUseUsageDescription": "Voca needs location access for location-aware assistance"
+      }
+    },
+    "android": {
+      "package": "com.patchava.voca",
+      "adaptiveIcon": {
+        "backgroundColor": "#0a0a1a"
+      },
+      "permissions": [
+        "RECORD_AUDIO",
+        "CAMERA",
+        "READ_CONTACTS",
+        "WRITE_CONTACTS",
+        "READ_CALENDAR",
+        "WRITE_CALENDAR",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED",
+        "POST_NOTIFICATIONS"
+      ]
+    }
+  }
+}
