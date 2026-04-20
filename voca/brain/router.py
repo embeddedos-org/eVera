@@ -193,6 +193,21 @@ INTENT_AGENT_MAP: dict[str, str] = {
     "unread": "life_manager",
     "reply": "life_manager",
     "mail": "life_manager",
+    # Live trading
+    "ibkr": "live_trader",
+    "interactive brokers": "live_trader",
+    "tradestation": "live_trader",
+    "schwab": "live_trader",
+    "thinkorswim": "live_trader",
+    "broker": "live_trader",
+    "live trade": "live_trader",
+    "paper trade": "live_trader",
+    "algo": "live_trader",
+    "backtest": "live_trader",
+    "strategy": "live_trader",
+    "regime": "live_trader",
+    "dca": "live_trader",
+    "risk check": "live_trader",
 }
 
 # Extended keyword patterns for offline classification (regex → agent, intent)
@@ -300,6 +315,7 @@ Available agents and their domains:
 - browser: web browsing, navigating websites, filling forms, logging in, social media posting, web automation
 - content_creator: video creation, social media scheduling, content scripts, SEO optimization, marketing
 - finance: bank accounts, balances, transactions, spending analysis, budgets
+- live_trader: live broker trading (IBKR, TradeStation, Schwab), algo strategies, backtesting, AI trading decisions
 
 Respond with ONLY a JSON object (no markdown):
 {"intent": "<intent>", "agent": "<agent_name>", "confidence": <0.0-1.0>}
@@ -457,5 +473,6 @@ class TierRouter:
             "companion": ModelTier.EXECUTOR,
             "content_creator": ModelTier.SPECIALIST,
             "finance": ModelTier.SPECIALIST,
+            "live_trader": ModelTier.STRATEGIST,
         }
         return tier_map.get(agent_name, ModelTier.EXECUTOR)

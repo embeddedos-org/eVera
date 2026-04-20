@@ -160,6 +160,17 @@ DEFAULT_RULES: dict[str, PolicyAction] = {
     "finance.transfer_money": PolicyAction.DENY,
     "finance.make_payment": PolicyAction.DENY,
     "finance.*": PolicyAction.ALLOW,
+    # Live trading plugin — ALL trades require confirmation
+    "live_trader.ibkr_connect": PolicyAction.ALLOW,
+    "live_trader.ibkr_portfolio": PolicyAction.ALLOW,
+    "live_trader.ibkr_trade": PolicyAction.CONFIRM,
+    "live_trader.tradestation_trade": PolicyAction.CONFIRM,
+    "live_trader.tradestation_account": PolicyAction.ALLOW,
+    "live_trader.schwab_trade": PolicyAction.CONFIRM,
+    "live_trader.schwab_account": PolicyAction.ALLOW,
+    "live_trader.ai_trading_decision": PolicyAction.ALLOW,
+    "live_trader.run_strategy": PolicyAction.CONFIRM,
+    "live_trader.risk_check": PolicyAction.ALLOW,
     # Email — reading is safe, sending/replying needs confirmation
     "life_manager.read_inbox": PolicyAction.ALLOW,
     "life_manager.read_email": PolicyAction.ALLOW,
