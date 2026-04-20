@@ -28,9 +28,15 @@ class ConversationStore:
     """
 
     def __init__(self, db_path: Path | None = None) -> None:
-        self._db_path = db_path or DEFAULT_DB_PATH
-        self._db_path.parent.mkdir(parents=True, exist_ok=True)
-        self._conn = sqlite3.connect(str(self._db_path))
+        self._db_path = Path(db_path) if db_path else DEFAULT_DB_PATH
+        self._db_path = self._db_path.resolve()
+        try:
+            self._db_path.parent.mkdir(parents=True, exist_ok=True)
+            self._conn = sqlite3.connect(str(self._db_path))
+        except (sqlite3.OperationalError, OSError):
+            # Fallback to in-memory database if file path is not writable
+            logger.warning("Cannot open %s, using in-memory database", self._db_path)
+            self._conn = sqlite3.connect(":memory:")
         self._conn.row_factory = sqlite3.Row
         self._create_tables()
         logger.info("ConversationStore initialized at %s", self._db_path)
