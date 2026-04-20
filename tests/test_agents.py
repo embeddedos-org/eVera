@@ -97,3 +97,40 @@ def test_git_agent_has_tools():
     assert "git_status" in tool_names
     assert "git_commit" in tool_names
     assert "code_review" in tool_names
+
+
+def test_content_creator_in_registry():
+    from voca.brain.agents import AGENT_REGISTRY
+    assert "content_creator" in AGENT_REGISTRY
+    agent = AGENT_REGISTRY["content_creator"]
+    assert len(agent.tools) == 5
+
+
+def test_finance_in_registry():
+    from voca.brain.agents import AGENT_REGISTRY
+    assert "finance" in AGENT_REGISTRY
+    agent = AGENT_REGISTRY["finance"]
+    assert len(agent.tools) == 6
+
+
+def test_content_creator_tool_names():
+    from voca.brain.agents import AGENT_REGISTRY
+    agent = AGENT_REGISTRY["content_creator"]
+    tool_names = [t.name for t in agent.tools]
+    assert "generate_script" in tool_names
+    assert "create_video" in tool_names
+    assert "schedule_post" in tool_names
+    assert "optimize_seo" in tool_names
+    assert "track_analytics" in tool_names
+
+
+def test_finance_tool_names():
+    from voca.brain.agents import AGENT_REGISTRY
+    agent = AGENT_REGISTRY["finance"]
+    tool_names = [t.name for t in agent.tools]
+    assert "check_balances" in tool_names
+    assert "view_transactions" in tool_names
+    assert "spending_analysis" in tool_names
+    assert "set_budget" in tool_names
+    assert "add_account" in tool_names
+    assert "add_transaction" in tool_names
