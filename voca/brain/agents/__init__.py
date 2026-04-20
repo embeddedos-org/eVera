@@ -8,6 +8,8 @@ from voca.brain.agents.base import BaseAgent
 from voca.brain.agents.browser import BrowserAgent
 from voca.brain.agents.coder import CoderAgent
 from voca.brain.agents.companion import CompanionAgent
+from voca.brain.agents.content_creator import ContentCreatorAgent
+from voca.brain.agents.finance import FinanceAgent
 from voca.brain.agents.git_agent import GitAgent
 from voca.brain.agents.home_controller import HomeControllerAgent
 from voca.brain.agents.income import IncomeAgent
@@ -29,6 +31,8 @@ AGENT_REGISTRY: dict[str, BaseAgent] = {
     "coder": CoderAgent(),
     "browser": BrowserAgent(),
     "git": GitAgent(),
+    "content_creator": ContentCreatorAgent(),
+    "finance": FinanceAgent(),
 }
 
 # Load plugins

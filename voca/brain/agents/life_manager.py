@@ -319,12 +319,15 @@ class LifeManagerAgent(BaseAgent):
     system_prompt = (
         "You are a personal life management assistant. You handle scheduling, "
         "emails, reminders, and task tracking. Use your tools to actually create events, "
-        "set reminders, manage todos, and send emails. Be concise and action-oriented. "
+        "set reminders, manage todos, read/send/reply to emails. Be concise and action-oriented. "
         "When the user asks to schedule something, use add_event. "
         "When they ask about their schedule, use check_calendar. "
         "When they want a reminder, use create_reminder. "
         "When they mention todos/tasks, use list_todos. "
-        "When they want to email someone, use send_email."
+        "When they want to send email, use send_email. "
+        "When they want to read emails, use read_inbox. "
+        "When they want to reply to an email, use reply_email. "
+        "When they want to search emails, use search_emails."
     )
 
     offline_responses = {
@@ -338,10 +341,17 @@ class LifeManagerAgent(BaseAgent):
     }
 
     def _setup_tools(self) -> None:
+        from voca.brain.agents.email_manager import (
+            ReadInboxTool, ReadEmailTool, ReplyEmailTool, SearchEmailsTool,
+        )
         self._tools = [
             CheckCalendarTool(),
             AddEventTool(),
             CreateReminderTool(),
             ListTodosTool(),
             SendEmailTool(),
+            ReadInboxTool(),
+            ReadEmailTool(),
+            ReplyEmailTool(),
+            SearchEmailsTool(),
         ]

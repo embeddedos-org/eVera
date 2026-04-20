@@ -50,6 +50,9 @@ class ProactiveScheduler:
             asyncio.create_task(self._calendar_loop()),
             asyncio.create_task(self._stock_alert_loop()),
             asyncio.create_task(self._daily_briefing_loop()),
+            asyncio.create_task(self._scheduled_tasks_loop()),
+            asyncio.create_task(self._content_publisher_loop()),
+            asyncio.create_task(self._spending_alert_loop()),
         ]
         logger.info("Proactive scheduler started with %d check loops", len(self._tasks))
 
@@ -285,3 +288,179 @@ class ProactiveScheduler:
             "mood": "happy",
             "data": {"date": today},
         })
+
+    # --- Scheduled recurring tasks ---
+
+    async def _scheduled_tasks_loop(self) -> None:
+        """Execute user-defined scheduled/recurring tasks every minute."""
+        while self._running:
+            try:
+                await self._check_scheduled_tasks()
+            except Exception as e:
+                logger.warning("Scheduled tasks check failed: %s", e)
+            await asyncio.sleep(60)
+
+    async def _check_scheduled_tasks(self) -> None:
+        """Check and execute due scheduled tasks."""
+        tasks_path = DATA_DIR / "scheduled_tasks.json"
+        if not tasks_path.exists():
+            return
+
+        try:
+            tasks = json.loads(tasks_path.read_text())
+        except (OSError, json.JSONDecodeError):
+            return
+
+        now = datetime.now()
+        updated = False
+
+        for task in tasks:
+            if not task.get("enabled", True):
+                continue
+
+            schedule = task.get("schedule", {})
+            task_type = schedule.get("type", "")
+
+            should_run = False
+
+            if task_type == "daily":
+                run_time = schedule.get("time", "08:00")
+                h, m = map(int, run_time.split(":"))
+                if now.hour == h and now.minute == m:
+                    last_run = task.get("last_run", "")
+                    if last_run != now.strftime("%Y-%m-%d"):
+                        should_run = True
+
+            elif task_type == "weekly":
+                run_day = schedule.get("day", "monday").lower()
+                run_time = schedule.get("time", "08:00")
+                h, m = map(int, run_time.split(":"))
+                day_names = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+                if now.strftime("%A").lower() == run_day and now.hour == h and now.minute == m:
+                    last_run = task.get("last_run", "")
+                    if last_run != now.strftime("%Y-%m-%d"):
+                        should_run = True
+
+            elif task_type == "interval":
+                interval_min = schedule.get("minutes", 60)
+                last_run = task.get("last_run_ts", 0)
+                if (now.timestamp() - last_run) >= (interval_min * 60):
+                    should_run = True
+
+            if should_run:
+                await self._notify({
+                    "type": "scheduled_task",
+                    "message": f"⏰ Scheduled task: {task.get('name', 'Unknown')}\n{task.get('description', '')}",
+                    "mood": "thinking",
+                    "data": task,
+                })
+                task["last_run"] = now.strftime("%Y-%m-%d")
+                task["last_run_ts"] = now.timestamp()
+                task["run_count"] = task.get("run_count", 0) + 1
+                updated = True
+
+        if updated:
+            tasks_path.write_text(json.dumps(tasks, indent=2, default=str))
+
+    # --- Content publisher ---
+
+    async def _content_publisher_loop(self) -> None:
+        """Check for scheduled social media posts ready to publish."""
+        while self._running:
+            try:
+                await self._check_scheduled_posts()
+            except Exception as e:
+                logger.warning("Content publisher check failed: %s", e)
+            await asyncio.sleep(60)
+
+    async def _check_scheduled_posts(self) -> None:
+        """Publish any posts whose schedule time has arrived."""
+        posts_path = DATA_DIR / "scheduled_posts.json"
+        if not posts_path.exists():
+            return
+
+        try:
+            posts = json.loads(posts_path.read_text())
+        except (OSError, json.JSONDecodeError):
+            return
+
+        now = datetime.now()
+        updated = False
+
+        for post in posts:
+            if post.get("status") != "scheduled":
+                continue
+
+            try:
+                schedule_at = datetime.fromisoformat(post["schedule_at"])
+                if schedule_at <= now:
+                    await self._notify({
+                        "type": "content_publish",
+                        "message": f"📱 Time to publish on {post['platform']}!\n{post['content'][:100]}...",
+                        "mood": "excited",
+                        "data": post,
+                    })
+                    post["status"] = "ready_to_publish"
+                    post["notified_at"] = now.isoformat()
+                    updated = True
+            except (ValueError, KeyError):
+                continue
+
+        if updated:
+            posts_path.write_text(json.dumps(posts, indent=2, default=str))
+
+    # --- Spending alert ---
+
+    async def _spending_alert_loop(self) -> None:
+        """Check spending against budgets every hour."""
+        while self._running:
+            try:
+                await self._check_spending_alerts()
+            except Exception as e:
+                logger.warning("Spending alert check failed: %s", e)
+            await asyncio.sleep(3600)  # Every hour
+
+    async def _check_spending_alerts(self) -> None:
+        """Alert if spending exceeds 80% of any budget category."""
+        finance_path = DATA_DIR / "finance.json"
+        if not finance_path.exists():
+            return
+
+        try:
+            finance = json.loads(finance_path.read_text())
+        except (OSError, json.JSONDecodeError):
+            return
+
+        budgets = finance.get("budgets", {})
+        transactions = finance.get("transactions", [])
+
+        if not budgets:
+            return
+
+        # Calculate this month's spending by category
+        month_start = datetime.now().replace(day=1).isoformat()
+        monthly_txns = [t for t in transactions if t.get("date", "") >= month_start and t.get("amount", 0) < 0]
+
+        by_category: dict[str, float] = {}
+        for t in monthly_txns:
+            cat = t.get("category", "Other")
+            by_category[cat] = by_category.get(cat, 0) + abs(t.get("amount", 0))
+
+        for cat, limit in budgets.items():
+            spent = by_category.get(cat, 0)
+            pct = (spent / limit * 100) if limit > 0 else 0
+
+            if pct >= 100:
+                await self._notify({
+                    "type": "budget_alert",
+                    "message": f"🚨 Budget exceeded for {cat}! Spent ${spent:.2f} of ${limit:.2f} ({pct:.0f}%)",
+                    "mood": "error",
+                    "data": {"category": cat, "spent": spent, "budget": limit, "percent": pct},
+                })
+            elif pct >= 80:
+                await self._notify({
+                    "type": "budget_warning",
+                    "message": f"⚠️ Approaching budget limit for {cat}: ${spent:.2f} of ${limit:.2f} ({pct:.0f}%)",
+                    "mood": "thinking",
+                    "data": {"category": cat, "spent": spent, "budget": limit, "percent": pct},
+                })

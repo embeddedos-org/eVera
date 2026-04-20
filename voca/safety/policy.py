@@ -144,6 +144,27 @@ DEFAULT_RULES: dict[str, PolicyAction] = {
     "income.ibkr_account": PolicyAction.ALLOW,
     "income.tradingview_setup": PolicyAction.ALLOW,
     "income.automate_broker_app": PolicyAction.ALLOW,
+    # Content creator — all safe except publishing
+    "content_creator.generate_script": PolicyAction.ALLOW,
+    "content_creator.create_video": PolicyAction.ALLOW,
+    "content_creator.optimize_seo": PolicyAction.ALLOW,
+    "content_creator.track_analytics": PolicyAction.ALLOW,
+    "content_creator.schedule_post": PolicyAction.CONFIRM,
+    # Finance — read-only is safe, no transfers ever
+    "finance.check_balances": PolicyAction.ALLOW,
+    "finance.view_transactions": PolicyAction.ALLOW,
+    "finance.spending_analysis": PolicyAction.ALLOW,
+    "finance.set_budget": PolicyAction.ALLOW,
+    "finance.add_account": PolicyAction.ALLOW,
+    "finance.add_transaction": PolicyAction.ALLOW,
+    "finance.transfer_money": PolicyAction.DENY,
+    "finance.make_payment": PolicyAction.DENY,
+    "finance.*": PolicyAction.ALLOW,
+    # Email — reading is safe, sending/replying needs confirmation
+    "life_manager.read_inbox": PolicyAction.ALLOW,
+    "life_manager.read_email": PolicyAction.ALLOW,
+    "life_manager.search_emails": PolicyAction.ALLOW,
+    "life_manager.reply_email": PolicyAction.CONFIRM,
 }
 
 

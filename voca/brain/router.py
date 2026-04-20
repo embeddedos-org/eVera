@@ -167,6 +167,32 @@ INTENT_AGENT_MAP: dict[str, str] = {
     "social": "browser",
     "bookmark": "browser",
     "download": "browser",
+    # Content creation
+    "video": "content_creator",
+    "content": "content_creator",
+    "script": "content_creator",
+    "youtube": "content_creator",
+    "tiktok": "content_creator",
+    "reel": "content_creator",
+    "marketing": "content_creator",
+    "seo": "content_creator",
+    "thumbnail": "content_creator",
+    "publish": "content_creator",
+    "schedule_post": "content_creator",
+    # Finance
+    "balance": "finance",
+    "bank": "finance",
+    "account": "finance",
+    "transaction": "finance",
+    "spending": "finance",
+    "budget": "finance",
+    "expense": "finance",
+    "saving": "finance",
+    # Email reading
+    "inbox": "life_manager",
+    "unread": "life_manager",
+    "reply": "life_manager",
+    "mail": "life_manager",
 }
 
 # Extended keyword patterns for offline classification (regex → agent, intent)
@@ -263,15 +289,17 @@ KEYWORD_PATTERNS: list[tuple[re.Pattern, str, str]] = [
 CLASSIFICATION_PROMPT = """You are an intent classifier. Given the user's message, classify it into exactly one intent and agent.
 
 Available agents and their domains:
-- life_manager: calendar, scheduling, email, reminders, to-do lists
+- life_manager: calendar, scheduling, email (read/send/reply), reminders, to-do lists
 - home_controller: IoT devices, lights, thermostat, locks, media playback
 - researcher: web search, summarization, academic papers, fact-checking
 - writer: drafting text, editing, formatting, translation
 - operator: PC automation, scripts, file management, screenshots, screen analysis, vision
-- income: market monitoring, content drafting, lead tracking, opportunity analysis
+- income: market monitoring, stock trading, portfolio, content drafting, lead tracking
 - companion: open conversation, emotional support, mood, jokes, activities
 - coder: reading, writing, editing code files, searching codebases, VS Code integration
 - browser: web browsing, navigating websites, filling forms, logging in, social media posting, web automation
+- content_creator: video creation, social media scheduling, content scripts, SEO optimization, marketing
+- finance: bank accounts, balances, transactions, spending analysis, budgets
 
 Respond with ONLY a JSON object (no markdown):
 {"intent": "<intent>", "agent": "<agent_name>", "confidence": <0.0-1.0>}
@@ -427,5 +455,7 @@ class TierRouter:
             "operator": ModelTier.SPECIALIST,
             "income": ModelTier.STRATEGIST,
             "companion": ModelTier.EXECUTOR,
+            "content_creator": ModelTier.SPECIALIST,
+            "finance": ModelTier.SPECIALIST,
         }
         return tier_map.get(agent_name, ModelTier.EXECUTOR)
