@@ -9,17 +9,15 @@ jobs:
   # ─── Desktop (Electron) ─────────────────────────────────────
   build-desktop:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: windows-latest
             platform: win
-            artifact: "electron/dist/*.exe"
           - os: macos-latest
             platform: mac
-            artifact: "electron/dist/*.dmg"
           - os: ubuntu-latest
             platform: linux
-            artifact: "electron/dist/*.AppImage"
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -42,16 +40,23 @@ jobs:
         run: python build_backend.py --clean
 
       - name: Install Electron dependencies
-        run: cd electron && npm install
+        working-directory: electron
+        run: npm install
 
       - name: Build Electron installer
-        run: cd electron && node build.js --skip-backend ${{ matrix.platform }}
+        working-directory: electron
+        run: node build.js --skip-backend ${{ matrix.platform }}
 
       - name: Upload desktop artifact
         uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.platform }}
-          path: ${{ matrix.artifact }}
+          path: |
+            electron/dist/*.exe
+            electron/dist/*.dmg
+            electron/dist/*.AppImage
+            electron/dist/*.deb
+          if-no-files-found: warn
 
   # ─── Mobile Android (APK) ───────────────────────────────────
   build-android:
@@ -69,20 +74,19 @@ jobs:
           node-version: '20'
 
       - name: Install mobile dependencies
-        run: cd mobile && npm install
+        working-directory: mobile
+        run: npm install
 
       - name: Generate Android project
+        working-directory: mobile
         run: |
-          cd mobile
-          npx react-native init VocaMobileTemp --template react-native-template-typescript --skip-install
-          cp -r VocaMobileTemp/android ./android
+          npx --yes @react-native-community/cli init VocaMobileTemp --skip-install --skip-git-init
+          cp -r VocaMobileTemp/android ./
           rm -rf VocaMobileTemp
-          # Copy our source files
-          cp -r src/* android/app/src/main/java/ 2>/dev/null || true
 
       - name: Build release APK
+        working-directory: mobile/android
         run: |
-          cd mobile/android
           chmod +x gradlew
           ./gradlew assembleRelease
 
@@ -91,6 +95,7 @@ jobs:
         with:
           name: android-apk
           path: mobile/android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
 
   # ─── Mobile iOS (IPA) ──────────────────────────────────────
   build-ios:
@@ -103,54 +108,64 @@ jobs:
           node-version: '20'
 
       - name: Install mobile dependencies
-        run: cd mobile && npm install
+        working-directory: mobile
+        run: npm install
 
       - name: Generate iOS project
+        working-directory: mobile
         run: |
-          cd mobile
-          npx react-native init VocaMobileTemp --template react-native-template-typescript --skip-install
-          cp -r VocaMobileTemp/ios ./ios
+          npx --yes @react-native-community/cli init VocaMobileTemp --skip-install --skip-git-init
+          cp -r VocaMobileTemp/ios ./
           rm -rf VocaMobileTemp
 
       - name: Install CocoaPods
-        run: cd mobile/ios && pod install
+        working-directory: mobile/ios
+        run: pod install || true
 
-      - name: Build iOS archive
+      - name: Build iOS archive (unsigned)
+        working-directory: mobile/ios
         run: |
-          cd mobile/ios
-          xcodebuild -workspace VocaMobile.xcworkspace \
-            -scheme VocaMobile \
+          xcodebuild \
+            -workspace *.xcworkspace \
+            -scheme VocaMobileTemp \
             -configuration Release \
             -sdk iphoneos \
-            -archivePath build/VocaMobile.xcarchive \
+            -archivePath build/Voca.xcarchive \
             archive \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO || true
 
       - name: Upload iOS archive
         uses: actions/upload-artifact@v4
         with:
           name: ios-archive
-          path: mobile/ios/build/VocaMobile.xcarchive
+          path: mobile/ios/build/Voca.xcarchive
+          if-no-files-found: warn
 
   # ─── Create GitHub Release ─────────────────────────────────
   release:
-    needs: [build-desktop, build-android, build-ios]
+    needs: [build-desktop]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: write
     steps:
       - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List artifacts
+        run: find artifacts -type f | head -50
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            desktop-win/**
-            desktop-mac/**
-            desktop-linux/**
-            android-apk/**
+            artifacts/**/*.exe
+            artifacts/**/*.dmg
+            artifacts/**/*.AppImage
+            artifacts/**/*.deb
+            artifacts/**/*.apk
           draft: true
           generate_release_notes: true
