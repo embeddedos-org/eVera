@@ -83,7 +83,7 @@ def create_app(brain: VocaBrain | None = None) -> FastAPI:
     app = FastAPI(
         title="Voca API",
         description="Voice-first multi-agent AI assistant",
-        version="0.5.0",
+        version="0.5.1",
         lifespan=lifespan,
     )
 

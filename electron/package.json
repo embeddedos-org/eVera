@@ -1,6 +1,6 @@
 {
   "name": "voca-desktop",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Voca - Voice-first AI Assistant Desktop App",
   "author": "Srikanth Patchava",
   "main": "main.js",

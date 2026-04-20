@@ -10,9 +10,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/v0.5.0-release-blue?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Agents-10+-blue?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Tools-90+-green?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/v0.5.1-release-blue?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Agents-12+-blue?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Tools-115+-green?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Python-3.11+-yellow?style=for-the-badge&logo=python" />
   <img src="https://img.shields.io/badge/Electron-28+-9feaf9?style=for-the-badge&logo=electron" />
   <img src="https://img.shields.io/badge/React_Native-0.73-61dafb?style=for-the-badge&logo=react" />

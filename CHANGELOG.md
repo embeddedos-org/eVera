@@ -2,6 +2,41 @@
 
 All notable changes to Voca are documented here.
 
+## [0.5.1] — 2026-04-20
+
+### 🎬 ContentCreator Agent (NEW — 5 tools)
+- `generate_script` — AI video/content scripts for YouTube, TikTok, Instagram, LinkedIn, Twitter
+- `create_video` — AI video generation via Runway, Pika, HeyGen, D-ID APIs
+- `schedule_post` — Schedule social media posts with auto-publishing
+- `optimize_seo` — SEO-optimized titles, descriptions, tags, best posting times
+- `track_analytics` — Content dashboard: scripts, posts, videos, platform breakdown
+
+### 🏦 Finance Agent (NEW — 6 tools)
+- `check_balances` — Bank account balances via Plaid API or manual entry
+- `view_transactions` — Recent transactions with category filtering
+- `spending_analysis` — Spending breakdown by category with budget comparison
+- `set_budget` — Monthly spending limits per category
+- `add_account` / `add_transaction` — Manual account and expense tracking
+- **Safety:** Money transfers are ALWAYS DENIED by policy
+
+### 📧 Full Email Management (4 new tools added to Life Manager)
+- `read_inbox` — Read recent emails via IMAP (unread filter, folder select)
+- `read_email` — Read full email body by ID
+- `reply_email` — AI-drafted reply with original context quoted
+- `search_emails` — Search by keyword, sender, or subject
+- Life Manager now has 9 tools (was 5)
+
+### ⏰ Enhanced Proactive Scheduler (3 new background loops)
+- **Recurring tasks** — Daily, weekly, and interval-based scheduled tasks from `scheduled_tasks.json`
+- **Content auto-publisher** — Publishes scheduled social posts when their time arrives
+- **Budget alerts** — Warns at 80% budget usage, alerts when exceeded
+- Scheduler now runs 7 background loops (was 4)
+
+### 📊 Stats
+- 12 agents (was 10), 115+ tools (was 90+)
+- 25+ new intent keywords for routing
+- 7 scheduler loops (was 4)
+
 ## [0.5.0] — 2026-04-19
 
 ### 🖥️ Standalone Desktop App

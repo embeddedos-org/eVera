@@ -98,10 +98,10 @@ def main() -> None:
     args = parser.parse_args()
 
     print(f"""
-╔══════════════════════════════════════════╗
-║  🔨 Voca Backend Builder v0.5.0         ║
-║  Platform: {SYSTEM:<30}║
-╚══════════════════════════════════════════╝
+===========================================
+  Voca Backend Builder v0.5.1
+  Platform: {SYSTEM}
+===========================================
 """)
 
     if args.clean:
@@ -112,7 +112,7 @@ def main() -> None:
     validate()
 
     print(f"""
-✅ Backend build complete!
+Done! Backend build complete.
    Output: {DIST_DIR}
    Executable: {DIST_DIR / EXE_NAME}
 
