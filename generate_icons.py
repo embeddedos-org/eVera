@@ -33,7 +33,7 @@ def create_png(width: int, height: int, bg_r: int, bg_g: int, bg_b: int) -> byte
                 else:
                     row.extend([0, 0, 0, 0])  # Transparent
             rows.append(bytes([0]) + bytes(row))  # Filter byte + row
-        return b''.join(rows)
+        return b"".join(rows)
 
     raw = make_pixel_rows()
     compressed = zlib.compress(raw)
@@ -41,11 +41,11 @@ def create_png(width: int, height: int, bg_r: int, bg_g: int, bg_b: int) -> byte
     def chunk(chunk_type: bytes, data: bytes) -> bytes:
         c = chunk_type + data
         crc = zlib.crc32(c) & 0xFFFFFFFF
-        return struct.pack('>I', len(data)) + c + struct.pack('>I', crc)
+        return struct.pack(">I", len(data)) + c + struct.pack(">I", crc)
 
-    sig = b'\x89PNG\r\n\x1a\n'
-    ihdr = struct.pack('>IIBBBBB', width, height, 8, 6, 0, 0, 0)  # 8-bit RGBA
-    return sig + chunk(b'IHDR', ihdr) + chunk(b'IDAT', compressed) + chunk(b'IEND', b'')
+    sig = b"\x89PNG\r\n\x1a\n"
+    ihdr = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)  # 8-bit RGBA
+    return sig + chunk(b"IHDR", ihdr) + chunk(b"IDAT", compressed) + chunk(b"IEND", b"")
 
 
 def main():

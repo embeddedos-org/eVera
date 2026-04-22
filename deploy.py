@@ -22,9 +22,9 @@ SYSTEM = platform.system()
 
 
 def header(text: str) -> None:
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  {text}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
 
 def run(cmd: str | list, cwd: Path = ROOT, check: bool = True) -> int:
@@ -45,8 +45,7 @@ def check_prereqs() -> dict[str, bool]:
 
     # Python + PyInstaller
     try:
-        subprocess.run([sys.executable, "-m", "PyInstaller", "--version"],
-                       capture_output=True, timeout=10)
+        subprocess.run([sys.executable, "-m", "PyInstaller", "--version"], capture_output=True, timeout=10)
         prereqs["pyinstaller"] = True
     except Exception:
         prereqs["pyinstaller"] = False
@@ -67,14 +66,14 @@ def check_prereqs() -> dict[str, bool]:
 
     # React Native CLI
     try:
-        subprocess.run(["npx", "react-native", "--version"],
-                       capture_output=True, timeout=10)
+        subprocess.run(["npx", "react-native", "--version"], capture_output=True, timeout=10)
         prereqs["react-native"] = True
     except Exception:
         prereqs["react-native"] = False
 
     # Android SDK (check for ANDROID_HOME)
     import os
+
     prereqs["android_sdk"] = bool(os.environ.get("ANDROID_HOME") or os.environ.get("ANDROID_SDK_ROOT"))
 
     # Xcode (macOS only)
@@ -111,8 +110,12 @@ def build_desktop(plat: str = "current") -> bool:
     # Step 3: Show output
     dist_dir = electron_dir / "dist"
     if dist_dir.exists():
-        installers = list(dist_dir.glob("*.exe")) + list(dist_dir.glob("*.dmg")) + \
-                     list(dist_dir.glob("*.AppImage")) + list(dist_dir.glob("*.deb"))
+        installers = (
+            list(dist_dir.glob("*.exe"))
+            + list(dist_dir.glob("*.dmg"))
+            + list(dist_dir.glob("*.AppImage"))
+            + list(dist_dir.glob("*.deb"))
+        )
         if installers:
             print("\n✅ Desktop installers built:")
             for f in installers:
@@ -183,20 +186,26 @@ def build_mobile_ios() -> bool:
 
     # Build archive
     print("🔨 Building iOS archive...")
-    if run(
-        "xcodebuild -workspace VeraMobile.xcworkspace -scheme VeraMobile "
-        "-configuration Release -archivePath build/VeraMobile.xcarchive archive",
-        cwd=ios_dir,
-    ) != 0:
+    if (
+        run(
+            "xcodebuild -workspace VeraMobile.xcworkspace -scheme VeraMobile "
+            "-configuration Release -archivePath build/VeraMobile.xcarchive archive",
+            cwd=ios_dir,
+        )
+        != 0
+    ):
         return False
 
     # Export IPA
     print("📦 Exporting IPA...")
-    if run(
-        "xcodebuild -exportArchive -archivePath build/VeraMobile.xcarchive "
-        "-exportPath build/ipa -exportOptionsPlist ExportOptions.plist",
-        cwd=ios_dir,
-    ) != 0:
+    if (
+        run(
+            "xcodebuild -exportArchive -archivePath build/VeraMobile.xcarchive "
+            "-exportPath build/ipa -exportOptionsPlist ExportOptions.plist",
+            cwd=ios_dir,
+        )
+        != 0
+    ):
         print("⚠️  IPA export failed. You may need to configure signing in Xcode.")
         return False
 
@@ -210,8 +219,12 @@ def main() -> None:
     parser.add_argument("--mobile", action="store_true", help="Build mobile (Android APK + iOS IPA)")
     parser.add_argument("--android-only", action="store_true", help="Build Android APK only")
     parser.add_argument("--ios-only", action="store_true", help="Build iOS IPA only")
-    parser.add_argument("--platform", default="current", choices=["win", "mac", "linux", "all", "current"],
-                        help="Desktop platform target")
+    parser.add_argument(
+        "--platform",
+        default="current",
+        choices=["win", "mac", "linux", "all", "current"],
+        help="Desktop platform target",
+    )
     parser.add_argument("--skip-prereq-check", action="store_true", help="Skip prerequisite check")
     args = parser.parse_args()
 
@@ -222,8 +235,8 @@ def main() -> None:
 ╔══════════════════════════════════════════════════════════╗
 ║  🚀 eVera Deploy v0.5.0                                ║
 ║  System: {SYSTEM:<49}║
-║  Desktop: {'Yes' if (build_all or args.desktop) else 'No':<48}║
-║  Mobile:  {'Yes' if (build_all or args.mobile) else 'No':<48}║
+║  Desktop: {"Yes" if (build_all or args.desktop) else "No":<48}║
+║  Mobile:  {"Yes" if (build_all or args.mobile) else "No":<48}║
 ╚══════════════════════════════════════════════════════════╝
 """)
 

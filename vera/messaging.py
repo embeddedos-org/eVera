@@ -32,6 +32,7 @@ TELEGRAM_BOT_TOKEN = os.getenv("VERA_TELEGRAM_BOT_TOKEN", "")
 # SLACK
 # ============================================================
 
+
 async def handle_slack_event(body: dict, headers: dict, brain: Any) -> dict:
     """Handle incoming Slack events (messages, slash commands)."""
     # URL verification challenge
@@ -65,6 +66,7 @@ async def _send_slack_message(channel: str, text: str) -> None:
         return
     try:
         import httpx
+
         async with httpx.AsyncClient() as client:
             await client.post(
                 "https://slack.com/api/chat.postMessage",
@@ -84,9 +86,14 @@ def _verify_slack_signature(body: dict, headers: dict) -> bool:
         return False
 
     sig_basestring = f"v0:{timestamp}:{json.dumps(body)}"
-    my_sig = "v0=" + hmac.new(
-        SLACK_SIGNING_SECRET.encode(), sig_basestring.encode(), hashlib.sha256,
-    ).hexdigest()
+    my_sig = (
+        "v0="
+        + hmac.new(
+            SLACK_SIGNING_SECRET.encode(),
+            sig_basestring.encode(),
+            hashlib.sha256,
+        ).hexdigest()
+    )
 
     return hmac.compare_digest(my_sig, signature)
 
@@ -112,6 +119,7 @@ async def fetch_channel_history(channel: str, oldest: str = "0", limit: int = 50
         return []
     try:
         import httpx
+
         async with httpx.AsyncClient() as client:
             resp = await client.get(
                 "https://slack.com/api/conversations.history",
@@ -133,6 +141,7 @@ async def fetch_channel_info(channel: str) -> dict:
         return {}
     try:
         import httpx
+
         async with httpx.AsyncClient() as client:
             resp = await client.get(
                 "https://slack.com/api/conversations.info",
@@ -157,6 +166,7 @@ async def get_user_info(user_id: str) -> dict:
         return {}
     try:
         import httpx
+
         async with httpx.AsyncClient() as client:
             resp = await client.get(
                 "https://slack.com/api/users.info",
@@ -177,6 +187,7 @@ async def get_user_info(user_id: str) -> dict:
 # ============================================================
 # DISCORD
 # ============================================================
+
 
 async def handle_discord_interaction(body: dict, brain: Any) -> dict:
     """Handle Discord interactions (slash commands, messages)."""
@@ -208,6 +219,7 @@ async def send_discord_message(channel_id: str, message: str) -> bool:
         return False
     try:
         import httpx
+
         async with httpx.AsyncClient() as client:
             await client.post(
                 f"https://discord.com/api/v10/channels/{channel_id}/messages",
@@ -223,6 +235,7 @@ async def send_discord_message(channel_id: str, message: str) -> bool:
 # ============================================================
 # TELEGRAM
 # ============================================================
+
 
 async def handle_telegram_update(body: dict, brain: Any) -> dict:
     """Handle incoming Telegram updates (messages)."""
@@ -253,6 +266,7 @@ async def send_telegram_message(chat_id: int | str, message: str) -> bool:
         return False
     try:
         import httpx
+
         async with httpx.AsyncClient() as client:
             await client.post(
                 f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
@@ -267,6 +281,7 @@ async def send_telegram_message(chat_id: int | str, message: str) -> bool:
 # ============================================================
 # NOTIFICATION ROUTER — sends to all configured channels
 # ============================================================
+
 
 async def broadcast_notification(message: str, channels: dict | None = None) -> dict:
     """Send a notification to all configured messaging platforms.

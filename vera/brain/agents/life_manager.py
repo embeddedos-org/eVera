@@ -40,6 +40,7 @@ def _save_json(filename: str, data: list[dict]) -> None:
 
 # --- Concrete tool implementations ---
 
+
 class CheckCalendarTool(Tool):
     """Check calendar events for a given date."""
 
@@ -157,6 +158,7 @@ class CreateReminderTool(Tool):
     def _parse_when(self, when_str: str) -> datetime:
         """Parse relative or absolute time."""
         import re
+
         lower = when_str.lower().strip()
 
         # "in Xm" / "in Xh" / "in X minutes" / "in X hours"
@@ -272,6 +274,7 @@ class SendEmailTool(Tool):
 
         # Check for SMTP config
         import os
+
         smtp_host = os.getenv("VERA_SMTP_HOST", "")
         smtp_port = int(os.getenv("VERA_SMTP_PORT", "587"))
         smtp_user = os.getenv("VERA_SMTP_USER", "")
@@ -282,7 +285,9 @@ class SendEmailTool(Tool):
             drafts = _load_json("email_drafts.json")
             draft = {
                 "id": datetime.now().strftime("%Y%m%d%H%M%S"),
-                "to": to, "subject": subject, "body": body,
+                "to": to,
+                "subject": subject,
+                "body": body,
                 "created": datetime.now().isoformat(),
                 "status": "draft",
             }
@@ -347,6 +352,7 @@ class LifeManagerAgent(BaseAgent):
             ReplyEmailTool,
             SearchEmailsTool,
         )
+
         self._tools = [
             CheckCalendarTool(),
             AddEventTool(),

@@ -27,6 +27,7 @@ def _ha_available() -> bool:
 async def _ha_request(method: str, endpoint: str, data: dict | None = None) -> dict:
     """Make a request to the Home Assistant REST API."""
     import httpx
+
     url = f"{HA_URL}/api/{endpoint}"
     headers = {"Authorization": f"Bearer {HA_TOKEN}", "Content-Type": "application/json"}
     async with httpx.AsyncClient(timeout=10) as client:
@@ -40,6 +41,7 @@ async def _ha_request(method: str, endpoint: str, data: dict | None = None) -> d
 
 # --- Local simulation fallback ---
 
+
 def _load_home_state() -> dict:
     path = DATA_DIR / "home_state.json"
     if path.exists():
@@ -48,7 +50,11 @@ def _load_home_state() -> dict:
         except (OSError, json.JSONDecodeError):
             pass
     return {
-        "lights": {"living_room": {"on": False, "brightness": 100}, "bedroom": {"on": False, "brightness": 100}, "kitchen": {"on": False, "brightness": 100}},
+        "lights": {
+            "living_room": {"on": False, "brightness": 100},
+            "bedroom": {"on": False, "brightness": 100},
+            "kitchen": {"on": False, "brightness": 100},
+        },
         "thermostat": {"temperature": 72, "mode": "auto"},
         "doors": {"front": "locked", "back": "locked", "garage": "locked"},
         "security": {"status": "armed", "alerts": []},
@@ -124,13 +130,23 @@ class SetThermostatTool(Tool):
         if _ha_available():
             try:
                 entity_id = "climate.thermostat"
-                await _ha_request("POST", "services/climate/set_temperature", {
-                    "entity_id": entity_id, "temperature": temp,
-                })
+                await _ha_request(
+                    "POST",
+                    "services/climate/set_temperature",
+                    {
+                        "entity_id": entity_id,
+                        "temperature": temp,
+                    },
+                )
                 if mode != "auto":
-                    await _ha_request("POST", "services/climate/set_hvac_mode", {
-                        "entity_id": entity_id, "hvac_mode": mode,
-                    })
+                    await _ha_request(
+                        "POST",
+                        "services/climate/set_hvac_mode",
+                        {
+                            "entity_id": entity_id,
+                            "hvac_mode": mode,
+                        },
+                    )
                 return {"status": "success", "temperature": temp, "mode": mode, "source": "home_assistant"}
             except Exception as e:
                 logger.warning("HA thermostat failed: %s — using simulation", e)
@@ -185,8 +201,12 @@ class CheckSecurityTool(Tool):
             try:
                 states = await _ha_request("GET", "states")
                 security_entities = [
-                    s for s in states
-                    if any(domain in s.get("entity_id", "") for domain in ["alarm_control_panel", "binary_sensor.door", "binary_sensor.motion", "lock."])
+                    s
+                    for s in states
+                    if any(
+                        domain in s.get("entity_id", "")
+                        for domain in ["alarm_control_panel", "binary_sensor.door", "binary_sensor.motion", "lock."]
+                    )
                 ]
                 return {
                     "status": "success",
@@ -224,16 +244,26 @@ class PlayMediaTool(Tool):
         if _ha_available():
             try:
                 entity_id = f"media_player.{device.replace(' ', '_')}"
-                await _ha_request("POST", "services/media_player/play_media", {
-                    "entity_id": entity_id,
-                    "media_content_id": media,
-                    "media_content_type": "music",
-                })
+                await _ha_request(
+                    "POST",
+                    "services/media_player/play_media",
+                    {
+                        "entity_id": entity_id,
+                        "media_content_id": media,
+                        "media_content_type": "music",
+                    },
+                )
                 return {"status": "success", "playing": media, "device": device, "source": "home_assistant"}
             except Exception as e:
                 logger.warning("HA media play failed: %s — using simulation", e)
 
-        return {"status": "success", "playing": media, "device": device, "source": "simulation", "note": "Simulated — set VERA_HA_URL and VERA_HA_TOKEN for real playback"}
+        return {
+            "status": "success",
+            "playing": media,
+            "device": device,
+            "source": "simulation",
+            "note": "Simulated — set VERA_HA_URL and VERA_HA_TOKEN for real playback",
+        }
 
 
 class GetDevicesTool(Tool):
@@ -251,9 +281,16 @@ class GetDevicesTool(Tool):
             try:
                 states = await _ha_request("GET", "states")
                 devices = [
-                    {"id": s["entity_id"], "state": s["state"], "name": s.get("attributes", {}).get("friendly_name", "")}
+                    {
+                        "id": s["entity_id"],
+                        "state": s["state"],
+                        "name": s.get("attributes", {}).get("friendly_name", ""),
+                    }
                     for s in states
-                    if any(s["entity_id"].startswith(d) for d in ["light.", "switch.", "climate.", "lock.", "media_player.", "cover.", "fan."])
+                    if any(
+                        s["entity_id"].startswith(d)
+                        for d in ["light.", "switch.", "climate.", "lock.", "media_player.", "cover.", "fan."]
+                    )
                 ]
                 return {"status": "success", "devices": devices, "count": len(devices), "source": "home_assistant"}
             except Exception as e:
@@ -263,12 +300,12 @@ class GetDevicesTool(Tool):
         devices = []
         for room, state in home["lights"].items():
             devices.append({"id": f"light.{room}", "state": "on" if state["on"] else "off", "name": room})
-        devices.append({"id": "climate.thermostat", "state": f"{home['thermostat']['temperature']}°F", "name": "Thermostat"})
+        devices.append(
+            {"id": "climate.thermostat", "state": f"{home['thermostat']['temperature']}°F", "name": "Thermostat"}
+        )
         for door, state in home["doors"].items():
             devices.append({"id": f"lock.{door}", "state": state, "name": f"{door} door"})
         return {"status": "success", "devices": devices, "count": len(devices), "source": "simulation"}
-
-
 
 
 class SmartHomeSetupTool(Tool):
@@ -283,7 +320,10 @@ class SmartHomeSetupTool(Tool):
             name="setup_smart_home",
             description="Interactive setup wizard for connecting to Home Assistant",
             parameters={
-                "step": {"type": "str", "description": "Setup step: check, url, token, validate, discover (default: check)"},
+                "step": {
+                    "type": "str",
+                    "description": "Setup step: check, url, token, validate, discover (default: check)",
+                },
                 "value": {"type": "str", "description": "Value for the current step (URL or token)"},
             },
         )
@@ -325,7 +365,10 @@ class SmartHomeSetupTool(Tool):
 
         elif step == "url":
             if not value:
-                return {"status": "error", "message": "Provide the Home Assistant URL (e.g. http://homeassistant.local:8123)"}
+                return {
+                    "status": "error",
+                    "message": "Provide the Home Assistant URL (e.g. http://homeassistant.local:8123)",
+                }
             url = value.rstrip("/")
             try:
                 async with httpx.AsyncClient(timeout=5) as client:
@@ -360,7 +403,10 @@ class SmartHomeSetupTool(Tool):
                             "status": "success",
                             "message": "Token validated and saved to .env! Run step=discover to see your devices.",
                         }
-                    return {"status": "error", "message": f"Token rejected (HTTP {resp.status_code}). Check the token and try again."}
+                    return {
+                        "status": "error",
+                        "message": f"Token rejected (HTTP {resp.status_code}). Check the token and try again.",
+                    }
             except Exception as e:
                 return {"status": "error", "message": f"Validation failed: {e}"}
 
@@ -393,6 +439,7 @@ class SmartHomeSetupTool(Tool):
 
         return {"status": "error", "message": f"Unknown step: {step}"}
 
+
 class HomeControllerAgent(BaseAgent):
     """Controls IoT devices via Home Assistant API or local simulation."""
 
@@ -400,7 +447,11 @@ class HomeControllerAgent(BaseAgent):
     description = "Controls IoT devices, lights, thermostat, locks, and media"
     tier = ModelTier.EXECUTOR
 
-    ha_status = "connected to Home Assistant" if _ha_available() else "simulation mode (set VERA_HA_URL and VERA_HA_TOKEN for real devices)"
+    ha_status = (
+        "connected to Home Assistant"
+        if _ha_available()
+        else "simulation mode (set VERA_HA_URL and VERA_HA_TOKEN for real devices)"
+    )
 
     system_prompt = (
         "You are a smart home controller. You manage lights, thermostat, door locks, "

@@ -20,6 +20,7 @@ class TestVisionMonitor:
         with patch("config.settings") as mock_settings:
             mock_settings.vision.monitor_enabled = False
             from vera.brain.agents.vision import VisionMonitor
+
             vm = VisionMonitor(event_bus=mock_event_bus)
             assert vm._task is None
 
@@ -28,6 +29,7 @@ class TestVisionMonitor:
         with patch("config.settings") as mock_settings:
             mock_settings.vision.monitor_enabled = False
             from vera.brain.agents.vision import VisionMonitor
+
             vm = VisionMonitor(event_bus=mock_event_bus)
             await vm.start()
             assert vm._task is None
@@ -40,6 +42,7 @@ class TestVisionMonitor:
             mock_settings.vision.monitor_model = "test-model"
             mock_settings.vision.monitor_prompt = "test"
             from vera.brain.agents.vision import VisionMonitor
+
             vm = VisionMonitor(event_bus=mock_event_bus)
 
             with patch.object(vm, "_loop", new_callable=AsyncMock):
@@ -52,5 +55,6 @@ class TestVisionMonitor:
         with patch("config.settings") as mock_settings:
             mock_settings.vision.monitor_enabled = False
             from vera.brain.agents.vision import VisionMonitor
+
             vm = VisionMonitor(event_bus=mock_event_bus)
             assert vm._last_hash is None

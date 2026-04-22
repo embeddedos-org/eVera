@@ -35,11 +35,15 @@ class TestGetImapConnection:
 
     def test_successful_connection(self):
         mock_conn = MagicMock()
-        with patch.dict("os.environ", {
-            "VERA_IMAP_HOST": "imap.test.com",
-            "VERA_IMAP_USER": "user@test.com",
-            "VERA_IMAP_PASS": "password123",
-        }, clear=True):
+        with patch.dict(
+            "os.environ",
+            {
+                "VERA_IMAP_HOST": "imap.test.com",
+                "VERA_IMAP_USER": "user@test.com",
+                "VERA_IMAP_PASS": "password123",
+            },
+            clear=True,
+        ):
             with patch("vera.brain.agents.email_manager.imaplib.IMAP4_SSL", return_value=mock_conn):
                 conn, err = _get_imap_connection()
                 assert conn is mock_conn
@@ -47,23 +51,33 @@ class TestGetImapConnection:
                 mock_conn.login.assert_called_once_with("user@test.com", "password123")
 
     def test_connection_failure(self):
-        with patch.dict("os.environ", {
-            "VERA_IMAP_HOST": "imap.test.com",
-            "VERA_IMAP_USER": "user@test.com",
-            "VERA_IMAP_PASS": "wrong",
-        }, clear=True):
-            with patch("vera.brain.agents.email_manager.imaplib.IMAP4_SSL", side_effect=Exception("Connection refused")):
+        with patch.dict(
+            "os.environ",
+            {
+                "VERA_IMAP_HOST": "imap.test.com",
+                "VERA_IMAP_USER": "user@test.com",
+                "VERA_IMAP_PASS": "wrong",
+            },
+            clear=True,
+        ):
+            with patch(
+                "vera.brain.agents.email_manager.imaplib.IMAP4_SSL", side_effect=Exception("Connection refused")
+            ):
                 conn, err = _get_imap_connection()
                 assert conn is None
                 assert "IMAP connection failed" in err
 
     def test_falls_back_to_smtp_user(self):
         mock_conn = MagicMock()
-        with patch.dict("os.environ", {
-            "VERA_IMAP_HOST": "imap.test.com",
-            "VERA_SMTP_USER": "smtp_user@test.com",
-            "VERA_SMTP_PASS": "smtp_pass",
-        }, clear=True):
+        with patch.dict(
+            "os.environ",
+            {
+                "VERA_IMAP_HOST": "imap.test.com",
+                "VERA_SMTP_USER": "smtp_user@test.com",
+                "VERA_SMTP_PASS": "smtp_pass",
+            },
+            clear=True,
+        ):
             with patch("vera.brain.agents.email_manager.imaplib.IMAP4_SSL", return_value=mock_conn):
                 conn, err = _get_imap_connection()
                 assert conn is mock_conn

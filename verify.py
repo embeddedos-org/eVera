@@ -43,7 +43,11 @@ def warn(name, detail=""):
 def run_cmd(cmd, timeout=60):
     try:
         result = subprocess.run(
-            cmd, shell=True, capture_output=True, text=True, timeout=timeout,
+            cmd,
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
         )
         return result.returncode == 0, result.stdout, result.stderr
     except Exception as e:
@@ -75,8 +79,11 @@ def main():
         except SyntaxError as e:
             syntax_errors.append((str(f), str(e)))
 
-    check(f"Syntax OK ({len(py_files)} files)", len(syntax_errors) == 0,
-          "\n".join(f"    {f}: {e}" for f, e in syntax_errors))
+    check(
+        f"Syntax OK ({len(py_files)} files)",
+        len(syntax_errors) == 0,
+        "\n".join(f"    {f}: {e}" for f, e in syntax_errors),
+    )
 
     # ============================================================
     # 2. IMPORT CHECK
@@ -121,16 +128,22 @@ def main():
         from vera.brain.agents import AGENT_REGISTRY
 
         expected_agents = [
-            "companion", "operator", "researcher", "writer",
-            "life_manager", "home_controller", "income",
-            "coder", "browser", "git",
+            "companion",
+            "operator",
+            "researcher",
+            "writer",
+            "life_manager",
+            "home_controller",
+            "income",
+            "coder",
+            "browser",
+            "git",
         ]
 
         for name in expected_agents:
             check(f"Agent '{name}' registered", name in AGENT_REGISTRY)
 
-        check("Total agents >= 10", len(AGENT_REGISTRY) >= 10,
-              f"Got {len(AGENT_REGISTRY)}")
+        check("Total agents >= 10", len(AGENT_REGISTRY) >= 10, f"Got {len(AGENT_REGISTRY)}")
 
         # Check all agents have tools
         total_tools = 0
@@ -164,36 +177,31 @@ def main():
     # Check default config is secure
     try:
         from config import settings
-        check("Default host is localhost", settings.server.host == "127.0.0.1",
-              f"Got {settings.server.host}")
-        check("CORS not wildcard", "*" not in settings.server.cors_origins,
-              f"Got {settings.server.cors_origins}")
+
+        check("Default host is localhost", settings.server.host == "127.0.0.1", f"Got {settings.server.host}")
+        check("CORS not wildcard", "*" not in settings.server.cors_origins, f"Got {settings.server.cors_origins}")
     except Exception as e:
         check("Config loads", False, str(e)[:100])
 
     # Check policy engine
     try:
         from vera.safety.policy import PolicyAction, PolicyService
+
         ps = PolicyService()
 
-        check("transfer_money DENIED",
-              ps.check("income", "transfer_money").action == PolicyAction.DENY)
-        check("execute_script CONFIRM",
-              ps.check("operator", "execute_script").action == PolicyAction.CONFIRM)
-        check("companion.chat ALLOW",
-              ps.check("companion", "chat").action == PolicyAction.ALLOW)
-        check("broker trades CONFIRM",
-              ps.check("income", "alpaca_trade").action == PolicyAction.CONFIRM)
-        check("browser login CONFIRM",
-              ps.check("browser", "login").action == PolicyAction.CONFIRM)
-        check("coder write CONFIRM",
-              ps.check("coder", "write_file").action == PolicyAction.CONFIRM)
+        check("transfer_money DENIED", ps.check("income", "transfer_money").action == PolicyAction.DENY)
+        check("execute_script CONFIRM", ps.check("operator", "execute_script").action == PolicyAction.CONFIRM)
+        check("companion.chat ALLOW", ps.check("companion", "chat").action == PolicyAction.ALLOW)
+        check("broker trades CONFIRM", ps.check("income", "alpaca_trade").action == PolicyAction.CONFIRM)
+        check("browser login CONFIRM", ps.check("browser", "login").action == PolicyAction.CONFIRM)
+        check("coder write CONFIRM", ps.check("coder", "write_file").action == PolicyAction.CONFIRM)
     except Exception as e:
         check("Policy engine", False, str(e)[:100])
 
     # Check PII detection
     try:
         from vera.safety.privacy import PrivacyGuard
+
         pg = PrivacyGuard()
         check("Detects SSN", pg.has_pii("SSN: 123-45-6789"))
         check("Detects credit card", pg.has_pii("Card: 4111-1111-1111-1111"))
@@ -207,6 +215,7 @@ def main():
         import asyncio
 
         from vera.brain.agents.operator import ExecuteScriptTool
+
         tool = ExecuteScriptTool()
 
         async def check_cmd_safety():
@@ -225,6 +234,7 @@ def main():
     # Check path sandboxing
     try:
         from vera.brain.agents.coder import _is_path_safe
+
         safe1, _ = _is_path_safe(Path.home() / ".ssh" / "id_rsa")
         safe2, _ = _is_path_safe(Path.home() / "Documents" / "test.txt")
         check("Blocks .ssh access", not safe1)
@@ -256,6 +266,7 @@ def main():
     # Check all agents have offline responses
     try:
         from vera.brain.agents import AGENT_REGISTRY
+
         for name, agent in AGENT_REGISTRY.items():
             has_offline = len(agent.offline_responses) > 0 or name == "git"
             check(f"  {name} has offline fallback", has_offline)
@@ -265,6 +276,7 @@ def main():
     # Check scheduler
     try:
         from vera.scheduler import ProactiveScheduler
+
         s = ProactiveScheduler()
         check("Scheduler initializes", s is not None)
         check("Scheduler has 0 handlers initially", len(s._notification_handlers) == 0)
@@ -274,6 +286,7 @@ def main():
     # Check RBAC
     try:
         from vera.rbac import RBACManager
+
         rm = RBACManager()
         check("RBAC initializes", rm is not None)
     except Exception as e:
@@ -282,6 +295,7 @@ def main():
     # Check workflow engine
     try:
         from vera.brain.workflow import WorkflowEngine
+
         we = WorkflowEngine()
         check("Workflow engine initializes", we is not None)
     except Exception as e:
@@ -295,7 +309,10 @@ def main():
     # Ensure pytest-asyncio is installed
     run_cmd(f"{sys.executable} -m pip install pytest-asyncio -q", timeout=30)
 
-    ok, stdout, stderr = run_cmd(f"{sys.executable} -m pytest tests/ -v -m \"not slow\" --tb=short -q --override-ini=\"asyncio_mode=auto\"", timeout=120)
+    ok, stdout, stderr = run_cmd(
+        f'{sys.executable} -m pytest tests/ -v -m "not slow" --tb=short -q --override-ini="asyncio_mode=auto"',
+        timeout=120,
+    )
     if ok:
         # Count passed/failed from output
         lines = stdout.strip().split("\n")
@@ -305,7 +322,9 @@ def main():
         # Try to extract which tests failed
         failed_tests = [l for l in (stdout + stderr).split("\n") if "FAILED" in l]
         if failed_tests:
-            check("Unit tests", False, f"{len(failed_tests)} failed:\n" + "\n".join(f"    {t}" for t in failed_tests[:10]))
+            check(
+                "Unit tests", False, f"{len(failed_tests)} failed:\n" + "\n".join(f"    {t}" for t in failed_tests[:10])
+            )
         else:
             check("Unit tests", False, stderr[:200] if stderr else "Unknown error")
 
@@ -327,16 +346,27 @@ def main():
     print("\n9️⃣  File Structure")
 
     required_files = [
-        "main.py", "config.py", "setup_vera.py",
-        "requirements.txt", "pyproject.toml",
-        "README.md", "CHANGELOG.md",
+        "main.py",
+        "config.py",
+        "setup_vera.py",
+        "requirements.txt",
+        "pyproject.toml",
+        "README.md",
+        "CHANGELOG.md",
         ".env.example",
         ".github/workflows/ci.yml",
-        "vera/__init__.py", "vera/app.py", "vera/core.py",
-        "vera/scheduler.py", "vera/rbac.py", "vera/messaging.py",
-        "vera/brain/graph.py", "vera/brain/router.py",
-        "vera/brain/crew.py", "vera/brain/workflow.py",
-        "vera/brain/language.py", "vera/brain/plugins.py",
+        "vera/__init__.py",
+        "vera/app.py",
+        "vera/core.py",
+        "vera/scheduler.py",
+        "vera/rbac.py",
+        "vera/messaging.py",
+        "vera/brain/graph.py",
+        "vera/brain/router.py",
+        "vera/brain/crew.py",
+        "vera/brain/workflow.py",
+        "vera/brain/language.py",
+        "vera/brain/plugins.py",
         "vera/brain/agents/base.py",
         "vera/brain/agents/companion.py",
         "vera/brain/agents/operator.py",
@@ -360,14 +390,22 @@ def main():
 
     # Check test files
     test_files = [
-        "tests/test_agents.py", "tests/test_tools.py",
-        "tests/test_security.py", "tests/test_language.py",
-        "tests/test_rbac.py", "tests/test_workflow.py",
-        "tests/test_plugins.py", "tests/test_scheduler.py",
-        "tests/test_router.py", "tests/test_safety.py",
-        "tests/test_memory.py", "tests/test_api.py",
-        "tests/test_foundation.py", "tests/test_data_breach.py",
-        "tests/test_sanity.py", "tests/test_performance.py",
+        "tests/test_agents.py",
+        "tests/test_tools.py",
+        "tests/test_security.py",
+        "tests/test_language.py",
+        "tests/test_rbac.py",
+        "tests/test_workflow.py",
+        "tests/test_plugins.py",
+        "tests/test_scheduler.py",
+        "tests/test_router.py",
+        "tests/test_safety.py",
+        "tests/test_memory.py",
+        "tests/test_api.py",
+        "tests/test_foundation.py",
+        "tests/test_data_breach.py",
+        "tests/test_sanity.py",
+        "tests/test_performance.py",
     ]
 
     for f in test_files:
@@ -385,9 +423,9 @@ def main():
 ╔══════════════════════════════════════════╗
 ║  {color} VERIFICATION COMPLETE                 ║
 ╠══════════════════════════════════════════╣
-║  ✅ Passed:   {results['passed']:>3}                          ║
-║  ❌ Failed:   {results['failed']:>3}                          ║
-║  ⚠️  Warnings: {results['warnings']:>3}                          ║
+║  ✅ Passed:   {results["passed"]:>3}                          ║
+║  ❌ Failed:   {results["failed"]:>3}                          ║
+║  ⚠️  Warnings: {results["warnings"]:>3}                          ║
 ║  📊 Score:    {pct}%                          ║
 ╚══════════════════════════════════════════╝
 """)

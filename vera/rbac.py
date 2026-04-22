@@ -41,7 +41,7 @@ class Role:
 ROLE_PERMISSIONS = {
     Role.ADMIN: {
         "agents": "*",  # All agents
-        "tools": "*",   # All tools
+        "tools": "*",  # All tools
         "manage_users": True,
         "view_audit": True,
         "manage_workflows": True,
@@ -215,12 +215,14 @@ class RBACManager:
             except Exception:
                 pass
 
-        entries.append({
-            "timestamp": datetime.now().isoformat(),
-            "action": action,
-            "username": username,
-            "details": details,
-        })
+        entries.append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "action": action,
+                "username": username,
+                "details": details,
+            }
+        )
 
         # Keep last 10000 entries
         entries = entries[-10000:]

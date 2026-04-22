@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 # --- Concrete tool implementations ---
 
+
 class WebSearchTool(Tool):
     """Search the web using DuckDuckGo (no API key needed)."""
 
@@ -36,11 +37,11 @@ class WebSearchTool(Tool):
 
         try:
             from duckduckgo_search import DDGS
+
             with DDGS() as ddgs:
                 results = list(ddgs.text(query, max_results=num))
             formatted = [
-                {"title": r.get("title", ""), "url": r.get("href", ""), "snippet": r.get("body", "")}
-                for r in results
+                {"title": r.get("title", ""), "url": r.get("href", ""), "snippet": r.get("body", "")} for r in results
             ]
             return {"status": "success", "query": query, "results": formatted, "count": len(formatted)}
         except ImportError:
@@ -53,6 +54,7 @@ class WebSearchTool(Tool):
         """Fallback: use httpx to scrape DuckDuckGo HTML results."""
         try:
             import httpx
+
             url = f"https://html.duckduckgo.com/html/?q={quote_plus(query)}"
             headers = {"User-Agent": "Mozilla/5.0 (compatible; Vera/1.0)"}
             async with httpx.AsyncClient(timeout=15) as client:
@@ -68,9 +70,18 @@ class WebSearchTool(Tool):
                 snippet = snippets[i] if i < len(snippets) else ""
                 results.append({"title": title.strip(), "url": href.strip(), "snippet": snippet.strip()})
 
-            return {"status": "success", "query": query, "results": results, "count": len(results), "method": "fallback"}
+            return {
+                "status": "success",
+                "query": query,
+                "results": results,
+                "count": len(results),
+                "method": "fallback",
+            }
         except Exception as e:
-            return {"status": "error", "message": f"Search failed: {e}. Install duckduckgo-search: pip install duckduckgo-search"}
+            return {
+                "status": "error",
+                "message": f"Search failed: {e}. Install duckduckgo-search: pip install duckduckgo-search",
+            }
 
 
 class SummarizeUrlTool(Tool):
@@ -90,6 +101,7 @@ class SummarizeUrlTool(Tool):
 
         try:
             import httpx
+
             headers = {"User-Agent": "Mozilla/5.0 (compatible; Vera/1.0)"}
             async with httpx.AsyncClient(timeout=20) as client:
                 resp = await client.get(url, headers=headers, follow_redirects=True)
@@ -98,6 +110,7 @@ class SummarizeUrlTool(Tool):
             # Try BeautifulSoup, fall back to regex
             try:
                 from bs4 import BeautifulSoup
+
                 soup = BeautifulSoup(html, "html.parser")
                 for tag in soup(["script", "style", "nav", "footer", "header"]):
                     tag.decompose()
@@ -140,6 +153,7 @@ class FindPapersTool(Tool):
 
         try:
             import httpx
+
             url = f"http://export.arxiv.org/api/query?search_query=all:{quote_plus(topic)}&max_results={max_results}"
             async with httpx.AsyncClient(timeout=15) as client:
                 resp = await client.get(url)
@@ -150,15 +164,17 @@ class FindPapersTool(Tool):
             for entry in entries[:max_results]:
                 title = re.search(r"<title>(.*?)</title>", entry, re.S)
                 summary = re.search(r"<summary>(.*?)</summary>", entry, re.S)
-                link = re.search(r'<id>(.*?)</id>', entry)
+                link = re.search(r"<id>(.*?)</id>", entry)
                 authors = re.findall(r"<name>(.*?)</name>", entry)
 
-                papers.append({
-                    "title": title.group(1).strip() if title else "",
-                    "summary": (summary.group(1).strip()[:300] + "...") if summary else "",
-                    "url": link.group(1).strip() if link else "",
-                    "authors": authors[:3],
-                })
+                papers.append(
+                    {
+                        "title": title.group(1).strip() if title else "",
+                        "summary": (summary.group(1).strip()[:300] + "...") if summary else "",
+                        "url": link.group(1).strip() if link else "",
+                        "authors": authors[:3],
+                    }
+                )
 
             return {"status": "success", "topic": topic, "papers": papers, "count": len(papers)}
         except ImportError:

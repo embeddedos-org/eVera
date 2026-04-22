@@ -9,8 +9,8 @@ from enum import IntEnum
 class ModelTier(IntEnum):
     """LLM usage tiers — higher tier = more capable & expensive."""
 
-    REFLEX = 0      # No LLM — regex/rule-based
-    EXECUTOR = 1    # Local Ollama — fast, cheap
+    REFLEX = 0  # No LLM — regex/rule-based
+    EXECUTOR = 1  # Local Ollama — fast, cheap
     SPECIALIST = 2  # Cloud LLM — capable
     STRATEGIST = 3  # Cloud LLM chain — most powerful
 
@@ -21,7 +21,7 @@ class ModelConfig:
 
     tier: ModelTier
     model_name: str
-    provider: str          # "ollama", "openai", "gemini"
+    provider: str  # "ollama", "openai", "gemini"
     max_tokens: int = 1024
     temperature: float = 0.7
     description: str = ""

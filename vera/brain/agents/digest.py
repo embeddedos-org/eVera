@@ -52,8 +52,14 @@ class AddSourceTool(Tool):
             parameters={
                 "name": {"type": "str", "description": "Source name (e.g. 'TechCrunch', 'AI News')"},
                 "type": {"type": "str", "description": "Source type: rss, website, or topic"},
-                "url": {"type": "str", "description": "URL for RSS/website sources, or search keyword for topic sources"},
-                "category": {"type": "str", "description": "Category for grouping (e.g. 'tech', 'business', 'science')"},
+                "url": {
+                    "type": "str",
+                    "description": "URL for RSS/website sources, or search keyword for topic sources",
+                },
+                "category": {
+                    "type": "str",
+                    "description": "Category for grouping (e.g. 'tech', 'business', 'science')",
+                },
             },
         )
 
@@ -75,6 +81,7 @@ class AddSourceTool(Tool):
         if source_type in ("rss", "website"):
             try:
                 import httpx
+
                 async with httpx.AsyncClient(timeout=10) as client:
                     resp = await client.head(url, follow_redirects=True)
                     if resp.status_code >= 400:
@@ -127,10 +134,7 @@ class RemoveSourceTool(Tool):
         sources = _load_json(DATA_DIR / "digest_sources.json")
         original_count = len(sources)
 
-        sources = [
-            s for s in sources
-            if s.get("id") != source_id and s.get("name", "").lower() != source_id.lower()
-        ]
+        sources = [s for s in sources if s.get("id") != source_id and s.get("name", "").lower() != source_id.lower()]
 
         if len(sources) == original_count:
             return {"status": "error", "message": f"Source not found: {source_id}"}
@@ -163,7 +167,10 @@ class GenerateDigestTool(Tool):
         sources = _load_json(DATA_DIR / "digest_sources.json")
 
         if not sources:
-            return {"status": "error", "message": "No sources configured. Use add_source to add RSS feeds, websites, or topics."}
+            return {
+                "status": "error",
+                "message": "No sources configured. Use add_source to add RSS feeds, websites, or topics.",
+            }
 
         max_items = settings.digest.max_items_per_source
         all_items: list[dict] = []
@@ -174,13 +181,15 @@ class GenerateDigestTool(Tool):
                 all_items.extend(items)
             except Exception as e:
                 logger.warning("Failed to fetch source '%s': %s", source.get("name"), e)
-                all_items.append({
-                    "source": source.get("name", "Unknown"),
-                    "category": source.get("category", "general"),
-                    "title": f"[Error fetching {source.get('name')}]",
-                    "snippet": str(e),
-                    "url": source.get("url", ""),
-                })
+                all_items.append(
+                    {
+                        "source": source.get("name", "Unknown"),
+                        "category": source.get("category", "general"),
+                        "title": f"[Error fetching {source.get('name')}]",
+                        "snippet": str(e),
+                        "url": source.get("url", ""),
+                    }
+                )
 
         digest = {
             "date": date_str,
@@ -218,6 +227,7 @@ class GenerateDigestTool(Tool):
         """Parse an RSS feed."""
         try:
             import httpx
+
             headers = {"User-Agent": "Mozilla/5.0 (compatible; Vera/1.0)"}
             async with httpx.AsyncClient(timeout=15) as client:
                 resp = await client.get(url, headers=headers, follow_redirects=True)
@@ -231,23 +241,35 @@ class GenerateDigestTool(Tool):
             for entry in entries[:max_items]:
                 title = re.search(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", entry, re.S)
                 link = re.search(r"<link[^>]*(?:href=[\"']([^\"']*)[\"']|>(.*?)</link>)", entry, re.S)
-                desc = re.search(r"<(?:description|summary)>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</(?:description|summary)>", entry, re.S)
+                desc = re.search(
+                    r"<(?:description|summary)>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</(?:description|summary)>", entry, re.S
+                )
 
                 item_url = ""
                 if link:
                     item_url = link.group(1) or link.group(2) or ""
 
-                items.append({
-                    "source": name,
-                    "category": category,
-                    "title": (title.group(1).strip() if title else "Untitled"),
-                    "url": item_url.strip(),
-                    "snippet": (desc.group(1).strip()[:200] if desc else ""),
-                })
+                items.append(
+                    {
+                        "source": name,
+                        "category": category,
+                        "title": (title.group(1).strip() if title else "Untitled"),
+                        "url": item_url.strip(),
+                        "snippet": (desc.group(1).strip()[:200] if desc else ""),
+                    }
+                )
 
             return items
         except ImportError:
-            return [{"source": name, "category": category, "title": "[httpx not installed]", "snippet": "pip install httpx", "url": url}]
+            return [
+                {
+                    "source": name,
+                    "category": category,
+                    "title": "[httpx not installed]",
+                    "snippet": "pip install httpx",
+                    "url": url,
+                }
+            ]
         except Exception as e:
             logger.warning("RSS fetch failed for %s: %s", name, e)
             return []
@@ -256,6 +278,7 @@ class GenerateDigestTool(Tool):
         """Scrape a website for headlines."""
         try:
             import httpx
+
             headers = {"User-Agent": "Mozilla/5.0 (compatible; Vera/1.0)"}
             async with httpx.AsyncClient(timeout=15) as client:
                 resp = await client.get(url, headers=headers, follow_redirects=True)
@@ -263,6 +286,7 @@ class GenerateDigestTool(Tool):
 
             try:
                 from bs4 import BeautifulSoup
+
                 soup = BeautifulSoup(html, "html.parser")
                 headlines = []
                 for tag in soup.find_all(["h1", "h2", "h3", "a"], limit=max_items * 3):
@@ -271,22 +295,38 @@ class GenerateDigestTool(Tool):
                     if text and len(text) > 10:
                         if link and not link.startswith("http"):
                             link = url.rstrip("/") + "/" + link.lstrip("/")
-                        headlines.append({
-                            "source": name,
-                            "category": category,
-                            "title": text[:150],
-                            "url": link,
-                            "snippet": "",
-                        })
+                        headlines.append(
+                            {
+                                "source": name,
+                                "category": category,
+                                "title": text[:150],
+                                "url": link,
+                                "snippet": "",
+                            }
+                        )
                 return headlines[:max_items]
             except ImportError:
                 titles = re.findall(r"<h[1-3][^>]*>(.*?)</h[1-3]>", html, re.S | re.I)
                 return [
-                    {"source": name, "category": category, "title": re.sub(r"<[^>]+>", "", t).strip()[:150], "url": url, "snippet": ""}
+                    {
+                        "source": name,
+                        "category": category,
+                        "title": re.sub(r"<[^>]+>", "", t).strip()[:150],
+                        "url": url,
+                        "snippet": "",
+                    }
                     for t in titles[:max_items]
                 ]
         except ImportError:
-            return [{"source": name, "category": category, "title": "[httpx not installed]", "snippet": "pip install httpx", "url": url}]
+            return [
+                {
+                    "source": name,
+                    "category": category,
+                    "title": "[httpx not installed]",
+                    "snippet": "pip install httpx",
+                    "url": url,
+                }
+            ]
         except Exception as e:
             logger.warning("Website fetch failed for %s: %s", name, e)
             return []
@@ -295,6 +335,7 @@ class GenerateDigestTool(Tool):
         """Search for a topic using DuckDuckGo."""
         try:
             from duckduckgo_search import DDGS
+
             with DDGS() as ddgs:
                 results = list(ddgs.text(keyword, max_results=max_items))
             return [
@@ -311,6 +352,7 @@ class GenerateDigestTool(Tool):
             # Fallback to httpx scraping
             try:
                 import httpx
+
                 url = f"https://html.duckduckgo.com/html/?q={quote_plus(keyword)}"
                 headers = {"User-Agent": "Mozilla/5.0 (compatible; Vera/1.0)"}
                 async with httpx.AsyncClient(timeout=15) as client:
@@ -433,7 +475,10 @@ class FilterNoiseTool(Tool):
             name="filter_noise",
             description="Given a list of items, rank by relevance to user's goals and interests. Reduces information overload",
             parameters={
-                "items": {"type": "str", "description": "JSON array of items with title/snippet fields, or comma-separated titles"},
+                "items": {
+                    "type": "str",
+                    "description": "JSON array of items with title/snippet fields, or comma-separated titles",
+                },
                 "threshold": {"type": "float", "description": "Relevance threshold 0-1. Default: 0.5"},
             },
         )

@@ -217,7 +217,10 @@ class ReplyEmailTool(Tool):
         smtp_pass = os.getenv("VERA_SMTP_PASS", "")
 
         if not smtp_host or not smtp_user:
-            return {"status": "error", "message": "SMTP not configured. Set VERA_SMTP_HOST, VERA_SMTP_USER, VERA_SMTP_PASS"}
+            return {
+                "status": "error",
+                "message": "SMTP not configured. Set VERA_SMTP_HOST, VERA_SMTP_USER, VERA_SMTP_PASS",
+            }
 
         try:
             msg = MIMEMultipart()

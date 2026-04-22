@@ -11,8 +11,10 @@ import pytest
 @pytest.fixture
 def scheduler(tmp_path):
     import vera.scheduler as sched_mod
+
     sched_mod.DATA_DIR = tmp_path
     from vera.scheduler import ProactiveScheduler
+
     s = ProactiveScheduler()
     return s, tmp_path
 
@@ -25,12 +27,14 @@ class TestScheduler:
         sched.add_notification_handler(lambda n: notifications.append(n))
 
         # Create a reminder that's already due
-        reminders = [{
-            "id": "1",
-            "text": "Test reminder",
-            "trigger_at": (datetime.now() - timedelta(minutes=1)).isoformat(),
-            "dismissed": False,
-        }]
+        reminders = [
+            {
+                "id": "1",
+                "text": "Test reminder",
+                "trigger_at": (datetime.now() - timedelta(minutes=1)).isoformat(),
+                "dismissed": False,
+            }
+        ]
         (data_dir / "reminders.json").write_text(json.dumps(reminders))
 
         await sched._check_reminders()
@@ -44,12 +48,14 @@ class TestScheduler:
         notifications = []
         sched.add_notification_handler(lambda n: notifications.append(n))
 
-        reminders = [{
-            "id": "1",
-            "text": "Old reminder",
-            "trigger_at": (datetime.now() - timedelta(hours=1)).isoformat(),
-            "dismissed": True,
-        }]
+        reminders = [
+            {
+                "id": "1",
+                "text": "Old reminder",
+                "trigger_at": (datetime.now() - timedelta(hours=1)).isoformat(),
+                "dismissed": True,
+            }
+        ]
         (data_dir / "reminders.json").write_text(json.dumps(reminders))
 
         await sched._check_reminders()
@@ -61,12 +67,14 @@ class TestScheduler:
         notifications = []
         sched.add_notification_handler(lambda n: notifications.append(n))
 
-        reminders = [{
-            "id": "1",
-            "text": "Future reminder",
-            "trigger_at": (datetime.now() + timedelta(hours=1)).isoformat(),
-            "dismissed": False,
-        }]
+        reminders = [
+            {
+                "id": "1",
+                "text": "Future reminder",
+                "trigger_at": (datetime.now() + timedelta(hours=1)).isoformat(),
+                "dismissed": False,
+            }
+        ]
         (data_dir / "reminders.json").write_text(json.dumps(reminders))
 
         await sched._check_reminders()
@@ -84,11 +92,14 @@ class TestScheduler:
         sched.add_notification_handler(lambda n: n1.append(n))
         sched.add_notification_handler(lambda n: n2.append(n))
 
-        reminders = [{
-            "id": "1", "text": "Multi-handler test",
-            "trigger_at": (datetime.now() - timedelta(seconds=10)).isoformat(),
-            "dismissed": False,
-        }]
+        reminders = [
+            {
+                "id": "1",
+                "text": "Multi-handler test",
+                "trigger_at": (datetime.now() - timedelta(seconds=10)).isoformat(),
+                "dismissed": False,
+            }
+        ]
         (data_dir / "reminders.json").write_text(json.dumps(reminders))
 
         await sched._check_reminders()
@@ -106,16 +117,18 @@ class TestScheduledTasks:
         sched.add_notification_handler(lambda n: notifications.append(n))
 
         now = datetime.now()
-        tasks = [{
-            "name": "Daily standup",
-            "description": "Join standup call",
-            "enabled": True,
-            "schedule": {
-                "type": "daily",
-                "time": f"{now.hour:02d}:{now.minute:02d}",
-            },
-            "last_run": "",
-        }]
+        tasks = [
+            {
+                "name": "Daily standup",
+                "description": "Join standup call",
+                "enabled": True,
+                "schedule": {
+                    "type": "daily",
+                    "time": f"{now.hour:02d}:{now.minute:02d}",
+                },
+                "last_run": "",
+            }
+        ]
         (data_dir / "scheduled_tasks.json").write_text(json.dumps(tasks))
 
         await sched._check_scheduled_tasks()
@@ -129,15 +142,17 @@ class TestScheduledTasks:
         sched.add_notification_handler(lambda n: notifications.append(n))
 
         now = datetime.now()
-        tasks = [{
-            "name": "Already done",
-            "enabled": True,
-            "schedule": {
-                "type": "daily",
-                "time": f"{now.hour:02d}:{now.minute:02d}",
-            },
-            "last_run": now.strftime("%Y-%m-%d"),
-        }]
+        tasks = [
+            {
+                "name": "Already done",
+                "enabled": True,
+                "schedule": {
+                    "type": "daily",
+                    "time": f"{now.hour:02d}:{now.minute:02d}",
+                },
+                "last_run": now.strftime("%Y-%m-%d"),
+            }
+        ]
         (data_dir / "scheduled_tasks.json").write_text(json.dumps(tasks))
 
         await sched._check_scheduled_tasks()
@@ -151,16 +166,18 @@ class TestScheduledTasks:
 
         now = datetime.now()
         today_name = now.strftime("%A").lower()
-        tasks = [{
-            "name": "Weekly review",
-            "enabled": True,
-            "schedule": {
-                "type": "weekly",
-                "day": today_name,
-                "time": f"{now.hour:02d}:{now.minute:02d}",
-            },
-            "last_run": "",
-        }]
+        tasks = [
+            {
+                "name": "Weekly review",
+                "enabled": True,
+                "schedule": {
+                    "type": "weekly",
+                    "day": today_name,
+                    "time": f"{now.hour:02d}:{now.minute:02d}",
+                },
+                "last_run": "",
+            }
+        ]
         (data_dir / "scheduled_tasks.json").write_text(json.dumps(tasks))
 
         await sched._check_scheduled_tasks()
@@ -173,15 +190,17 @@ class TestScheduledTasks:
         notifications = []
         sched.add_notification_handler(lambda n: notifications.append(n))
 
-        tasks = [{
-            "name": "Interval check",
-            "enabled": True,
-            "schedule": {
-                "type": "interval",
-                "minutes": 5,
-            },
-            "last_run_ts": 0,  # Last run at epoch → definitely past interval
-        }]
+        tasks = [
+            {
+                "name": "Interval check",
+                "enabled": True,
+                "schedule": {
+                    "type": "interval",
+                    "minutes": 5,
+                },
+                "last_run_ts": 0,  # Last run at epoch → definitely past interval
+            }
+        ]
         (data_dir / "scheduled_tasks.json").write_text(json.dumps(tasks))
 
         await sched._check_scheduled_tasks()
@@ -195,15 +214,17 @@ class TestScheduledTasks:
         sched.add_notification_handler(lambda n: notifications.append(n))
 
         now = datetime.now()
-        tasks = [{
-            "name": "Disabled task",
-            "enabled": False,
-            "schedule": {
-                "type": "daily",
-                "time": f"{now.hour:02d}:{now.minute:02d}",
-            },
-            "last_run": "",
-        }]
+        tasks = [
+            {
+                "name": "Disabled task",
+                "enabled": False,
+                "schedule": {
+                    "type": "daily",
+                    "time": f"{now.hour:02d}:{now.minute:02d}",
+                },
+                "last_run": "",
+            }
+        ]
         (data_dir / "scheduled_tasks.json").write_text(json.dumps(tasks))
 
         await sched._check_scheduled_tasks()
@@ -225,12 +246,14 @@ class TestScheduledPosts:
         sched.add_notification_handler(lambda n: notifications.append(n))
 
         past_time = (datetime.now() - timedelta(minutes=5)).isoformat()
-        posts = [{
-            "platform": "twitter",
-            "content": "Hello Twitter!",
-            "schedule_at": past_time,
-            "status": "scheduled",
-        }]
+        posts = [
+            {
+                "platform": "twitter",
+                "content": "Hello Twitter!",
+                "schedule_at": past_time,
+                "status": "scheduled",
+            }
+        ]
         (data_dir / "scheduled_posts.json").write_text(json.dumps(posts))
 
         await sched._check_scheduled_posts()
@@ -248,12 +271,14 @@ class TestScheduledPosts:
         notifications = []
         sched.add_notification_handler(lambda n: notifications.append(n))
 
-        posts = [{
-            "platform": "twitter",
-            "content": "Already published",
-            "schedule_at": (datetime.now() - timedelta(hours=1)).isoformat(),
-            "status": "published",
-        }]
+        posts = [
+            {
+                "platform": "twitter",
+                "content": "Already published",
+                "schedule_at": (datetime.now() - timedelta(hours=1)).isoformat(),
+                "status": "published",
+            }
+        ]
         (data_dir / "scheduled_posts.json").write_text(json.dumps(posts))
 
         await sched._check_scheduled_posts()
@@ -367,8 +392,10 @@ class TestSchedulerStartStop:
 
     def test_remove_notification_handler(self, scheduler):
         sched, _ = scheduler
+
         def handler(n):
             return None
+
         sched.add_notification_handler(handler)
         assert len(sched._notification_handlers) == 1
         sched.remove_notification_handler(handler)

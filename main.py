@@ -51,13 +51,15 @@ async def voice_loop() -> None:
 
     # Proactive TTS bridge — speak scheduler notifications aloud
     if proactive_tts:
+
         async def _on_proactive_notification(notification: dict) -> None:
             if session.is_active:
                 return  # don't interrupt active conversation
             message = notification.get("message", "")
             if message:
                 await brain.event_bus.publish(
-                    EventType.PROACTIVE_NOTIFICATION, {"message": message},
+                    EventType.PROACTIVE_NOTIFICATION,
+                    {"message": message},
                 )
                 print(f"📢 {message}")
                 await tts.speak(message)
@@ -176,6 +178,7 @@ async def start_server(host: str, port: int) -> None:
     # Auto-open browser after server starts
     def open_browser():
         import time
+
         time.sleep(2)
         url = f"http://{'localhost' if host in ('0.0.0.0', '127.0.0.1') else host}:{port}"
         print(f"🌐 Opening {url} in browser...")
@@ -249,7 +252,8 @@ Modes:
     parser.add_argument("--host", default=settings.server.host, help="Server host")
     parser.add_argument("--port", type=int, default=settings.server.port, help="Server port")
     parser.add_argument(
-        "--unsafe-paths", action="store_true",
+        "--unsafe-paths",
+        action="store_true",
         help="Allow Coder agent to access blocked paths (dangerous!)",
     )
 
@@ -298,6 +302,7 @@ Modes:
             if attempt < max_retries - 1:
                 logger.info("Self-recovery: restarting in %d seconds...", retry_delay)
                 import time
+
                 time.sleep(retry_delay)
                 retry_delay = min(retry_delay * 2, 60)
             else:

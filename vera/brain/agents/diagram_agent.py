@@ -20,7 +20,9 @@ class DiagramAgent(BaseAgent):
     """Agent for generating code visualization diagrams."""
 
     name = "diagram"
-    description = "Generates code visualizations: call graphs, class diagrams, flowcharts, and exports them as SVG/PNG/PDF."
+    description = (
+        "Generates code visualizations: call graphs, class diagrams, flowcharts, and exports them as SVG/PNG/PDF."
+    )
     tier = ModelTier.SPECIALIST
 
     system_prompt = (

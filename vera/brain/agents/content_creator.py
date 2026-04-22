@@ -51,9 +51,18 @@ class GenerateScriptTool(Tool):
             description="Generate a video or social media content script",
             parameters={
                 "topic": {"type": "str", "description": "Content topic or idea"},
-                "platform": {"type": "str", "description": "Target platform: youtube, tiktok, instagram, linkedin, twitter"},
-                "duration": {"type": "str", "description": "Target duration: short (30s), medium (2-5min), long (10+min)"},
-                "style": {"type": "str", "description": "Content style: educational, entertaining, promotional, tutorial"},
+                "platform": {
+                    "type": "str",
+                    "description": "Target platform: youtube, tiktok, instagram, linkedin, twitter",
+                },
+                "duration": {
+                    "type": "str",
+                    "description": "Target duration: short (30s), medium (2-5min), long (10+min)",
+                },
+                "style": {
+                    "type": "str",
+                    "description": "Content style: educational, entertaining, promotional, tutorial",
+                },
             },
         )
 
@@ -153,7 +162,7 @@ class CreateVideoTool(Tool):
             return {
                 "status": "saved",
                 "message": f"Video job saved. Set VERA_{provider.upper()}_API_KEY in .env to generate. "
-                           f"Supported providers: Runway ($0.05/sec), Pika (free tier), HeyGen (avatar videos), D-ID (talking head).",
+                f"Supported providers: Runway ($0.05/sec), Pika (free tier), HeyGen (avatar videos), D-ID (talking head).",
                 "job": job,
             }
 
@@ -174,10 +183,16 @@ class SchedulePostTool(Tool):
             name="schedule_post",
             description="Schedule a social media post for auto-publishing",
             parameters={
-                "platform": {"type": "str", "description": "Platform: youtube, tiktok, instagram, linkedin, twitter, facebook"},
+                "platform": {
+                    "type": "str",
+                    "description": "Platform: youtube, tiktok, instagram, linkedin, twitter, facebook",
+                },
                 "content": {"type": "str", "description": "Post text/caption"},
                 "media_path": {"type": "str", "description": "Path to image/video file (optional)"},
-                "schedule_at": {"type": "str", "description": "When to post: 'now', 'in 2h', 'tomorrow 9am', or ISO datetime"},
+                "schedule_at": {
+                    "type": "str",
+                    "description": "When to post: 'now', 'in 2h', 'tomorrow 9am', or ISO datetime",
+                },
                 "hashtags": {"type": "str", "description": "Comma-separated hashtags"},
             },
         )
@@ -193,6 +208,7 @@ class SchedulePostTool(Tool):
             return {"status": "error", "message": "Both platform and content are required"}
 
         import re
+
         if schedule_at == "now":
             post_time = datetime.now()
         elif schedule_at.startswith("in "):
@@ -269,9 +285,9 @@ class OptimizeSEOTool(Tool):
                 f"I Tried {topic} for 30 Days — Here's What Happened",
             ],
             "description": f"In this video, we cover everything about {topic}. "
-                          f"Learn {', '.join(keyword_list[:3])} and more. "
-                          f"Don't forget to subscribe for more content!\n\n"
-                          f"Timestamps:\n0:00 Introduction\n0:30 What is {topic}\n2:00 Key Points\n5:00 Summary",
+            f"Learn {', '.join(keyword_list[:3])} and more. "
+            f"Don't forget to subscribe for more content!\n\n"
+            f"Timestamps:\n0:00 Introduction\n0:30 What is {topic}\n2:00 Key Points\n5:00 Summary",
             "tags": keyword_list + [f"{topic} tutorial", f"{topic} guide", f"{topic} explained", f"how to {topic}"],
             "hashtags": [f"#{k.replace(' ', '')}" for k in keyword_list[:10]],
             "best_posting_times": {

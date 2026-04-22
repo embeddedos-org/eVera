@@ -8,20 +8,24 @@ import pytest
 @pytest.fixture
 def workflow_engine(tmp_path):
     import vera.brain.workflow as wf_mod
+
     wf_mod.WORKFLOWS_DIR = tmp_path / "workflows"
     from vera.brain.workflow import WorkflowEngine
+
     return WorkflowEngine()
 
 
 class TestWorkflowEngine:
     def test_create_workflow(self, workflow_engine):
-        wf = workflow_engine.create({
-            "name": "test_workflow",
-            "description": "A test",
-            "steps": [
-                {"id": "1", "type": "notify", "message": "Hello!"},
-            ],
-        })
+        wf = workflow_engine.create(
+            {
+                "name": "test_workflow",
+                "description": "A test",
+                "steps": [
+                    {"id": "1", "type": "notify", "message": "Hello!"},
+                ],
+            }
+        )
         assert wf.name == "test_workflow"
         assert len(wf.steps) == 1
 
@@ -46,11 +50,14 @@ class TestWorkflowEngine:
         assert "42" in resolved
 
     def test_workflow_persistence(self, workflow_engine):
-        workflow_engine.create({
-            "name": "persistent",
-            "steps": [{"id": "1", "type": "notify", "message": "saved"}],
-        })
+        workflow_engine.create(
+            {
+                "name": "persistent",
+                "steps": [{"id": "1", "type": "notify", "message": "saved"}],
+            }
+        )
         # Reload
         import vera.brain.workflow as wf_mod
+
         engine2 = wf_mod.WorkflowEngine()
         assert engine2.get("persistent") is not None

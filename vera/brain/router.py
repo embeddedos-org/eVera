@@ -35,24 +35,50 @@ class RouteDecision:
 
 # Tier 0: Regex-based instant responses (no LLM)
 TIER0_PATTERNS: list[tuple[re.Pattern, str, str, str]] = [
-    (re.compile(r"\b(?:what\s+time|current\s+time|time\s+is\s+it)\b", re.I),
-     "tier0", "get_time", "It's {time}! ⏰"),
-    (re.compile(r"\bset\s+(?:a\s+)?timer?\s+(?:for\s+)?(\d+)\s*(min|minute|sec|second|hour)s?\b", re.I),
-     "tier0", "set_timer", "Timer set for {duration}! ⏱️ I'll let you know when it's up!"),
-    (re.compile(r"\b(?:stop|cancel|nevermind|never\s+mind)\b", re.I),
-     "tier0", "cancel", "No worries, cancelled! 👍"),
-    (re.compile(r"\b(?:thanks?|thank\s+you)\b", re.I),
-     "tier0", "thanks", "You're welcome, buddy! 😊 Need anything else?"),
-    (re.compile(r"\b(?:hello|hi|hey|good\s+(?:morning|afternoon|evening))\b", re.I),
-     "companion", "greeting", "Hey there, buddy! 👋 How can I help you today?"),
-    (re.compile(r"\b(?:what\s+(?:is\s+the\s+)?date|today'?s?\s+date|what\s+day)\b", re.I),
-     "tier0", "get_date", "Today is {date} 📅"),
-    (re.compile(r"\b(?:goodbye|bye|see\s+you|good\s+night)\b", re.I),
-     "tier0", "goodbye", "See you later, buddy! 👋 I'll be right here when you need me!"),
-    (re.compile(r"\bwho\s+are\s+you\b", re.I),
-     "tier0", "identity", "I'm Vera, your AI buddy! 🤖 I'm here to help with anything you need — just ask!"),
-    (re.compile(r"\b(?:help|what\s+can\s+you\s+do)\b", re.I),
-     "tier0", "help", "I'm your all-in-one buddy! 🚀 I can help with:\n📅 Scheduling & reminders\n🏠 Smart home control\n🔍 Web research\n✍️ Writing & editing\n💻 PC automation\n💬 Casual chat & jokes\nJust tell me what you need!"),
+    (re.compile(r"\b(?:what\s+time|current\s+time|time\s+is\s+it)\b", re.I), "tier0", "get_time", "It's {time}! ⏰"),
+    (
+        re.compile(r"\bset\s+(?:a\s+)?timer?\s+(?:for\s+)?(\d+)\s*(min|minute|sec|second|hour)s?\b", re.I),
+        "tier0",
+        "set_timer",
+        "Timer set for {duration}! ⏱️ I'll let you know when it's up!",
+    ),
+    (re.compile(r"\b(?:stop|cancel|nevermind|never\s+mind)\b", re.I), "tier0", "cancel", "No worries, cancelled! 👍"),
+    (
+        re.compile(r"\b(?:thanks?|thank\s+you)\b", re.I),
+        "tier0",
+        "thanks",
+        "You're welcome, buddy! 😊 Need anything else?",
+    ),
+    (
+        re.compile(r"\b(?:hello|hi|hey|good\s+(?:morning|afternoon|evening))\b", re.I),
+        "companion",
+        "greeting",
+        "Hey there, buddy! 👋 How can I help you today?",
+    ),
+    (
+        re.compile(r"\b(?:what\s+(?:is\s+the\s+)?date|today'?s?\s+date|what\s+day)\b", re.I),
+        "tier0",
+        "get_date",
+        "Today is {date} 📅",
+    ),
+    (
+        re.compile(r"\b(?:goodbye|bye|see\s+you|good\s+night)\b", re.I),
+        "tier0",
+        "goodbye",
+        "See you later, buddy! 👋 I'll be right here when you need me!",
+    ),
+    (
+        re.compile(r"\bwho\s+are\s+you\b", re.I),
+        "tier0",
+        "identity",
+        "I'm Vera, your AI buddy! 🤖 I'm here to help with anything you need — just ask!",
+    ),
+    (
+        re.compile(r"\b(?:help|what\s+can\s+you\s+do)\b", re.I),
+        "tier0",
+        "help",
+        "I'm your all-in-one buddy! 🚀 I can help with:\n📅 Scheduling & reminders\n🏠 Smart home control\n🔍 Web research\n✍️ Writing & editing\n💻 PC automation\n💬 Casual chat & jokes\nJust tell me what you need!",
+    ),
 ]
 
 # Intent → Agent mapping for LLM classification
@@ -301,198 +327,269 @@ INTENT_AGENT_MAP: dict[str, str] = {
 # Extended keyword patterns for offline classification (regex → agent, intent)
 KEYWORD_PATTERNS: list[tuple[re.Pattern, str, str]] = [
     # Operator — app/program launching
-    (re.compile(r"\b(?:open|launch|start|run)\s+(?:(?:ms|microsoft)\s+)?(?:word|excel|powerpoint|notepad|chrome|firefox|edge|browser|calculator|paint|outlook|teams|code|vscode|terminal|cmd|powershell|explorer|spotify|discord|slack|zoom)\b", re.I),
-     "operator", "open_app"),
-    (re.compile(r"\b(?:open|launch|start|run)\s+\w+(?:\s+\w+)?\s*(?:app|application|program|document)?\b", re.I),
-     "operator", "open_app"),
-    (re.compile(r"\b(?:take\s+a?\s*screenshot|screen\s*cap(?:ture)?|print\s*screen)\b", re.I),
-     "operator", "screenshot"),
-    (re.compile(r"\b(?:create|make|new)\s+(?:a\s+)?(?:folder|directory|file)\b", re.I),
-     "operator", "manage_files"),
-    (re.compile(r"\b(?:delete|remove|move|copy|rename)\s+(?:the\s+)?(?:file|folder|directory)\b", re.I),
-     "operator", "manage_files"),
-    (re.compile(r"\b(?:run|execute)\s+(?:a\s+)?(?:script|command|program)\b", re.I),
-     "operator", "execute_script"),
-
+    (
+        re.compile(
+            r"\b(?:open|launch|start|run)\s+(?:(?:ms|microsoft)\s+)?(?:word|excel|powerpoint|notepad|chrome|firefox|edge|browser|calculator|paint|outlook|teams|code|vscode|terminal|cmd|powershell|explorer|spotify|discord|slack|zoom)\b",
+            re.I,
+        ),
+        "operator",
+        "open_app",
+    ),
+    (
+        re.compile(r"\b(?:open|launch|start|run)\s+\w+(?:\s+\w+)?\s*(?:app|application|program|document)?\b", re.I),
+        "operator",
+        "open_app",
+    ),
+    (
+        re.compile(r"\b(?:take\s+a?\s*screenshot|screen\s*cap(?:ture)?|print\s*screen)\b", re.I),
+        "operator",
+        "screenshot",
+    ),
+    (re.compile(r"\b(?:create|make|new)\s+(?:a\s+)?(?:folder|directory|file)\b", re.I), "operator", "manage_files"),
+    (
+        re.compile(r"\b(?:delete|remove|move|copy|rename)\s+(?:the\s+)?(?:file|folder|directory)\b", re.I),
+        "operator",
+        "manage_files",
+    ),
+    (re.compile(r"\b(?:run|execute)\s+(?:a\s+)?(?:script|command|program)\b", re.I), "operator", "execute_script"),
     # Home controller
-    (re.compile(r"\b(?:turn|switch)\s+(?:on|off)\s+(?:the\s+)?(?:light|lamp|fan|tv|television)\b", re.I),
-     "home_controller", "control_light"),
-    (re.compile(r"\b(?:set|change|adjust)\s+(?:the\s+)?(?:temperature|thermostat|temp)\b", re.I),
-     "home_controller", "set_thermostat"),
-    (re.compile(r"\b(?:lock|unlock)\s+(?:the\s+)?(?:door|front|back|garage)\b", re.I),
-     "home_controller", "lock_door"),
-    (re.compile(r"\b(?:play|pause|stop|skip|next|previous)\s+(?:the\s+)?(?:music|song|track|video|movie|podcast)\b", re.I),
-     "home_controller", "play_media"),
-
+    (
+        re.compile(r"\b(?:turn|switch)\s+(?:on|off)\s+(?:the\s+)?(?:light|lamp|fan|tv|television)\b", re.I),
+        "home_controller",
+        "control_light",
+    ),
+    (
+        re.compile(r"\b(?:set|change|adjust)\s+(?:the\s+)?(?:temperature|thermostat|temp)\b", re.I),
+        "home_controller",
+        "set_thermostat",
+    ),
+    (re.compile(r"\b(?:lock|unlock)\s+(?:the\s+)?(?:door|front|back|garage)\b", re.I), "home_controller", "lock_door"),
+    (
+        re.compile(
+            r"\b(?:play|pause|stop|skip|next|previous)\s+(?:the\s+)?(?:music|song|track|video|movie|podcast)\b", re.I
+        ),
+        "home_controller",
+        "play_media",
+    ),
     # Life manager
-    (re.compile(r"\b(?:schedule|book|plan)\s+(?:a\s+)?(?:meeting|event|appointment|call)\b", re.I),
-     "life_manager", "schedule"),
-    (re.compile(r"\b(?:remind\s+me|set\s+(?:a\s+)?reminder|don'?t\s+(?:let\s+me\s+)?forget)\b", re.I),
-     "life_manager", "reminder"),
-    (re.compile(r"\b(?:send|write|draft|compose)\s+(?:a(?:n)?\s+)?(?:email|mail|message)\b", re.I),
-     "life_manager", "email"),
-    (re.compile(r"\b(?:add|create)\s+(?:a\s+)?(?:to\s*-?\s*do|task|todo)\b", re.I),
-     "life_manager", "todo"),
-    (re.compile(r"\b(?:what'?s?\s+(?:on\s+)?my\s+(?:calendar|schedule|agenda))\b", re.I),
-     "life_manager", "calendar"),
-
+    (
+        re.compile(r"\b(?:schedule|book|plan)\s+(?:a\s+)?(?:meeting|event|appointment|call)\b", re.I),
+        "life_manager",
+        "schedule",
+    ),
+    (
+        re.compile(r"\b(?:remind\s+me|set\s+(?:a\s+)?reminder|don'?t\s+(?:let\s+me\s+)?forget)\b", re.I),
+        "life_manager",
+        "reminder",
+    ),
+    (
+        re.compile(r"\b(?:send|write|draft|compose)\s+(?:a(?:n)?\s+)?(?:email|mail|message)\b", re.I),
+        "life_manager",
+        "email",
+    ),
+    (re.compile(r"\b(?:add|create)\s+(?:a\s+)?(?:to\s*-?\s*do|task|todo)\b", re.I), "life_manager", "todo"),
+    (re.compile(r"\b(?:what'?s?\s+(?:on\s+)?my\s+(?:calendar|schedule|agenda))\b", re.I), "life_manager", "calendar"),
     # Researcher
-    (re.compile(r"\b(?:search|look\s*up|google|find\s+(?:info|information)|research)\s+(?:for\s+)?(?:about\s+)?\b", re.I),
-     "researcher", "search"),
-    (re.compile(r"\b(?:summarize|summary\s+of|explain|what\s+is|who\s+is|define)\b", re.I),
-     "researcher", "summarize"),
-
+    (
+        re.compile(
+            r"\b(?:search|look\s*up|google|find\s+(?:info|information)|research)\s+(?:for\s+)?(?:about\s+)?\b", re.I
+        ),
+        "researcher",
+        "search",
+    ),
+    (re.compile(r"\b(?:summarize|summary\s+of|explain|what\s+is|who\s+is|define)\b", re.I), "researcher", "summarize"),
     # Writer
-    (re.compile(r"\b(?:write|draft|compose)\s+(?:a\s+)?(?:letter|blog|post|article|essay|report|note)\b", re.I),
-     "writer", "write"),
-    (re.compile(r"\b(?:translate)\s+", re.I),
-     "writer", "translate"),
-    (re.compile(r"\b(?:proofread|edit|revise|rewrite)\b", re.I),
-     "writer", "edit"),
-
+    (
+        re.compile(r"\b(?:write|draft|compose)\s+(?:a\s+)?(?:letter|blog|post|article|essay|report|note)\b", re.I),
+        "writer",
+        "write",
+    ),
+    (re.compile(r"\b(?:translate)\s+", re.I), "writer", "translate"),
+    (re.compile(r"\b(?:proofread|edit|revise|rewrite)\b", re.I), "writer", "edit"),
     # Income / Stocks
-    (re.compile(r"\b(?:stock|market|invest|portfolio|crypto|bitcoin|trading)\b", re.I),
-     "income", "market"),
-    (re.compile(r"\b(?:buy|sell|trade)\s+(?:\d+\s+)?(?:shares?\s+(?:of\s+)?)?\b[A-Z]{1,5}\b", re.I),
-     "income", "trading"),
-    (re.compile(r"\b(?:price|quote|ticker)\s+(?:of\s+|for\s+)?\b[A-Z]{1,5}\b", re.I),
-     "income", "stock"),
-    (re.compile(r"\b(?:how\s+(?:is|are)\s+(?:the\s+)?(?:market|stocks?|my\s+portfolio))\b", re.I),
-     "income", "market"),
-    (re.compile(r"\b(?:watchlist|watch\s+list|add\s+to\s+(?:my\s+)?watch)\b", re.I),
-     "income", "market"),
-
+    (re.compile(r"\b(?:stock|market|invest|portfolio|crypto|bitcoin|trading)\b", re.I), "income", "market"),
+    (
+        re.compile(r"\b(?:buy|sell|trade)\s+(?:\d+\s+)?(?:shares?\s+(?:of\s+)?)?\b[A-Z]{1,5}\b", re.I),
+        "income",
+        "trading",
+    ),
+    (re.compile(r"\b(?:price|quote|ticker)\s+(?:of\s+|for\s+)?\b[A-Z]{1,5}\b", re.I), "income", "stock"),
+    (re.compile(r"\b(?:how\s+(?:is|are)\s+(?:the\s+)?(?:market|stocks?|my\s+portfolio))\b", re.I), "income", "market"),
+    (re.compile(r"\b(?:watchlist|watch\s+list|add\s+to\s+(?:my\s+)?watch)\b", re.I), "income", "market"),
     # Coder
-    (re.compile(r"\b(?:create|write|make)\s+(?:a\s+)?(?:python|javascript|html|css|java|c\+\+|rust|go)\s+(?:file|script|program|class|function)\b", re.I),
-     "coder", "code"),
-    (re.compile(r"\b(?:read|show|display|cat|view)\s+(?:the\s+)?(?:file|code|source|contents)\b", re.I),
-     "coder", "read_file"),
-    (re.compile(r"\b(?:edit|modify|change|update|fix)\s+(?:the\s+)?(?:code|file|script|function|bug)\b", re.I),
-     "coder", "edit_file"),
-    (re.compile(r"\b(?:search|find|grep|look\s+for)\s+(?:in\s+)?(?:the\s+)?(?:code|codebase|files|project|source)\b", re.I),
-     "coder", "search"),
-    (re.compile(r"\bopen\s+(?:in\s+)?(?:vs\s*code|editor)\b", re.I),
-     "coder", "code"),
-
+    (
+        re.compile(
+            r"\b(?:create|write|make)\s+(?:a\s+)?(?:python|javascript|html|css|java|c\+\+|rust|go)\s+(?:file|script|program|class|function)\b",
+            re.I,
+        ),
+        "coder",
+        "code",
+    ),
+    (
+        re.compile(r"\b(?:read|show|display|cat|view)\s+(?:the\s+)?(?:file|code|source|contents)\b", re.I),
+        "coder",
+        "read_file",
+    ),
+    (
+        re.compile(r"\b(?:edit|modify|change|update|fix)\s+(?:the\s+)?(?:code|file|script|function|bug)\b", re.I),
+        "coder",
+        "edit_file",
+    ),
+    (
+        re.compile(
+            r"\b(?:search|find|grep|look\s+for)\s+(?:in\s+)?(?:the\s+)?(?:code|codebase|files|project|source)\b", re.I
+        ),
+        "coder",
+        "search",
+    ),
+    (re.compile(r"\bopen\s+(?:in\s+)?(?:vs\s*code|editor)\b", re.I), "coder", "code"),
     # Screen vision
-    (re.compile(r"\b(?:what'?s?\s+(?:on\s+)?(?:my\s+)?screen|what\s+(?:do\s+)?you\s+see|look\s+at\s+(?:my\s+)?screen|analyze\s+(?:my\s+)?screen|read\s+(?:my\s+)?screen)\b", re.I),
-     "operator", "screenshot"),
-
+    (
+        re.compile(
+            r"\b(?:what'?s?\s+(?:on\s+)?(?:my\s+)?screen|what\s+(?:do\s+)?you\s+see|look\s+at\s+(?:my\s+)?screen|analyze\s+(?:my\s+)?screen|read\s+(?:my\s+)?screen)\b",
+            re.I,
+        ),
+        "operator",
+        "screenshot",
+    ),
     # Job hunter
-    (re.compile(r"\b(?:apply|search|find|look)\s+(?:for\s+)?(?:a\s+)?(?:job|position|role|opening)s?\b", re.I),
-     "job_hunter", "search_jobs"),
-    (re.compile(r"\b(?:job|career)\s+(?:search|hunt|application|apply)\b", re.I),
-     "job_hunter", "search_jobs"),
-    (re.compile(r"\b(?:update|edit)\s+(?:my\s+)?(?:resume|cv|profile)\b", re.I),
-     "job_hunter", "update_profile"),
-    (re.compile(r"\b(?:check|show|list)\s+(?:my\s+)?(?:applications?|applied)\b", re.I),
-     "job_hunter", "check_status"),
-
+    (
+        re.compile(r"\b(?:apply|search|find|look)\s+(?:for\s+)?(?:a\s+)?(?:job|position|role|opening)s?\b", re.I),
+        "job_hunter",
+        "search_jobs",
+    ),
+    (re.compile(r"\b(?:job|career)\s+(?:search|hunt|application|apply)\b", re.I), "job_hunter", "search_jobs"),
+    (re.compile(r"\b(?:update|edit)\s+(?:my\s+)?(?:resume|cv|profile)\b", re.I), "job_hunter", "update_profile"),
+    (re.compile(r"\b(?:check|show|list)\s+(?:my\s+)?(?:applications?|applied)\b", re.I), "job_hunter", "check_status"),
     # Planner
-    (re.compile(r"\b(?:plan|start|organize)\s+(?:my\s+)?(?:day|morning|week|month)\b", re.I),
-     "planner", "morning_plan"),
-    (re.compile(r"\b(?:daily|weekly|monthly)\s+(?:review|retrospective|retro)\b", re.I),
-     "planner", "daily_review"),
-    (re.compile(r"\b(?:set|add|create)\s+(?:a\s+)?goal\b", re.I),
-     "planner", "set_goals"),
-    (re.compile(r"\b(?:check|show|view|my)\s+goals?\b", re.I),
-     "planner", "check_goals"),
-    (re.compile(r"\b(?:prioritize|rank|score)\s+(?:my\s+)?(?:tasks?|todos?|to-dos?)\b", re.I),
-     "planner", "priority_score"),
-
+    (
+        re.compile(r"\b(?:plan|start|organize)\s+(?:my\s+)?(?:day|morning|week|month)\b", re.I),
+        "planner",
+        "morning_plan",
+    ),
+    (re.compile(r"\b(?:daily|weekly|monthly)\s+(?:review|retrospective|retro)\b", re.I), "planner", "daily_review"),
+    (re.compile(r"\b(?:set|add|create)\s+(?:a\s+)?goal\b", re.I), "planner", "set_goals"),
+    (re.compile(r"\b(?:check|show|view|my)\s+goals?\b", re.I), "planner", "check_goals"),
+    (
+        re.compile(r"\b(?:prioritize|rank|score)\s+(?:my\s+)?(?:tasks?|todos?|to-dos?)\b", re.I),
+        "planner",
+        "priority_score",
+    ),
     # Wellness
-    (re.compile(r"\b(?:start|begin)\s+(?:a\s+)?(?:focus|pomodoro|deep\s+work)\b", re.I),
-     "wellness", "start_focus"),
-    (re.compile(r"\b(?:take|need)\s+(?:a\s+)?break\b", re.I),
-     "wellness", "take_break"),
-    (re.compile(r"\b(?:screen\s+time|how\s+long.*working)\b", re.I),
-     "wellness", "screen_time"),
-    (re.compile(r"\b(?:energy|how\s+am\s+i\s+feeling|tired|exhausted)\b", re.I),
-     "wellness", "energy_check"),
-    (re.compile(r"\b(?:work\s+hours|set\s+(?:my\s+)?(?:work|office)\s+hours)\b", re.I),
-     "wellness", "set_work_hours"),
-    (re.compile(r"\b(?:wellness|wellbeing|burnout)\s+(?:report|summary|check)\b", re.I),
-     "wellness", "wellness_summary"),
-
+    (re.compile(r"\b(?:start|begin)\s+(?:a\s+)?(?:focus|pomodoro|deep\s+work)\b", re.I), "wellness", "start_focus"),
+    (re.compile(r"\b(?:take|need)\s+(?:a\s+)?break\b", re.I), "wellness", "take_break"),
+    (re.compile(r"\b(?:screen\s+time|how\s+long.*working)\b", re.I), "wellness", "screen_time"),
+    (re.compile(r"\b(?:energy|how\s+am\s+i\s+feeling|tired|exhausted)\b", re.I), "wellness", "energy_check"),
+    (re.compile(r"\b(?:work\s+hours|set\s+(?:my\s+)?(?:work|office)\s+hours)\b", re.I), "wellness", "set_work_hours"),
+    (
+        re.compile(r"\b(?:wellness|wellbeing|burnout)\s+(?:report|summary|check)\b", re.I),
+        "wellness",
+        "wellness_summary",
+    ),
     # Digest
-    (re.compile(r"\b(?:generate|show|my)\s+(?:daily\s+)?digest\b", re.I),
-     "digest", "generate_digest"),
-    (re.compile(r"\b(?:add|subscribe)\s+(?:to\s+)?(?:rss|feed|source|newsletter)\b", re.I),
-     "digest", "add_source"),
-    (re.compile(r"\b(?:reading\s+list|read\s+later|save\s+(?:for\s+)?later)\b", re.I),
-     "digest", "reading_list"),
-    (re.compile(r"\b(?:summarize)\s+(?:this\s+)?(?:thread|conversation|email\s+thread)\b", re.I),
-     "digest", "summarize_thread"),
-
+    (re.compile(r"\b(?:generate|show|my)\s+(?:daily\s+)?digest\b", re.I), "digest", "generate_digest"),
+    (re.compile(r"\b(?:add|subscribe)\s+(?:to\s+)?(?:rss|feed|source|newsletter)\b", re.I), "digest", "add_source"),
+    (re.compile(r"\b(?:reading\s+list|read\s+later|save\s+(?:for\s+)?later)\b", re.I), "digest", "reading_list"),
+    (
+        re.compile(r"\b(?:summarize)\s+(?:this\s+)?(?:thread|conversation|email\s+thread)\b", re.I),
+        "digest",
+        "summarize_thread",
+    ),
     # Language learning
-    (re.compile(r"\b(?:teach|learn|study|practice)\s+(?:me\s+)?(?:some\s+)?(?:spanish|french|german|italian|japanese|korean|chinese|portuguese|english|arabic|russian|hindi|dutch|turkish|swedish|telugu)\b", re.I),
-     "language_tutor", "learn_language"),
-    (re.compile(r"\b(?:how\s+do\s+(?:you|I)\s+say|translate)\s+.+\s+(?:in|to)\s+(?:spanish|french|german|italian|japanese|korean|chinese|portuguese|arabic|russian|hindi)\b", re.I),
-     "language_tutor", "vocabulary"),
-    (re.compile(r"\b(?:language\s+lesson|vocab(?:ulary)?\s+(?:lesson|practice)|conversation\s+practice)\b", re.I),
-     "language_tutor", "learn_language"),
-    (re.compile(r"\b(?:quiz\s+me|test\s+me)\s+(?:on|in)\s+(?:spanish|french|german|italian|japanese|korean)\b", re.I),
-     "language_tutor", "quiz"),
-    (re.compile(r"\b(?:pronounce|pronunciation\s+(?:of|help|guide))\b", re.I),
-     "language_tutor", "pronunciation"),
-
+    (
+        re.compile(
+            r"\b(?:teach|learn|study|practice)\s+(?:me\s+)?(?:some\s+)?(?:spanish|french|german|italian|japanese|korean|chinese|portuguese|english|arabic|russian|hindi|dutch|turkish|swedish|telugu)\b",
+            re.I,
+        ),
+        "language_tutor",
+        "learn_language",
+    ),
+    (
+        re.compile(
+            r"\b(?:how\s+do\s+(?:you|I)\s+say|translate)\s+.+\s+(?:in|to)\s+(?:spanish|french|german|italian|japanese|korean|chinese|portuguese|arabic|russian|hindi)\b",
+            re.I,
+        ),
+        "language_tutor",
+        "vocabulary",
+    ),
+    (
+        re.compile(r"\b(?:language\s+lesson|vocab(?:ulary)?\s+(?:lesson|practice)|conversation\s+practice)\b", re.I),
+        "language_tutor",
+        "learn_language",
+    ),
+    (
+        re.compile(
+            r"\b(?:quiz\s+me|test\s+me)\s+(?:on|in)\s+(?:spanish|french|german|italian|japanese|korean)\b", re.I
+        ),
+        "language_tutor",
+        "quiz",
+    ),
+    (re.compile(r"\b(?:pronounce|pronunciation\s+(?:of|help|guide))\b", re.I), "language_tutor", "pronunciation"),
     # Browser
-    (re.compile(r"\b(?:go\s+to|open|visit|navigate\s+to|browse)\s+(?:(?:the\s+)?website\s+)?(?:https?://)?[\w.-]+\.(?:com|org|net|io|dev|co|app|me)\b", re.I),
-     "browser", "browse"),
-    (re.compile(r"\b(?:log\s*in|sign\s*in|login|signin)\s+(?:to\s+)?(?:my\s+)?\w+\b", re.I),
-     "browser", "login"),
-    (re.compile(r"\b(?:post|tweet|share|publish)\s+(?:on|to|in)\s+(?:facebook|twitter|x|instagram|linkedin|reddit)\b", re.I),
-     "browser", "post"),
-    (re.compile(r"\b(?:check|read|open)\s+(?:my\s+)?(?:facebook|twitter|x|instagram|linkedin|reddit|gmail|email|inbox|feed|timeline|notifications)\b", re.I),
-     "browser", "browse"),
-
+    (
+        re.compile(
+            r"\b(?:go\s+to|open|visit|navigate\s+to|browse)\s+(?:(?:the\s+)?website\s+)?(?:https?://)?[\w.-]+\.(?:com|org|net|io|dev|co|app|me)\b",
+            re.I,
+        ),
+        "browser",
+        "browse",
+    ),
+    (re.compile(r"\b(?:log\s*in|sign\s*in|login|signin)\s+(?:to\s+)?(?:my\s+)?\w+\b", re.I), "browser", "login"),
+    (
+        re.compile(
+            r"\b(?:post|tweet|share|publish)\s+(?:on|to|in)\s+(?:facebook|twitter|x|instagram|linkedin|reddit)\b", re.I
+        ),
+        "browser",
+        "post",
+    ),
+    (
+        re.compile(
+            r"\b(?:check|read|open)\s+(?:my\s+)?(?:facebook|twitter|x|instagram|linkedin|reddit|gmail|email|inbox|feed|timeline|notifications)\b",
+            re.I,
+        ),
+        "browser",
+        "browse",
+    ),
     # Jira / tickets
-    (re.compile(r"\b(?:show|get|list|check)\s+(?:my\s+)?tickets?\b", re.I),
-     "jira", "get_my_tickets"),
-    (re.compile(r"\bcreate\s+(?:a\s+)?ticket\b", re.I),
-     "jira", "create_ticket"),
-    (re.compile(r"\bsprint\s+board\b", re.I),
-     "jira", "list_sprint_tickets"),
-    (re.compile(r"\b(?:get|show|fetch)\s+(?:ticket\s+)?[A-Z]+-\d+\b", re.I),
-     "jira", "get_ticket"),
-    (re.compile(r"\b(?:update|move|change)\s+(?:ticket\s+)?status\b", re.I),
-     "jira", "update_ticket_status"),
-
+    (re.compile(r"\b(?:show|get|list|check)\s+(?:my\s+)?tickets?\b", re.I), "jira", "get_my_tickets"),
+    (re.compile(r"\bcreate\s+(?:a\s+)?ticket\b", re.I), "jira", "create_ticket"),
+    (re.compile(r"\bsprint\s+board\b", re.I), "jira", "list_sprint_tickets"),
+    (re.compile(r"\b(?:get|show|fetch)\s+(?:ticket\s+)?[A-Z]+-\d+\b", re.I), "jira", "get_ticket"),
+    (re.compile(r"\b(?:update|move|change)\s+(?:ticket\s+)?status\b", re.I), "jira", "update_ticket_status"),
     # Codebase indexer
-    (re.compile(r"\b(?:index|analyze|understand)\s+(?:the\s+)?(?:codebase|project|repo)\b", re.I),
-     "codebase_indexer", "index_project"),
-    (re.compile(r"\b(?:project|codebase)\s+(?:structure|architecture|overview)\b", re.I),
-     "codebase_indexer", "get_architecture_summary"),
-    (re.compile(r"\bfind\s+(?:files?\s+)?related\s+(?:to|files?)\b", re.I),
-     "codebase_indexer", "find_related_files"),
-
+    (
+        re.compile(r"\b(?:index|analyze|understand)\s+(?:the\s+)?(?:codebase|project|repo)\b", re.I),
+        "codebase_indexer",
+        "index_project",
+    ),
+    (
+        re.compile(r"\b(?:project|codebase)\s+(?:structure|architecture|overview)\b", re.I),
+        "codebase_indexer",
+        "get_architecture_summary",
+    ),
+    (re.compile(r"\bfind\s+(?:files?\s+)?related\s+(?:to|files?)\b", re.I), "codebase_indexer", "find_related_files"),
     # Diagram / visualization
-    (re.compile(r"\b(?:generate|show|create)\s+(?:a\s+)?(?:call\s+graph|class\s+diagram|flowchart)\b", re.I),
-     "diagram", "diagram"),
-    (re.compile(r"\bvisualize\s+(?:the\s+)?(?:code|project|architecture)\b", re.I),
-     "diagram", "visualize"),
-    (re.compile(r"\b(?:diagram|graph)\s+(?:of|for)\s+", re.I),
-     "diagram", "diagram"),
-
+    (
+        re.compile(r"\b(?:generate|show|create)\s+(?:a\s+)?(?:call\s+graph|class\s+diagram|flowchart)\b", re.I),
+        "diagram",
+        "diagram",
+    ),
+    (re.compile(r"\bvisualize\s+(?:the\s+)?(?:code|project|architecture)\b", re.I), "diagram", "visualize"),
+    (re.compile(r"\b(?:diagram|graph)\s+(?:of|for)\s+", re.I), "diagram", "diagram"),
     # Meeting
-    (re.compile(r"\b(?:extract|get|find)\s+action\s+items\b", re.I),
-     "meeting", "extract_action_items"),
-    (re.compile(r"\b(?:parse|process)\s+meeting\b", re.I),
-     "meeting", "parse_meeting_notes"),
-    (re.compile(r"\bcreate\s+(?:tasks?|todos?)\s+from\s+(?:the\s+)?meeting\b", re.I),
-     "meeting", "create_tasks_from_meeting"),
-
+    (re.compile(r"\b(?:extract|get|find)\s+action\s+items\b", re.I), "meeting", "extract_action_items"),
+    (re.compile(r"\b(?:parse|process)\s+meeting\b", re.I), "meeting", "parse_meeting_notes"),
+    (
+        re.compile(r"\bcreate\s+(?:tasks?|todos?)\s+from\s+(?:the\s+)?meeting\b", re.I),
+        "meeting",
+        "create_tasks_from_meeting",
+    ),
     # Work pilot
-    (re.compile(r"\b(?:start|begin)\s+work(?:ing)?\s+on\b", re.I),
-     "work_pilot", "start_work_on_ticket"),
-    (re.compile(r"\bdo\s+(?:my\s+)?ticket\b", re.I),
-     "work_pilot", "start_work_on_ticket"),
-    (re.compile(r"\bcomplete\s+(?:the\s+)?work\b", re.I),
-     "work_pilot", "complete_work_item"),
-
+    (re.compile(r"\b(?:start|begin)\s+work(?:ing)?\s+on\b", re.I), "work_pilot", "start_work_on_ticket"),
+    (re.compile(r"\bdo\s+(?:my\s+)?ticket\b", re.I), "work_pilot", "start_work_on_ticket"),
+    (re.compile(r"\bcomplete\s+(?:the\s+)?work\b", re.I), "work_pilot", "complete_work_item"),
     # Git — PR creation
-    (re.compile(r"\b(?:create|open|make)\s+(?:a\s+)?(?:pr|pull\s+request)\b", re.I),
-     "git", "git_create_pr"),
+    (re.compile(r"\b(?:create|open|make)\s+(?:a\s+)?(?:pr|pull\s+request)\b", re.I), "git", "git_create_pr"),
 ]
 
 CLASSIFICATION_PROMPT = """You are an intent classifier. Given the user's message, classify it into exactly one intent and agent.
@@ -571,7 +668,7 @@ class TierRouter:
                 )
 
         # Fall back to simple word matching against INTENT_AGENT_MAP
-        words = re.findall(r'\b\w+\b', lower)
+        words = re.findall(r"\b\w+\b", lower)
         scores: dict[str, int] = {}
         matched_intent: dict[str, str] = {}
 

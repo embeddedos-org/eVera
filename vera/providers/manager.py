@@ -139,17 +139,24 @@ class ProviderManager:
         parsed_tool_calls = None
         if hasattr(message, "tool_calls") and message.tool_calls:
             import json
+
             parsed_tool_calls = []
             for tc in message.tool_calls:
                 try:
-                    args = json.loads(tc.function.arguments) if isinstance(tc.function.arguments, str) else tc.function.arguments
+                    args = (
+                        json.loads(tc.function.arguments)
+                        if isinstance(tc.function.arguments, str)
+                        else tc.function.arguments
+                    )
                 except (json.JSONDecodeError, AttributeError):
                     args = {}
-                parsed_tool_calls.append(ToolCall(
-                    id=tc.id or "",
-                    name=tc.function.name,
-                    arguments=args or {},
-                ))
+                parsed_tool_calls.append(
+                    ToolCall(
+                        id=tc.id or "",
+                        name=tc.function.name,
+                        arguments=args or {},
+                    )
+                )
 
         # Track usage
         tier_usage = self._usage[model_config.tier]

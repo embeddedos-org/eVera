@@ -97,6 +97,7 @@ class StartFocusTool(Tool):
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         from config import settings
+
         duration = kwargs.get("duration_min", settings.wellness.focus_duration_min)
         label = kwargs.get("label", "")
 
@@ -143,6 +144,7 @@ class TakeBreakTool(Tool):
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         from config import settings
+
         duration = kwargs.get("duration_min", settings.wellness.break_duration_min)
 
         try:
@@ -192,13 +194,11 @@ class ScreenTimeTool(Tool):
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         from config import settings
+
         data = _load_wellness()
         today = _today_key()
 
-        today_sessions = [
-            s for s in data.get("sessions", [])
-            if s.get("start", "").startswith(today) and s.get("end")
-        ]
+        today_sessions = [s for s in data.get("sessions", []) if s.get("start", "").startswith(today) and s.get("end")]
 
         total_min = sum(s.get("duration_min", 0) for s in today_sessions)
         longest = max((s.get("duration_min", 0) for s in today_sessions), default=0)
@@ -235,6 +235,7 @@ class EnergyCheckTool(Tool):
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         from config import settings
+
         level = kwargs.get("level", 3)
         note = kwargs.get("note", "")
 
@@ -363,7 +364,10 @@ class WellnessSummaryTool(Tool):
             name="wellness_summary",
             description="Generate a wellness report: focus sessions, breaks taken, energy trend, and recommendations",
             parameters={
-                "period": {"type": "str", "description": "Period: 'today', 'week', or specific date (YYYY-MM-DD). Default: today"},
+                "period": {
+                    "type": "str",
+                    "description": "Period: 'today', 'week', or specific date (YYYY-MM-DD). Default: today",
+                },
             },
         )
 
@@ -396,7 +400,7 @@ class WellnessSummaryTool(Tool):
             now = datetime.now()
             week_stats = {}
             for i in range(7):
-                day = (now - __import__("datetime").timedelta(days=now.weekday() - i))
+                day = now - __import__("datetime").timedelta(days=now.weekday() - i)
                 day_key = day.strftime("%Y-%m-%d")
                 day_stats = data.get("daily_stats", {}).get(day_key, {})
                 if day_stats:

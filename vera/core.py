@@ -75,6 +75,7 @@ class VeraBrain:
 
         # Proactive scheduler
         from vera.scheduler import ProactiveScheduler
+
         self.scheduler = ProactiveScheduler()
 
         # Vision monitor
@@ -120,9 +121,14 @@ class VeraBrain:
 
         try:
             pipeline_nodes = [
-                "enrich_memory", "classify", "safety_check",
-                "tier0_handler", "agent", "confirmation",
-                "store_memory", "synthesize",
+                "enrich_memory",
+                "classify",
+                "safety_check",
+                "tier0_handler",
+                "agent",
+                "confirmation",
+                "store_memory",
+                "synthesize",
             ]
             await emit_pipeline_event("pipeline", "start", nodes=pipeline_nodes)
             t0 = time.monotonic()
@@ -214,6 +220,7 @@ class VeraBrain:
 
         # Subscribe to screen context events and start vision monitor
         from vera.events.bus import EventType
+
         self.event_bus.subscribe(EventType.SCREEN_CONTEXT, self._on_screen_context)
         await self.vision_monitor.start()
 

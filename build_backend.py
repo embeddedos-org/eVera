@@ -78,7 +78,9 @@ def validate() -> None:
     try:
         result = subprocess.run(
             [str(exe), "--help"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if result.returncode == 0:
             print("✅ Executable runs successfully")

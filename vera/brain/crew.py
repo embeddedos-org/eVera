@@ -79,11 +79,13 @@ Rules:
         )
 
         prompt = TaskDecomposer.DECOMPOSITION_PROMPT.format(
-            agents=agents_desc, task=task,
+            agents=agents_desc,
+            task=task,
         )
 
         try:
             from vera.providers.models import ModelTier
+
             result = await provider_manager.complete(
                 messages=[{"role": "user", "content": prompt}],
                 tier=ModelTier.SPECIALIST,
@@ -134,6 +136,7 @@ class Crew:
     async def execute(self, brain: Any) -> CrewResult:
         """Execute the crew task using the selected strategy."""
         import time
+
         start = time.monotonic()
 
         from vera.brain.agents import AGENT_REGISTRY
@@ -146,7 +149,9 @@ class Crew:
 
         # Decompose task into sub-tasks
         self.tasks = await TaskDecomposer.decompose(
-            self.task, available, brain.provider_manager,
+            self.task,
+            available,
+            brain.provider_manager,
         )
 
         # Execute based on strategy
@@ -194,9 +199,7 @@ class Crew:
         while True:
             # Find tasks ready to run
             ready = [
-                t for t in self.tasks
-                if t.status == "pending"
-                and all(dep in completed_ids for dep in t.depends_on)
+                t for t in self.tasks if t.status == "pending" and all(dep in completed_ids for dep in t.depends_on)
             ]
 
             if not ready:
@@ -207,8 +210,7 @@ class Crew:
                 task.status = "running"
                 # Gather dependency results as context
                 dep_context = "\n".join(
-                    f"[{dt.agent_name}]: {dt.result}"
-                    for dt in self.tasks if dt.id in task.depends_on and dt.result
+                    f"[{dt.agent_name}]: {dt.result}" for dt in self.tasks if dt.id in task.depends_on and dt.result
                 )
                 instruction = task.instruction
                 if dep_context:
@@ -240,13 +242,15 @@ class Crew:
         supervisor_result = await self._run_agent_task(brain, "companion", review_prompt)
 
         # Add supervisor review as final task
-        self.tasks.append(AgentTask(
-            id="supervisor",
-            agent_name="companion",
-            instruction="Supervisor review",
-            status="completed",
-            result=supervisor_result,
-        ))
+        self.tasks.append(
+            AgentTask(
+                id="supervisor",
+                agent_name="companion",
+                instruction="Supervisor review",
+                status="completed",
+                result=supervisor_result,
+            )
+        )
 
     async def _execute_debate(self, brain: Any) -> None:
         """Agents debate/critique each other's responses."""
@@ -262,9 +266,7 @@ class Crew:
 
         # Round 2+: Each agent critiques and improves
         for round_num in range(1, self.max_rounds):
-            all_responses = "\n".join(
-                f"[{t.agent_name}]: {t.result}" for t in self.tasks
-            )
+            all_responses = "\n".join(f"[{t.agent_name}]: {t.result}" for t in self.tasks)
             for task in self.tasks:
                 critique_prompt = (
                     f"Other agents' responses:\n{all_responses}\n\n"
@@ -272,7 +274,9 @@ class Crew:
                     "Critique the other responses and provide your improved answer."
                 )
                 task.result = await self._run_agent_task(
-                    brain, task.agent_name, critique_prompt,
+                    brain,
+                    task.agent_name,
+                    critique_prompt,
                 )
 
     async def _run_agent_task(self, brain: Any, agent_name: str, instruction: str) -> str:

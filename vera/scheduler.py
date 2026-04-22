@@ -112,12 +112,14 @@ class ProactiveScheduler:
 
             trigger_at = datetime.fromisoformat(reminder["trigger_at"])
             if trigger_at <= now:
-                await self._notify({
-                    "type": "reminder",
-                    "message": f"⏰ Reminder: {reminder['text']}",
-                    "mood": "excited",
-                    "data": reminder,
-                })
+                await self._notify(
+                    {
+                        "type": "reminder",
+                        "message": f"⏰ Reminder: {reminder['text']}",
+                        "mood": "excited",
+                        "data": reminder,
+                    }
+                )
                 reminder["dismissed"] = True
                 fired = True
 
@@ -160,12 +162,14 @@ class ProactiveScheduler:
                 minutes_until = (event_time - now).total_seconds() / 60
 
                 if 0 < minutes_until <= 15:
-                    await self._notify({
-                        "type": "calendar",
-                        "message": f"📅 Heads up! '{event['title']}' starts in {int(minutes_until)} minutes!",
-                        "mood": "thinking",
-                        "data": event,
-                    })
+                    await self._notify(
+                        {
+                            "type": "calendar",
+                            "message": f"📅 Heads up! '{event['title']}' starts in {int(minutes_until)} minutes!",
+                            "mood": "thinking",
+                            "data": event,
+                        }
+                    )
                     event["notified"] = True
             except (ValueError, KeyError):
                 continue
@@ -206,6 +210,7 @@ class ProactiveScheduler:
 
         try:
             import yfinance as yf
+
             for symbol in symbols_to_check[:10]:  # Limit to 10
                 try:
                     ticker = yf.Ticker(symbol)
@@ -219,12 +224,14 @@ class ProactiveScheduler:
                         # Alert on > 5% move
                         if abs(change_pct) >= 5:
                             direction = "📈" if change_pct > 0 else "📉"
-                            await self._notify({
-                                "type": "stock_alert",
-                                "message": f"{direction} {symbol} moved {change_pct:+.1f}% to ${price:.2f}!",
-                                "mood": "excited" if change_pct > 0 else "empathetic",
-                                "data": {"symbol": symbol, "price": price, "change_pct": round(change_pct, 2)},
-                            })
+                            await self._notify(
+                                {
+                                    "type": "stock_alert",
+                                    "message": f"{direction} {symbol} moved {change_pct:+.1f}% to ${price:.2f}!",
+                                    "mood": "excited" if change_pct > 0 else "empathetic",
+                                    "data": {"symbol": symbol, "price": price, "change_pct": round(change_pct, 2)},
+                                }
+                            )
                 except Exception:
                     continue
         except ImportError:
@@ -290,12 +297,14 @@ class ProactiveScheduler:
 
         parts.append("\nLet me know how I can help today! 💪")
 
-        await self._notify({
-            "type": "daily_briefing",
-            "message": "\n".join(parts),
-            "mood": "happy",
-            "data": {"date": today},
-        })
+        await self._notify(
+            {
+                "type": "daily_briefing",
+                "message": "\n".join(parts),
+                "mood": "happy",
+                "data": {"date": today},
+            }
+        )
 
     # --- Scheduled recurring tasks ---
 
@@ -356,12 +365,14 @@ class ProactiveScheduler:
                     should_run = True
 
             if should_run:
-                await self._notify({
-                    "type": "scheduled_task",
-                    "message": f"⏰ Scheduled task: {task.get('name', 'Unknown')}\n{task.get('description', '')}",
-                    "mood": "thinking",
-                    "data": task,
-                })
+                await self._notify(
+                    {
+                        "type": "scheduled_task",
+                        "message": f"⏰ Scheduled task: {task.get('name', 'Unknown')}\n{task.get('description', '')}",
+                        "mood": "thinking",
+                        "data": task,
+                    }
+                )
                 task["last_run"] = now.strftime("%Y-%m-%d")
                 task["last_run_ts"] = now.timestamp()
                 task["run_count"] = task.get("run_count", 0) + 1
@@ -402,12 +413,14 @@ class ProactiveScheduler:
             try:
                 schedule_at = datetime.fromisoformat(post["schedule_at"])
                 if schedule_at <= now:
-                    await self._notify({
-                        "type": "content_publish",
-                        "message": f"📱 Time to publish on {post['platform']}!\n{post['content'][:100]}...",
-                        "mood": "excited",
-                        "data": post,
-                    })
+                    await self._notify(
+                        {
+                            "type": "content_publish",
+                            "message": f"📱 Time to publish on {post['platform']}!\n{post['content'][:100]}...",
+                            "mood": "excited",
+                            "data": post,
+                        }
+                    )
                     post["status"] = "ready_to_publish"
                     post["notified_at"] = now.isoformat()
                     updated = True
@@ -459,25 +472,30 @@ class ProactiveScheduler:
             pct = (spent / limit * 100) if limit > 0 else 0
 
             if pct >= 100:
-                await self._notify({
-                    "type": "budget_alert",
-                    "message": f"🚨 Budget exceeded for {cat}! Spent ${spent:.2f} of ${limit:.2f} ({pct:.0f}%)",
-                    "mood": "error",
-                    "data": {"category": cat, "spent": spent, "budget": limit, "percent": pct},
-                })
+                await self._notify(
+                    {
+                        "type": "budget_alert",
+                        "message": f"🚨 Budget exceeded for {cat}! Spent ${spent:.2f} of ${limit:.2f} ({pct:.0f}%)",
+                        "mood": "error",
+                        "data": {"category": cat, "spent": spent, "budget": limit, "percent": pct},
+                    }
+                )
             elif pct >= 80:
-                await self._notify({
-                    "type": "budget_warning",
-                    "message": f"⚠️ Approaching budget limit for {cat}: ${spent:.2f} of ${limit:.2f} ({pct:.0f}%)",
-                    "mood": "thinking",
-                    "data": {"category": cat, "spent": spent, "budget": limit, "percent": pct},
-                })
+                await self._notify(
+                    {
+                        "type": "budget_warning",
+                        "message": f"⚠️ Approaching budget limit for {cat}: ${spent:.2f} of ${limit:.2f} ({pct:.0f}%)",
+                        "mood": "thinking",
+                        "data": {"category": cat, "spent": spent, "budget": limit, "percent": pct},
+                    }
+                )
 
     # --- Job scan ---
 
     async def _job_scan_loop(self) -> None:
         """Periodically run a job scan cycle when job hunter is enabled."""
         from config import settings
+
         if not settings.job_hunter.enabled:
             return
 
@@ -498,8 +516,9 @@ class ProactiveScheduler:
 
         daily_count = _today_application_count()
         if daily_count >= settings.job_hunter.max_daily_applications:
-            logger.info("Job scan skipped — daily cap reached (%d/%d)",
-                        daily_count, settings.job_hunter.max_daily_applications)
+            logger.info(
+                "Job scan skipped — daily cap reached (%d/%d)", daily_count, settings.job_hunter.max_daily_applications
+            )
             return
 
         scanner = RunJobScanTool()
@@ -511,15 +530,17 @@ class ProactiveScheduler:
         total = result.get("total_found", 0)
 
         if applied > 0 or failed > 0:
-            await self._notify({
-                "type": "job_scan",
-                "message": (
-                    f"💼 Job scan complete!\n"
-                    f"Found {total} jobs — applied to {applied}, skipped {skipped}, failed {failed}."
-                ),
-                "mood": "excited" if applied > 0 else "thinking",
-                "data": result,
-            })
+            await self._notify(
+                {
+                    "type": "job_scan",
+                    "message": (
+                        f"💼 Job scan complete!\n"
+                        f"Found {total} jobs — applied to {applied}, skipped {skipped}, failed {failed}."
+                    ),
+                    "mood": "excited" if applied > 0 else "thinking",
+                    "data": result,
+                }
+            )
         else:
             logger.info("Job scan: found %d jobs, all skipped or no new matches", total)
 
@@ -528,6 +549,7 @@ class ProactiveScheduler:
     async def _morning_plan_loop(self) -> None:
         """Generate morning plan at configured time."""
         from config import settings
+
         if not settings.planner.enabled:
             return
 
@@ -570,18 +592,21 @@ class ProactiveScheduler:
                     parts.append(f"  • {g.get('title', '?')}")
             parts.append("\nReady to crush it! 💪")
 
-            await self._notify({
-                "type": "morning_plan",
-                "message": "\n".join(parts),
-                "mood": "excited",
-                "data": result,
-            })
+            await self._notify(
+                {
+                    "type": "morning_plan",
+                    "message": "\n".join(parts),
+                    "mood": "excited",
+                    "data": result,
+                }
+            )
 
     # --- Break reminder ---
 
     async def _break_reminder_loop(self) -> None:
         """Remind user to take a break after continuous work."""
         from config import settings
+
         if not settings.wellness.enabled:
             return
 
@@ -625,22 +650,25 @@ class ProactiveScheduler:
         minutes_since = (now - last_activity).total_seconds() / 60
 
         if minutes_since >= interval_min:
-            await self._notify({
-                "type": "break_reminder",
-                "message": (
-                    f"⏰ You've been working for {int(minutes_since)} minutes without a break!\n"
-                    "How about a quick stretch or a cup of tea? ☕\n"
-                    "Say 'take a break' when you're ready!"
-                ),
-                "mood": "thinking",
-                "data": {"minutes_worked": int(minutes_since)},
-            })
+            await self._notify(
+                {
+                    "type": "break_reminder",
+                    "message": (
+                        f"⏰ You've been working for {int(minutes_since)} minutes without a break!\n"
+                        "How about a quick stretch or a cup of tea? ☕\n"
+                        "Say 'take a break' when you're ready!"
+                    ),
+                    "mood": "thinking",
+                    "data": {"minutes_worked": int(minutes_since)},
+                }
+            )
 
     # --- Digest ---
 
     async def _digest_loop(self) -> None:
         """Generate daily digest at configured time."""
         from config import settings
+
         if not settings.digest.enabled or not settings.digest.auto_digest:
             return
 
@@ -667,18 +695,21 @@ class ProactiveScheduler:
             items = digest.get("items", [])
             sources = digest.get("sources_count", 0)
 
-            await self._notify({
-                "type": "daily_digest",
-                "message": f"📰 Your daily digest is ready! {len(items)} items from {sources} sources.",
-                "mood": "happy",
-                "data": result,
-            })
+            await self._notify(
+                {
+                    "type": "daily_digest",
+                    "message": f"📰 Your daily digest is ready! {len(items)} items from {sources} sources.",
+                    "mood": "happy",
+                    "data": result,
+                }
+            )
 
     # --- Daily review reminder ---
 
     async def _daily_review_reminder_loop(self) -> None:
         """Remind user to do their daily review."""
         from config import settings
+
         if not settings.planner.enabled:
             return
 
@@ -687,16 +718,18 @@ class ProactiveScheduler:
             try:
                 h, m = map(int, settings.planner.daily_review_time.split(":"))
                 if now.hour == h and now.minute == m:
-                    await self._notify({
-                        "type": "daily_review_reminder",
-                        "message": (
-                            "📊 Time for your daily review!\n"
-                            "Let's reflect on what you accomplished today and plan for tomorrow.\n"
-                            "Say 'daily review' to get started!"
-                        ),
-                        "mood": "thinking",
-                        "data": {"date": now.strftime("%Y-%m-%d")},
-                    })
+                    await self._notify(
+                        {
+                            "type": "daily_review_reminder",
+                            "message": (
+                                "📊 Time for your daily review!\n"
+                                "Let's reflect on what you accomplished today and plan for tomorrow.\n"
+                                "Say 'daily review' to get started!"
+                            ),
+                            "mood": "thinking",
+                            "data": {"date": now.strftime("%Y-%m-%d")},
+                        }
+                    )
                     await asyncio.sleep(120)
             except Exception as e:
                 logger.warning("Daily review reminder failed: %s", e)
@@ -707,6 +740,7 @@ class ProactiveScheduler:
     async def _mood_check_loop(self) -> None:
         """Proactive mood monitoring — check-in when negative patterns emerge."""
         from config import settings
+
         if not settings.emotional.enabled or not settings.emotional.proactive_empathy_enabled:
             return
 
@@ -728,6 +762,7 @@ class ProactiveScheduler:
     async def _ticket_scan_loop(self) -> None:
         """Periodically scan for newly assigned Jira tickets."""
         from config import settings
+
         if not settings.jira.enabled:
             return
 
@@ -752,6 +787,7 @@ class ProactiveScheduler:
         known_keys = set(last_scan.get("known_tickets", []))
 
         from vera.brain.agents.jira_agent import GetMyTicketsTool
+
         tool = GetMyTicketsTool()
         result = await tool.execute()
 
@@ -768,28 +804,36 @@ class ProactiveScheduler:
 
         if new_tickets:
             for ticket in new_tickets:
-                await self._notify({
-                    "type": "new_ticket",
-                    "message": (
-                        f"🎫 New ticket assigned to you: {ticket['key']}\n"
-                        f"  {ticket.get('summary', '')}\n"
-                        f"  Priority: {ticket.get('priority', 'N/A')} | Type: {ticket.get('type', 'N/A')}"
-                    ),
-                    "mood": "thinking",
-                    "data": ticket,
-                })
+                await self._notify(
+                    {
+                        "type": "new_ticket",
+                        "message": (
+                            f"🎫 New ticket assigned to you: {ticket['key']}\n"
+                            f"  {ticket.get('summary', '')}\n"
+                            f"  Priority: {ticket.get('priority', 'N/A')} | Type: {ticket.get('type', 'N/A')}"
+                        ),
+                        "mood": "thinking",
+                        "data": ticket,
+                    }
+                )
 
         last_scan_path.parent.mkdir(parents=True, exist_ok=True)
-        last_scan_path.write_text(json.dumps({
-            "known_tickets": list(current_keys),
-            "last_scan": datetime.now().isoformat(),
-        }, indent=2))
+        last_scan_path.write_text(
+            json.dumps(
+                {
+                    "known_tickets": list(current_keys),
+                    "last_scan": datetime.now().isoformat(),
+                },
+                indent=2,
+            )
+        )
 
     # --- Channel monitor ---
 
     async def _channel_monitor_loop(self) -> None:
         """Monitor Slack channels for new messages and mentions."""
         from config import settings
+
         if not settings.channel_monitor.enabled:
             return
 
@@ -837,19 +881,23 @@ class ProactiveScheduler:
             mention_count = sum(1 for m in new_msgs if "<@" in m.get("text", ""))
 
             if settings.channel_monitor.mention_alert and mention_count > 0:
-                await self._notify({
-                    "type": "mention_alert",
-                    "message": f"💬 You were mentioned {mention_count} time(s) in channel {channel_id}!",
-                    "mood": "excited",
-                    "data": {"channel": channel_id, "mentions": mention_count, "total_new": len(new_msgs)},
-                })
+                await self._notify(
+                    {
+                        "type": "mention_alert",
+                        "message": f"💬 You were mentioned {mention_count} time(s) in channel {channel_id}!",
+                        "mood": "excited",
+                        "data": {"channel": channel_id, "mentions": mention_count, "total_new": len(new_msgs)},
+                    }
+                )
             else:
-                await self._notify({
-                    "type": "channel_activity",
-                    "message": f"💬 {len(new_msgs)} new message(s) in channel {channel_id}.",
-                    "mood": "neutral",
-                    "data": {"channel": channel_id, "count": len(new_msgs)},
-                })
+                await self._notify(
+                    {
+                        "type": "channel_activity",
+                        "message": f"💬 {len(new_msgs)} new message(s) in channel {channel_id}.",
+                        "mood": "neutral",
+                        "data": {"channel": channel_id, "count": len(new_msgs)},
+                    }
+                )
 
         state_path.parent.mkdir(parents=True, exist_ok=True)
         state_path.write_text(json.dumps(state, indent=2))
@@ -882,16 +930,18 @@ class ProactiveScheduler:
 
         if streak >= threshold:
             last_mood = recent[-1].mood
-            await self._notify({
-                "type": "mood_checkin",
-                "message": (
-                    f"Hey, I've noticed you've been feeling {last_mood} lately. "
-                    "I just want to check in — is there anything I can help with? "
-                    "Sometimes talking it out helps. 💙"
-                ),
-                "mood": "empathetic",
-                "data": {"streak": streak, "current_mood": last_mood},
-            })
+            await self._notify(
+                {
+                    "type": "mood_checkin",
+                    "message": (
+                        f"Hey, I've noticed you've been feeling {last_mood} lately. "
+                        "I just want to check in — is there anything I can help with? "
+                        "Sometimes talking it out helps. 💙"
+                    ),
+                    "mood": "empathetic",
+                    "data": {"streak": streak, "current_mood": last_mood},
+                }
+            )
             return
 
         # Check for day-of-week pattern
@@ -900,13 +950,15 @@ class ProactiveScheduler:
 
         for p in patterns:
             if p.pattern_type == "day_of_week" and p.data.get("day") == today_name:
-                await self._notify({
-                    "type": "mood_preemptive",
-                    "message": (
-                        f"I know {today_name}s can be tough sometimes. "
-                        "Just a heads up — I'm here if you need me today! 🌟"
-                    ),
-                    "mood": "empathetic",
-                    "data": {"pattern": p.pattern_type, "day": today_name},
-                })
+                await self._notify(
+                    {
+                        "type": "mood_preemptive",
+                        "message": (
+                            f"I know {today_name}s can be tough sometimes. "
+                            "Just a heads up — I'm here if you need me today! 🌟"
+                        ),
+                        "mood": "empathetic",
+                        "data": {"pattern": p.pattern_type, "day": today_name},
+                    }
+                )
                 return

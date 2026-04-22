@@ -70,11 +70,16 @@ class Workflow:
             "trigger": self.trigger,
             "steps": [
                 {
-                    "id": s.id, "type": s.step_type, "agent": s.agent,
-                    "action": s.action, "params": s.params,
+                    "id": s.id,
+                    "type": s.step_type,
+                    "agent": s.agent,
+                    "action": s.action,
+                    "params": s.params,
                     "depends_on": s.depends_on,
-                    "if": s.condition_if, "then": s.condition_then,
-                    "else": s.condition_else, "message": s.message,
+                    "if": s.condition_if,
+                    "then": s.condition_then,
+                    "else": s.condition_else,
+                    "message": s.message,
                 }
                 for s in self.steps
             ],
@@ -115,8 +120,14 @@ class WorkflowEngine:
 
     def list_all(self) -> list[dict]:
         return [
-            {"name": w.name, "description": w.description, "steps": len(w.steps),
-             "trigger": w.trigger, "run_count": w.run_count, "last_run": w.last_run}
+            {
+                "name": w.name,
+                "description": w.description,
+                "steps": len(w.steps),
+                "trigger": w.trigger,
+                "run_count": w.run_count,
+                "last_run": w.last_run,
+            }
             for w in self._workflows.values()
         ]
 
@@ -150,11 +161,7 @@ class WorkflowEngine:
         max_iterations = len(wf.steps) * 2
 
         for _ in range(max_iterations):
-            ready = [
-                s for s in wf.steps
-                if s.status == "pending"
-                and all(d in completed for d in s.depends_on)
-            ]
+            ready = [s for s in wf.steps if s.status == "pending" and all(d in completed for d in s.depends_on)]
             if not ready:
                 break
 
@@ -193,8 +200,11 @@ class WorkflowEngine:
         }
 
     async def _execute_step(
-        self, step: WorkflowStep, brain: Any,
-        step_outputs: dict, variables: dict,
+        self,
+        step: WorkflowStep,
+        brain: Any,
+        step_outputs: dict,
+        variables: dict,
     ) -> Any:
         """Execute a single workflow step."""
         # Resolve template variables in params
@@ -203,6 +213,7 @@ class WorkflowEngine:
         if step.step_type == "agent":
             # Execute via agent tool
             from vera.brain.agents import get_agent
+
             agent = get_agent(step.agent)
             if agent:
                 tool = agent.get_tool(step.action)
@@ -240,6 +251,7 @@ class WorkflowEngine:
 
     def _resolve_template_string(self, template: str, outputs: dict, variables: dict) -> str:
         """Replace template variables in a string."""
+
         def replacer(match: re.Match) -> str:
             path = match.group(1)
             if path.startswith("steps."):

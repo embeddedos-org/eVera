@@ -38,9 +38,9 @@ def check(name, condition, detail=""):
 
 
 def section(title):
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  {title}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
 
 # ═══════════════════════════════════════════════════════════
@@ -70,32 +70,56 @@ for pf in py_files:
     except SyntaxError as e:
         syntax_errors.append(f"{pf}: {e}")
 
-check(f"All {len(py_files)} Python files parse", len(syntax_errors) == 0,
-      f"{len(syntax_errors)} errors: {syntax_errors}")
+check(
+    f"All {len(py_files)} Python files parse", len(syntax_errors) == 0, f"{len(syntax_errors)} errors: {syntax_errors}"
+)
 
 # Check key files exist
 key_files = [
-    "config.py", "main.py", "vera/core.py", "vera/app.py",
-    "vera/brain/graph.py", "vera/brain/router.py", "vera/brain/state.py",
-    "vera/brain/supervisor.py", "vera/brain/crew.py", "vera/brain/workflow.py",
-    "vera/brain/agents/__init__.py", "vera/brain/agents/base.py",
-    "vera/brain/agents/companion.py", "vera/brain/agents/operator.py",
-    "vera/brain/agents/browser.py", "vera/brain/agents/researcher.py",
-    "vera/brain/agents/writer.py", "vera/brain/agents/life_manager.py",
-    "vera/brain/agents/home_controller.py", "vera/brain/agents/income.py",
-    "vera/brain/agents/coder.py", "vera/brain/agents/git_agent.py",
-    "vera/brain/agents/vision.py", "vera/brain/agents/content_creator.py",
-    "vera/brain/agents/finance.py", "vera/brain/agents/email_manager.py",
-    "vera/memory/vault.py", "vera/memory/working.py", "vera/memory/episodic.py",
-    "vera/memory/semantic.py", "vera/memory/secure.py", "vera/memory/persistence.py",
-    "vera/safety/policy.py", "vera/safety/privacy.py",
-    "vera/providers/manager.py", "vera/providers/models.py",
-    "vera/events/bus.py", "vera/scheduler.py", "vera/messaging.py", "vera/rbac.py",
+    "config.py",
+    "main.py",
+    "vera/core.py",
+    "vera/app.py",
+    "vera/brain/graph.py",
+    "vera/brain/router.py",
+    "vera/brain/state.py",
+    "vera/brain/supervisor.py",
+    "vera/brain/crew.py",
+    "vera/brain/workflow.py",
+    "vera/brain/agents/__init__.py",
+    "vera/brain/agents/base.py",
+    "vera/brain/agents/companion.py",
+    "vera/brain/agents/operator.py",
+    "vera/brain/agents/browser.py",
+    "vera/brain/agents/researcher.py",
+    "vera/brain/agents/writer.py",
+    "vera/brain/agents/life_manager.py",
+    "vera/brain/agents/home_controller.py",
+    "vera/brain/agents/income.py",
+    "vera/brain/agents/coder.py",
+    "vera/brain/agents/git_agent.py",
+    "vera/brain/agents/vision.py",
+    "vera/brain/agents/content_creator.py",
+    "vera/brain/agents/finance.py",
+    "vera/brain/agents/email_manager.py",
+    "vera/memory/vault.py",
+    "vera/memory/working.py",
+    "vera/memory/episodic.py",
+    "vera/memory/semantic.py",
+    "vera/memory/secure.py",
+    "vera/memory/persistence.py",
+    "vera/safety/policy.py",
+    "vera/safety/privacy.py",
+    "vera/providers/manager.py",
+    "vera/providers/models.py",
+    "vera/events/bus.py",
+    "vera/scheduler.py",
+    "vera/messaging.py",
+    "vera/rbac.py",
     "plugins/live_trading.py",
 ]
 missing = [f for f in key_files if not os.path.exists(f)]
-check(f"All {len(key_files)} key files exist", len(missing) == 0,
-      f"Missing: {missing}")
+check(f"All {len(key_files)} key files exist", len(missing) == 0, f"Missing: {missing}")
 
 # ═══════════════════════════════════════════════════════════
 #  2. CONFIGURATION
@@ -121,6 +145,7 @@ section("3. Memory System")
 
 try:
     from vera.memory.working import Turn, WorkingMemory
+
     wm_available = True
 except ImportError:
     wm_available = False
@@ -154,6 +179,7 @@ else:
 try:
     # Import directly to bypass __init__.py auto-imports
     import importlib.util
+
     spec = importlib.util.spec_from_file_location("persistence", "vera/memory/persistence.py")
     persistence_mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(persistence_mod)
@@ -260,13 +286,23 @@ agent_map = {}
 for intent, agent in agent_intents:
     agent_map.setdefault(agent, []).append(intent)
 
-expected_agents = ["life_manager", "home_controller", "researcher", "writer",
-                   "operator", "income", "companion", "coder", "browser",
-                   "content_creator", "finance", "live_trader"]
+expected_agents = [
+    "life_manager",
+    "home_controller",
+    "researcher",
+    "writer",
+    "operator",
+    "income",
+    "companion",
+    "coder",
+    "browser",
+    "content_creator",
+    "finance",
+    "live_trader",
+]
 
 for agent in expected_agents:
-    check(f"Router has intents for {agent}", agent in agent_map,
-          "Missing from INTENT_AGENT_MAP")
+    check(f"Router has intents for {agent}", agent in agent_map, "Missing from INTENT_AGENT_MAP")
 
 # Check classification prompt mentions all agents
 check("Classification prompt has content_creator", "content_creator" in router_src)
@@ -291,9 +327,11 @@ for root_dir, dirs, files in os.walk("vera/brain/agents"):
             path = os.path.join(root_dir, f)
             with open(path, encoding="utf-8") as fh:
                 tree = ast.parse(fh.read())
-            tools = [n.name for n in ast.walk(tree)
-                     if isinstance(n, ast.ClassDef)
-                     and any(isinstance(b, ast.Name) and b.id == "Tool" for b in n.bases)]
+            tools = [
+                n.name
+                for n in ast.walk(tree)
+                if isinstance(n, ast.ClassDef) and any(isinstance(b, ast.Name) and b.id == "Tool" for b in n.bases)
+            ]
             agent_name = f.replace(".py", "")
             agent_tools[agent_name] = len(tools)
 
@@ -303,9 +341,11 @@ for f in os.listdir("plugins"):
         path = os.path.join("plugins", f)
         with open(path, encoding="utf-8") as fh:
             tree = ast.parse(fh.read())
-        tools = [n.name for n in ast.walk(tree)
-                 if isinstance(n, ast.ClassDef)
-                 and any(isinstance(b, ast.Name) and b.id == "Tool" for b in n.bases)]
+        tools = [
+            n.name
+            for n in ast.walk(tree)
+            if isinstance(n, ast.ClassDef) and any(isinstance(b, ast.Name) and b.id == "Tool" for b in n.bases)
+        ]
         agent_tools[f.replace(".py", "")] = len(tools)
 
 total_tools = sum(agent_tools.values())
@@ -323,15 +363,24 @@ section("7. Proactive Scheduler")
 with open("vera/scheduler.py", encoding="utf-8") as f:
     sched_src = f.read()
 
-expected_loops = ["reminder", "calendar", "stock_alert", "daily_briefing",
-                  "scheduled_tasks", "content_publisher", "spending_alert"]
+expected_loops = [
+    "reminder",
+    "calendar",
+    "stock_alert",
+    "daily_briefing",
+    "scheduled_tasks",
+    "content_publisher",
+    "spending_alert",
+]
 for loop in expected_loops:
     check(f"Scheduler has _{loop}_loop", f"_{loop}_loop" in sched_src)
 
-check("Scheduler creates tasks for all loops",
-      "self._scheduled_tasks_loop" in sched_src and
-      "self._content_publisher_loop" in sched_src and
-      "self._spending_alert_loop" in sched_src)
+check(
+    "Scheduler creates tasks for all loops",
+    "self._scheduled_tasks_loop" in sched_src
+    and "self._content_publisher_loop" in sched_src
+    and "self._spending_alert_loop" in sched_src,
+)
 
 # ═══════════════════════════════════════════════════════════
 #  8. API ENDPOINTS
@@ -342,14 +391,24 @@ with open("vera/app.py", encoding="utf-8") as f:
     app_src = f.read()
 
 endpoints = [
-    ("/health", "GET"), ("/status", "GET"), ("/agents", "GET"),
-    ("/chat", "POST"), ("/chat/stream", "POST"),
-    ("/memory/facts", "GET"), ("/memory/facts", "POST"),
-    ("/events/stream", "GET"), ("/agents/stream", "GET"),
-    ("/crew", "POST"), ("/workflows", "GET"), ("/workflows", "POST"),
-    ("/admin/users", "GET"), ("/admin/audit", "GET"),
-    ("/webhook/tradingview", "POST"), ("/webhook/slack", "POST"),
-    ("/webhook/discord", "POST"), ("/webhook/telegram", "POST"),
+    ("/health", "GET"),
+    ("/status", "GET"),
+    ("/agents", "GET"),
+    ("/chat", "POST"),
+    ("/chat/stream", "POST"),
+    ("/memory/facts", "GET"),
+    ("/memory/facts", "POST"),
+    ("/events/stream", "GET"),
+    ("/agents/stream", "GET"),
+    ("/crew", "POST"),
+    ("/workflows", "GET"),
+    ("/workflows", "POST"),
+    ("/admin/users", "GET"),
+    ("/admin/audit", "GET"),
+    ("/webhook/tradingview", "POST"),
+    ("/webhook/slack", "POST"),
+    ("/webhook/discord", "POST"),
+    ("/webhook/telegram", "POST"),
     ("/ws", "websocket"),
 ]
 
@@ -369,12 +428,24 @@ check("Session cleanup on disconnect", "remove_session" in app_src)
 section("9. Documentation")
 
 expected_docs = [
-    "docs/index.md", "docs/getting_started.md", "docs/architecture.md",
-    "docs/agents.md", "docs/api_reference.md", "docs/security.md",
-    "docs/development.md", "docs/configuration.md", "docs/faq.md",
-    "docs/diagrams.md", "docs/doxygen_main_page.md", "docs/release_notes_v0.5.0.md",
-    "docs/Doxyfile", "docs/requirements.txt", "docs/generate_diagrams.py",
-    "CHANGELOG.md", "README.md", "DISTRIBUTION.md",
+    "docs/index.md",
+    "docs/getting_started.md",
+    "docs/architecture.md",
+    "docs/agents.md",
+    "docs/api_reference.md",
+    "docs/security.md",
+    "docs/development.md",
+    "docs/configuration.md",
+    "docs/faq.md",
+    "docs/diagrams.md",
+    "docs/doxygen_main_page.md",
+    "docs/release_notes_v0.5.0.md",
+    "docs/Doxyfile",
+    "docs/requirements.txt",
+    "docs/generate_diagrams.py",
+    "CHANGELOG.md",
+    "README.md",
+    "DISTRIBUTION.md",
 ]
 
 for doc in expected_docs:
@@ -391,8 +462,12 @@ check("Doxyfile version 0.5.1", "0.5.1" in doxyfile)
 section("10. Desktop & Mobile")
 
 desktop_files = [
-    "electron/main.js", "electron/preload.js", "electron/build.js",
-    "electron/package.json", "electron/icon.ico", "electron/icon.png",
+    "electron/main.js",
+    "electron/preload.js",
+    "electron/build.js",
+    "electron/package.json",
+    "electron/icon.ico",
+    "electron/icon.png",
 ]
 for f in desktop_files:
     check(f"Desktop: {f}", os.path.exists(f))
@@ -402,11 +477,17 @@ with open("electron/package.json", encoding="utf-8") as f:
 check("Electron version 0.5.1", epkg.get("version") == "0.5.1")
 
 mobile_files = [
-    "mobile/package.json", "mobile/app.json", "mobile/index.js",
-    "mobile/src/App.tsx", "mobile/src/screens/ChatScreen.tsx",
-    "mobile/src/screens/SettingsScreen.tsx", "mobile/src/services/api.ts",
-    "mobile/src/services/voice.ts", "mobile/src/services/permissions.ts",
-    "mobile/src/services/notifications.ts", "mobile/README.md",
+    "mobile/package.json",
+    "mobile/app.json",
+    "mobile/index.js",
+    "mobile/src/App.tsx",
+    "mobile/src/screens/ChatScreen.tsx",
+    "mobile/src/screens/SettingsScreen.tsx",
+    "mobile/src/services/api.ts",
+    "mobile/src/services/voice.ts",
+    "mobile/src/services/permissions.ts",
+    "mobile/src/services/notifications.ts",
+    "mobile/README.md",
 ]
 for f in mobile_files:
     check(f"Mobile: {f}", os.path.exists(f))
@@ -432,12 +513,11 @@ with open("vera/brain/agents/operator.py", encoding="utf-8") as f:
     op_src = f.read()
 shell_true_count = op_src.count("shell=True")
 # Only ExecuteScriptTool has a controlled shell=True fallback
-check("Operator: minimal shell=True usage", shell_true_count <= 1,
-      f"Found {shell_true_count} instances")
+check("Operator: minimal shell=True usage", shell_true_count <= 1, f"Found {shell_true_count} instances")
 
 check("API auth middleware is real middleware", "@app.middleware" in app_src)
 check("WebSocket checks api_key on connect", "4001" in app_src or "api_key" in app_src)
-check("Finance transfer DENIED", 'finance.transfer_money' in open("vera/safety/policy.py", encoding="utf-8").read())
+check("Finance transfer DENIED", "finance.transfer_money" in open("vera/safety/policy.py", encoding="utf-8").read())
 
 # ═══════════════════════════════════════════════════════════
 #  FINAL REPORT
@@ -447,7 +527,7 @@ total = PASS + FAIL
 print(f"\n  Total checks: {total}")
 print(f"  Passed: {PASS}")
 print(f"  Failed: {FAIL}")
-print(f"  Pass rate: {PASS/total*100:.1f}%\n")
+print(f"  Pass rate: {PASS / total * 100:.1f}%\n")
 
 if ERRORS:
     print("  FAILURES:")

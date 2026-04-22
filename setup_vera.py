@@ -19,8 +19,11 @@ def run(cmd, check=False, capture=False):
     print(f"  → {cmd}")
     try:
         result = subprocess.run(
-            cmd, shell=True, check=check,
-            capture_output=capture, text=True,
+            cmd,
+            shell=True,
+            check=check,
+            capture_output=capture,
+            text=True,
             timeout=300,
         )
         return result
@@ -45,7 +48,7 @@ def get_python():
 
 def check_version(python):
     """Check Python version is 3.11+."""
-    result = run(f"{python} -c \"import sys; print(sys.version_info[:2])\"", capture=True)
+    result = run(f'{python} -c "import sys; print(sys.version_info[:2])"', capture=True)
     if result and result.returncode == 0:
         version = eval(result.stdout.strip())
         if version >= (3, 11):
@@ -126,7 +129,7 @@ def install_core(pip):
 
     failed = []
     for dep in core_deps:
-        result = run(f"{pip} install \"{dep}\"")
+        result = run(f'{pip} install "{dep}"')
         if result is None or result.returncode != 0:
             failed.append(dep)
 
@@ -137,7 +140,7 @@ def install_langgraph(pip):
     """Install LangGraph — try multiple versions."""
     print("\n📦 Installing LangGraph...")
     for version in ["langgraph==0.2.0", "langgraph==0.1.0", "langgraph==0.0.8", "langgraph"]:
-        result = run(f"{pip} install \"{version}\"", capture=True)
+        result = run(f'{pip} install "{version}"', capture=True)
         if result and result.returncode == 0:
             print(f"  ✅ Installed {version}")
             return True
@@ -175,7 +178,9 @@ def install_browser(pip):
     result = run(f"{pip} install playwright>=1.40.0")
     if result and result.returncode == 0:
         print("  Installing Chromium browser...")
-        venv_python = str(Path(".venv/Scripts/python.exe")) if platform.system() == "Windows" else str(Path(".venv/bin/python"))
+        venv_python = (
+            str(Path(".venv/Scripts/python.exe")) if platform.system() == "Windows" else str(Path(".venv/bin/python"))
+        )
         run(f"{venv_python} -m playwright install chromium")
 
 
@@ -190,6 +195,7 @@ def create_env_file():
     if not Path(".env").exists() and Path(".env.example").exists():
         print("\n📄 Creating .env from .env.example...")
         import shutil
+
         shutil.copy(".env.example", ".env")
         print("  ✅ Created .env — edit it with your API keys")
     elif not Path(".env").exists():
@@ -207,8 +213,12 @@ def create_env_file():
 def create_data_dirs():
     """Create required data directories."""
     dirs = [
-        "data", "data/faiss_index", "data/browser_sessions",
-        "data/rbac", "data/workflows", "plugins",
+        "data",
+        "data/faiss_index",
+        "data/browser_sessions",
+        "data/rbac",
+        "data/workflows",
+        "plugins",
     ]
     for d in dirs:
         Path(d).mkdir(parents=True, exist_ok=True)
@@ -236,18 +246,18 @@ def configure_system_for_247():
         port = 8000
 
         startup_script.write_text(
-            f'@echo off\n'
+            f"@echo off\n"
             f'cd /d "{work_dir}"\n'
-            f'echo Starting Vera AI Buddy...\n'
+            f"echo Starting Vera AI Buddy...\n"
             f'start "" "http://localhost:{port}"\n'
-            f'timeout /t 3 >nul\n'
+            f"timeout /t 3 >nul\n"
             f'"{venv_python}" "{main_py}" --mode server\n',
             encoding="utf-8",
         )
         print("  ✅ Created start_vera.bat (auto-opens browser)")
 
         # Add to Windows Task Scheduler for auto-start on boot
-        task_xml = f'''<?xml version="1.0" encoding="UTF-16"?>
+        task_xml = f"""<?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <Triggers>
     <LogonTrigger><Enabled>true</Enabled></LogonTrigger>
@@ -264,7 +274,7 @@ def configure_system_for_247():
       <WorkingDirectory>{work_dir}</WorkingDirectory>
     </Exec>
   </Actions>
-</Task>'''
+</Task>"""
         task_file = Path("vera_task.xml")
         task_file.write_text(task_xml, encoding="utf-16")
         result = run(f'schtasks /create /tn "VeraServer" /xml "{task_file}" /f')
@@ -292,7 +302,7 @@ WorkingDirectory={work_dir}
 ExecStart={venv_python} {main_py} --mode server
 Restart=always
 RestartSec=5
-Environment=PATH={Path('.venv/bin').resolve()}:/usr/bin
+Environment=PATH={Path(".venv/bin").resolve()}:/usr/bin
 
 [Install]
 WantedBy=multi-user.target
@@ -345,7 +355,9 @@ WantedBy=multi-user.target
 def check_install(pip):
     """Verify installation."""
     print("\n🔍 Checking installation...")
-    venv_python = str(Path(".venv/Scripts/python.exe")) if platform.system() == "Windows" else str(Path(".venv/bin/python"))
+    venv_python = (
+        str(Path(".venv/Scripts/python.exe")) if platform.system() == "Windows" else str(Path(".venv/bin/python"))
+    )
 
     checks = {
         "FastAPI": "import fastapi",
@@ -366,7 +378,7 @@ def check_install(pip):
 
     results = {}
     for name, import_stmt in checks.items():
-        result = run(f"{venv_python} -c \"{import_stmt}\"", capture=True)
+        result = run(f'{venv_python} -c "{import_stmt}"', capture=True)
         ok = result is not None and result.returncode == 0
         results[name] = ok
         status = "✅" if ok else "❌"

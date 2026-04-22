@@ -67,7 +67,7 @@ class CheckBalancesTool(Tool):
             return {
                 "status": "info",
                 "message": "No bank accounts linked. Set VERA_PLAID_CLIENT_ID and VERA_PLAID_SECRET in .env for Plaid, "
-                           "or manually add accounts via add_account tool.",
+                "or manually add accounts via add_account tool.",
                 "accounts": [],
             }
 
@@ -91,10 +91,19 @@ class CheckBalancesTool(Tool):
             env = os.getenv("VERA_PLAID_ENV", "sandbox")
 
             if not access_token:
-                return {"status": "error", "message": "VERA_PLAID_ACCESS_TOKEN not set. Complete Plaid Link flow first."}
+                return {
+                    "status": "error",
+                    "message": "VERA_PLAID_ACCESS_TOKEN not set. Complete Plaid Link flow first.",
+                }
 
-            host_map = {"sandbox": plaid.Environment.Sandbox, "development": plaid.Environment.Development, "production": plaid.Environment.Production}
-            configuration = plaid.Configuration(host=host_map.get(env, plaid.Environment.Sandbox), api_key={"clientId": client_id, "secret": secret})
+            host_map = {
+                "sandbox": plaid.Environment.Sandbox,
+                "development": plaid.Environment.Development,
+                "production": plaid.Environment.Production,
+            }
+            configuration = plaid.Configuration(
+                host=host_map.get(env, plaid.Environment.Sandbox), api_key={"clientId": client_id, "secret": secret}
+            )
             api_client = plaid.ApiClient(configuration)
             client = plaid_api.PlaidApi(api_client)
 
@@ -103,16 +112,22 @@ class CheckBalancesTool(Tool):
 
             accounts = []
             for acct in response.accounts:
-                accounts.append({
-                    "name": acct.name,
-                    "type": acct.type.value,
-                    "subtype": acct.subtype.value if acct.subtype else "",
-                    "balance": acct.balances.current,
-                    "available": acct.balances.available,
-                    "currency": acct.balances.iso_currency_code or "USD",
-                })
+                accounts.append(
+                    {
+                        "name": acct.name,
+                        "type": acct.type.value,
+                        "subtype": acct.subtype.value if acct.subtype else "",
+                        "balance": acct.balances.current,
+                        "available": acct.balances.available,
+                        "currency": acct.balances.iso_currency_code or "USD",
+                    }
+                )
 
-            return {"status": "success", "accounts": accounts, "total_balance": sum(a["balance"] or 0 for a in accounts)}
+            return {
+                "status": "success",
+                "accounts": accounts,
+                "total_balance": sum(a["balance"] or 0 for a in accounts),
+            }
         except ImportError:
             return {"status": "error", "message": "plaid-python not installed. Run: pip install plaid-python"}
         except Exception as e:
@@ -225,7 +240,10 @@ class SetBudgetTool(Tool):
             name="set_budget",
             description="Set a monthly spending budget for a category",
             parameters={
-                "category": {"type": "str", "description": "Spending category: food, transport, shopping, bills, entertainment"},
+                "category": {
+                    "type": "str",
+                    "description": "Spending category: food, transport, shopping, bills, entertainment",
+                },
                 "amount": {"type": "float", "description": "Monthly budget amount in dollars"},
             },
         )
@@ -244,7 +262,12 @@ class SetBudgetTool(Tool):
         finance["budgets"][category] = amount
         _save_json("finance.json", finance)
 
-        return {"status": "success", "category": category, "budget": amount, "message": f"Budget set: ${amount}/month for {category}"}
+        return {
+            "status": "success",
+            "category": category,
+            "budget": amount,
+            "message": f"Budget set: ${amount}/month for {category}",
+        }
 
 
 class AddAccountTool(Tool):
@@ -297,7 +320,10 @@ class AddTransactionTool(Tool):
             parameters={
                 "description": {"type": "str", "description": "Transaction description"},
                 "amount": {"type": "float", "description": "Amount (negative for expense, positive for income)"},
-                "category": {"type": "str", "description": "Category: food, transport, shopping, bills, entertainment, income, other"},
+                "category": {
+                    "type": "str",
+                    "description": "Category: food, transport, shopping, bills, entertainment, income, other",
+                },
                 "account": {"type": "str", "description": "Account name"},
             },
         )

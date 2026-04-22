@@ -13,10 +13,11 @@ from vera.providers.models import ModelTier
 @pytest.fixture
 def mock_graph():
     """Build a graph with fully mocked LLM."""
-    with patch("vera.providers.manager.litellm") as mock_litellm, \
-         patch("vera.memory.vault.settings") as mock_mem_settings, \
-         patch("vera.safety.policy.settings") as mock_safety_settings:
-
+    with (
+        patch("vera.providers.manager.litellm") as mock_litellm,
+        patch("vera.memory.vault.settings") as mock_mem_settings,
+        patch("vera.safety.policy.settings") as mock_safety_settings,
+    ):
         # Memory settings
         mock_mem_settings.memory.working_memory_max_turns = 10
         mock_mem_settings.memory.embedding_model = "all-MiniLM-L6-v2"
@@ -31,7 +32,9 @@ def mock_graph():
 
         # LLM mock
         mock_response = MagicMock()
-        mock_response.choices = [MagicMock(message=MagicMock(content='{"intent":"chat","agent":"companion","confidence":0.9}'))]
+        mock_response.choices = [
+            MagicMock(message=MagicMock(content='{"intent":"chat","agent":"companion","confidence":0.9}'))
+        ]
         mock_response.usage = MagicMock(prompt_tokens=10, completion_tokens=20, total_tokens=30)
         mock_litellm.acompletion = AsyncMock(return_value=mock_response)
 
@@ -70,7 +73,9 @@ async def test_agent_flow(mock_graph):
 
     # First call = classification, second call = agent response
     classify_resp = MagicMock()
-    classify_resp.choices = [MagicMock(message=MagicMock(content='{"intent":"chat","agent":"companion","confidence":0.9}'))]
+    classify_resp.choices = [
+        MagicMock(message=MagicMock(content='{"intent":"chat","agent":"companion","confidence":0.9}'))
+    ]
     classify_resp.usage = MagicMock(prompt_tokens=10, completion_tokens=20, total_tokens=30)
 
     agent_resp = MagicMock()

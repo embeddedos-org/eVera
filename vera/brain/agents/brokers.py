@@ -62,6 +62,7 @@ def _log_trade(broker: str, trade: dict):
 # 1. ALPACA TRADING (Free API, Paper + Live)
 # ============================================================
 
+
 class AlpacaTradeTool(Tool):
     """Place real orders through Alpaca API."""
 
@@ -80,7 +81,10 @@ class AlpacaTradeTool(Tool):
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         if not ALPACA_API_KEY:
-            return {"status": "error", "message": "Alpaca not configured. Set VERA_ALPACA_API_KEY and VERA_ALPACA_SECRET_KEY in .env"}
+            return {
+                "status": "error",
+                "message": "Alpaca not configured. Set VERA_ALPACA_API_KEY and VERA_ALPACA_SECRET_KEY in .env",
+            }
 
         action = kwargs.get("action", "").lower()
         symbol = kwargs.get("symbol", "").upper()
@@ -95,6 +99,7 @@ class AlpacaTradeTool(Tool):
 
         try:
             from alpaca_trade_api import REST
+
             base_url = "https://paper-api.alpaca.markets" if ALPACA_PAPER else "https://api.alpaca.markets"
             api = REST(ALPACA_API_KEY, ALPACA_SECRET_KEY, base_url)
 
@@ -111,9 +116,13 @@ class AlpacaTradeTool(Tool):
             order = api.submit_order(**order_params)
 
             trade_data = {
-                "action": action, "symbol": symbol, "quantity": qty,
-                "order_type": order_type, "order_id": order.id,
-                "status": order.status, "mode": "paper" if ALPACA_PAPER else "LIVE",
+                "action": action,
+                "symbol": symbol,
+                "quantity": qty,
+                "order_type": order_type,
+                "order_id": order.id,
+                "status": order.status,
+                "mode": "paper" if ALPACA_PAPER else "LIVE",
             }
             _log_trade("alpaca", trade_data)
 
@@ -154,6 +163,7 @@ class AlpacaAccountTool(Tool):
 
         try:
             from alpaca_trade_api import REST
+
             base_url = "https://paper-api.alpaca.markets" if ALPACA_PAPER else "https://api.alpaca.markets"
             api = REST(ALPACA_API_KEY, ALPACA_SECRET_KEY, base_url)
 
@@ -163,7 +173,9 @@ class AlpacaAccountTool(Tool):
                     "status": "success",
                     "positions": [
                         {
-                            "symbol": p.symbol, "qty": int(p.qty), "side": p.side,
+                            "symbol": p.symbol,
+                            "qty": int(p.qty),
+                            "side": p.side,
                             "market_value": float(p.market_value),
                             "avg_entry": float(p.avg_entry_price),
                             "current_price": float(p.current_price),
@@ -180,8 +192,12 @@ class AlpacaAccountTool(Tool):
                     "status": "success",
                     "orders": [
                         {
-                            "id": o.id, "symbol": o.symbol, "side": o.side,
-                            "qty": int(o.qty), "type": o.type, "status": o.status,
+                            "id": o.id,
+                            "symbol": o.symbol,
+                            "side": o.side,
+                            "qty": int(o.qty),
+                            "type": o.type,
+                            "status": o.status,
                             "submitted_at": str(o.submitted_at),
                         }
                         for o in orders
@@ -207,6 +223,7 @@ class AlpacaAccountTool(Tool):
 # ============================================================
 # 2. INTERACTIVE BROKERS (via ib_insync)
 # ============================================================
+
 
 class IBKRTradeTool(Tool):
     """Place trades through Interactive Brokers TWS/Gateway."""
@@ -255,8 +272,11 @@ class IBKRTradeTool(Tool):
                 await ib.sleep(2)
 
                 trade_data = {
-                    "action": action, "symbol": symbol, "quantity": qty,
-                    "order_type": order_type, "order_id": trade.order.orderId,
+                    "action": action,
+                    "symbol": symbol,
+                    "quantity": qty,
+                    "order_type": order_type,
+                    "order_id": trade.order.orderId,
                     "status": trade.orderStatus.status,
                 }
                 _log_trade("ibkr", trade_data)
@@ -275,7 +295,10 @@ class IBKRTradeTool(Tool):
         except ImportError:
             return {"status": "error", "message": "Install: pip install ib_insync"}
         except Exception as e:
-            return {"status": "error", "message": f"IBKR connection failed: {e}. Is TWS/Gateway running on port {IBKR_PORT}?"}
+            return {
+                "status": "error",
+                "message": f"IBKR connection failed: {e}. Is TWS/Gateway running on port {IBKR_PORT}?",
+            }
 
 
 class IBKRAccountTool(Tool):
@@ -332,6 +355,7 @@ class IBKRAccountTool(Tool):
 # 3. TRADINGVIEW WEBHOOK INTEGRATION
 # ============================================================
 
+
 class TradingViewWebhookTool(Tool):
     """Set up TradingView webhook alerts that trigger Vera trades."""
 
@@ -348,6 +372,7 @@ class TradingViewWebhookTool(Tool):
         action = kwargs.get("action", "setup").lower()
 
         from config import settings
+
         webhook_url = f"http://{settings.server.host}:{settings.server.port}/webhook/tradingview"
 
         if action == "setup":
@@ -378,6 +403,7 @@ class TradingViewWebhookTool(Tool):
 # 4. DESKTOP APP AUTOMATION (Any broker — Thinkorswim, Webull, etc.)
 # ============================================================
 
+
 class BrokerAppAutomationTool(Tool):
     """Automate any broker desktop app (Thinkorswim, Webull, etc.) using UI automation."""
 
@@ -386,7 +412,10 @@ class BrokerAppAutomationTool(Tool):
             name="automate_broker_app",
             description="Open and automate a broker desktop app (Thinkorswim, Webull, Fidelity, etc.)",
             parameters={
-                "app": {"type": "str", "description": "Broker app name: thinkorswim, webull, fidelity, schwab, robinhood"},
+                "app": {
+                    "type": "str",
+                    "description": "Broker app name: thinkorswim, webull, fidelity, schwab, robinhood",
+                },
                 "action": {"type": "str", "description": "open, buy, sell, check_positions"},
                 "symbol": {"type": "str", "description": "Stock symbol (for buy/sell)"},
                 "quantity": {"type": "int", "description": "Shares (for buy/sell)"},
@@ -412,7 +441,10 @@ class BrokerAppAutomationTool(Tool):
             commands = app_commands.get(app, {})
             exe = commands.get(SYSTEM)
             if not exe:
-                return {"status": "error", "message": f"Don't know how to launch {app} on {SYSTEM}. Try opening it manually."}
+                return {
+                    "status": "error",
+                    "message": f"Don't know how to launch {app} on {SYSTEM}. Try opening it manually.",
+                }
 
             try:
                 if SYSTEM == "Windows":
@@ -422,7 +454,11 @@ class BrokerAppAutomationTool(Tool):
                 else:
                     subprocess.Popen([exe])
 
-                return {"status": "success", "opened": app, "message": f"Opened {app}. You can now trade manually or I can guide you through the steps."}
+                return {
+                    "status": "success",
+                    "opened": app,
+                    "message": f"Opened {app}. You can now trade manually or I can guide you through the steps.",
+                }
             except Exception as e:
                 return {"status": "error", "message": str(e)}
 
@@ -440,7 +476,7 @@ class BrokerAppAutomationTool(Tool):
                     "7. Review and confirm the order",
                 ],
                 "note": f"I can't directly click buttons in {app} yet without screen vision. "
-                        "Want me to open the app and guide you step by step?",
+                "Want me to open the app and guide you step by step?",
             }
 
         elif action == "check_positions":
@@ -459,6 +495,7 @@ class BrokerAppAutomationTool(Tool):
 # ============================================================
 # 5. SMART TRADE ROUTER — picks the best broker
 # ============================================================
+
 
 class SmartTradeTool(Tool):
     """Intelligent trade router — picks the best available broker and handles safety."""
@@ -479,6 +516,7 @@ class SmartTradeTool(Tool):
         self._ibkr = IBKRTradeTool()
         # Import paper trade from income agent
         from vera.brain.agents.income import PaperTradeTool
+
         self._paper = PaperTradeTool()
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
@@ -489,6 +527,7 @@ class SmartTradeTool(Tool):
         # Estimate trade value for safety check
         try:
             from vera.brain.agents.income import GetStockPriceTool
+
             price_tool = GetStockPriceTool()
             price_result = await price_tool.execute(symbol=symbol)
             estimated_value = (price_result.get("price", 0) or 0) * qty
@@ -505,12 +544,15 @@ class SmartTradeTool(Tool):
                 result["estimated_value"] = round(estimated_value, 2)
                 result["needs_confirmation"] = needs_confirmation
                 if needs_confirmation:
-                    result["safety_note"] = f"⚠️ Trade value ${estimated_value:,.2f} exceeds auto-trade limit of ${AUTO_TRADE_LIMIT:,.2f}"
+                    result["safety_note"] = (
+                        f"⚠️ Trade value ${estimated_value:,.2f} exceeds auto-trade limit of ${AUTO_TRADE_LIMIT:,.2f}"
+                    )
                 return result
 
         # IBKR fallback
         try:
             from ib_insync import IB
+
             result = await self._ibkr.execute(**kwargs)
             if result.get("status") == "success":
                 return result
@@ -521,8 +563,6 @@ class SmartTradeTool(Tool):
         result = await self._paper.execute(**kwargs)
         result["note"] = "No broker configured — executed as paper trade. Set VERA_ALPACA_API_KEY for real trading."
         return result
-
-
 
 
 class TradingSetupTool(Tool):
@@ -590,6 +630,7 @@ class TradingSetupTool(Tool):
                 # Validate
                 try:
                     import httpx
+
                     base = "https://paper-api.alpaca.markets"
                     async with httpx.AsyncClient(timeout=10) as client:
                         resp = await client.get(
@@ -638,6 +679,7 @@ class TradingSetupTool(Tool):
             return {"status": "error", "message": "Specify broker=alpaca or broker=ibkr"}
 
         return {"status": "error", "message": f"Unknown step: {step}"}
+
 
 # Export all broker tools
 BROKER_TOOLS = [

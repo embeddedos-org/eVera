@@ -67,7 +67,9 @@ class WakeWordDetector:
         if duration_s < _MIN_DURATION_S or duration_s > _MAX_DURATION_S:
             logger.debug(
                 "Wake word skip: segment %.2fs outside [%.1f, %.1f]",
-                duration_s, _MIN_DURATION_S, _MAX_DURATION_S,
+                duration_s,
+                _MIN_DURATION_S,
+                _MAX_DURATION_S,
             )
             return False
 

@@ -63,14 +63,26 @@ class CompanionAgent(BaseAgent):
 
     def _setup_tools(self) -> None:
         self._tools = [
-            Tool(name="chat", description="General conversation",
-                 parameters={"topic": {"type": "str", "description": "Conversation topic"}}),
-            Tool(name="check_mood", description="Assess and respond to mood",
-                 parameters={"observation": {"type": "str", "description": "Observed mood cues"}}),
-            Tool(name="suggest_activity", description="Suggest activities",
-                 parameters={"preferences": {"type": "str", "description": "User preferences"}}),
-            Tool(name="tell_joke", description="Tell a joke",
-                 parameters={"category": {"type": "str", "description": "Joke category"}}),
+            Tool(
+                name="chat",
+                description="General conversation",
+                parameters={"topic": {"type": "str", "description": "Conversation topic"}},
+            ),
+            Tool(
+                name="check_mood",
+                description="Assess and respond to mood",
+                parameters={"observation": {"type": "str", "description": "Observed mood cues"}},
+            ),
+            Tool(
+                name="suggest_activity",
+                description="Suggest activities",
+                parameters={"preferences": {"type": "str", "description": "User preferences"}},
+            ),
+            Tool(
+                name="tell_joke",
+                description="Tell a joke",
+                parameters={"category": {"type": "str", "description": "Joke category"}},
+            ),
         ]
 
     def respond_offline(self, state: VeraState) -> str:

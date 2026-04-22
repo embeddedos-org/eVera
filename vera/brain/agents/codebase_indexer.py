@@ -23,9 +23,23 @@ logger = logging.getLogger(__name__)
 DATA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "data"
 
 GITIGNORE_DEFAULTS = {
-    "__pycache__", ".git", "node_modules", ".venv", "venv", ".env",
-    "dist", "build", ".next", ".cache", ".tox", "*.pyc", "*.pyo",
-    ".mypy_cache", ".pytest_cache", "egg-info", ".eggs",
+    "__pycache__",
+    ".git",
+    "node_modules",
+    ".venv",
+    "venv",
+    ".env",
+    "dist",
+    "build",
+    ".next",
+    ".cache",
+    ".tox",
+    "*.pyc",
+    "*.pyo",
+    ".mypy_cache",
+    ".pytest_cache",
+    "egg-info",
+    ".eggs",
 }
 
 
@@ -95,14 +109,24 @@ def _extract_definitions(filepath: Path) -> list[dict]:
 
     if suffix == ".py":
         for match in re.finditer(r"^(?:class|def|async\s+def)\s+(\w+)", content, re.MULTILINE):
-            kind = "class" if content[match.start():match.start() + 5] == "class" else "function"
-            defs.append({"name": match.group(1), "kind": kind, "line": content[:match.start()].count("\n") + 1})
+            kind = "class" if content[match.start() : match.start() + 5] == "class" else "function"
+            defs.append({"name": match.group(1), "kind": kind, "line": content[: match.start()].count("\n") + 1})
     elif suffix in (".js", ".jsx", ".ts", ".tsx"):
-        for match in re.finditer(r"(?:export\s+)?(?:default\s+)?(?:class|function|const|let|var)\s+(\w+)", content, re.MULTILINE):
-            defs.append({"name": match.group(1), "kind": "definition", "line": content[:match.start()].count("\n") + 1})
+        for match in re.finditer(
+            r"(?:export\s+)?(?:default\s+)?(?:class|function|const|let|var)\s+(\w+)", content, re.MULTILINE
+        ):
+            defs.append(
+                {"name": match.group(1), "kind": "definition", "line": content[: match.start()].count("\n") + 1}
+            )
     elif suffix in (".java", ".go", ".rs", ".cpp", ".c", ".h"):
-        for match in re.finditer(r"(?:public\s+|private\s+|protected\s+)?(?:static\s+)?(?:class|struct|fn|func|void|int|string)\s+(\w+)", content, re.MULTILINE):
-            defs.append({"name": match.group(1), "kind": "definition", "line": content[:match.start()].count("\n") + 1})
+        for match in re.finditer(
+            r"(?:public\s+|private\s+|protected\s+)?(?:static\s+)?(?:class|struct|fn|func|void|int|string)\s+(\w+)",
+            content,
+            re.MULTILINE,
+        ):
+            defs.append(
+                {"name": match.group(1), "kind": "definition", "line": content[: match.start()].count("\n") + 1}
+            )
 
     return defs
 
@@ -110,11 +134,18 @@ def _extract_definitions(filepath: Path) -> list[dict]:
 def _analyze_key_files(path: Path) -> dict:
     """Identify README, config files, and entry points."""
     key_files = {
-        "readme": None, "config": [], "entry_points": [], "package_manager": None, "tech_stack": [],
+        "readme": None,
+        "config": [],
+        "entry_points": [],
+        "package_manager": None,
+        "tech_stack": [],
     }
 
     checks = {
-        "README.md": "readme", "README.rst": "readme", "README.txt": "readme", "README": "readme",
+        "README.md": "readme",
+        "README.rst": "readme",
+        "README.txt": "readme",
+        "README": "readme",
     }
     for name, role in checks.items():
         if (path / name).exists():
@@ -122,10 +153,23 @@ def _analyze_key_files(path: Path) -> dict:
             break
 
     config_patterns = [
-        "package.json", "pyproject.toml", "setup.py", "setup.cfg", "Cargo.toml",
-        "go.mod", "pom.xml", "build.gradle", "Makefile", "CMakeLists.txt",
-        "tsconfig.json", "webpack.config.js", "vite.config.ts", ".eslintrc*",
-        "requirements.txt", "Pipfile", "poetry.lock",
+        "package.json",
+        "pyproject.toml",
+        "setup.py",
+        "setup.cfg",
+        "Cargo.toml",
+        "go.mod",
+        "pom.xml",
+        "build.gradle",
+        "Makefile",
+        "CMakeLists.txt",
+        "tsconfig.json",
+        "webpack.config.js",
+        "vite.config.ts",
+        ".eslintrc*",
+        "requirements.txt",
+        "Pipfile",
+        "poetry.lock",
     ]
     for pattern in config_patterns:
         matches = list(path.glob(pattern))
@@ -153,7 +197,17 @@ def _analyze_key_files(path: Path) -> dict:
         key_files["package_manager"] = "go modules"
         key_files["tech_stack"].append("Go")
 
-    entry_candidates = ["main.py", "app.py", "index.js", "index.ts", "main.go", "main.rs", "Main.java", "server.py", "manage.py"]
+    entry_candidates = [
+        "main.py",
+        "app.py",
+        "index.js",
+        "index.ts",
+        "main.go",
+        "main.rs",
+        "Main.java",
+        "server.py",
+        "manage.py",
+    ]
     for name in entry_candidates:
         if (path / name).exists():
             key_files["entry_points"].append(name)
@@ -177,6 +231,7 @@ class IndexProjectTool(Tool):
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         from config import settings
+
         project_path = Path(kwargs.get("project_path", settings.codebase_indexer.default_project_path)).resolve()
 
         if not project_path.is_dir():
@@ -253,24 +308,31 @@ class QueryCodebaseTool(Tool):
         except Exception as e:
             return {"status": "error", "message": f"Failed to load index: {e}"}
 
-        context = json.dumps({
-            "project": index.get("project_path", ""),
-            "key_files": index.get("key_files", {}),
-            "definitions": {k: v for k, v in list(index.get("definitions", {}).items())[:30]},
-            "file_count": index.get("file_count", 0),
-        }, indent=1)
+        context = json.dumps(
+            {
+                "project": index.get("project_path", ""),
+                "key_files": index.get("key_files", {}),
+                "definitions": {k: v for k, v in list(index.get("definitions", {}).items())[:30]},
+                "file_count": index.get("file_count", 0),
+            },
+            indent=1,
+        )
 
         try:
             from vera.providers.manager import ProviderManager
+
             provider = ProviderManager()
             result = await provider.complete(
                 messages=[
-                    {"role": "system", "content": (
-                        "You are a codebase analyst. Using the project index below, answer the user's "
-                        "question about the architecture, structure, or code organization. Be specific "
-                        "and reference actual file paths and definitions.\n\n"
-                        f"Project Index:\n{context}"
-                    )},
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are a codebase analyst. Using the project index below, answer the user's "
+                            "question about the architecture, structure, or code organization. Be specific "
+                            "and reference actual file paths and definitions.\n\n"
+                            f"Project Index:\n{context}"
+                        ),
+                    },
                     {"role": "user", "content": question},
                 ],
                 tier=ModelTier.SPECIALIST,
@@ -378,8 +440,11 @@ class FindRelatedFilesTool(Tool):
                 content = f.read_text(errors="ignore")
                 if target_stem in content or target_name in content:
                     rel = str(f.relative_to(project_path))
-                    lines = [i + 1 for i, line in enumerate(content.splitlines())
-                             if target_stem in line or target_name in line]
+                    lines = [
+                        i + 1
+                        for i, line in enumerate(content.splitlines())
+                        if target_stem in line or target_name in line
+                    ]
                     related.append({"file": rel, "reference_lines": lines[:10]})
             except Exception:
                 continue

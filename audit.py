@@ -1,4 +1,5 @@
 """Quick audit of eVera project completeness."""
+
 import ast
 import os
 import re
@@ -42,12 +43,12 @@ for root, dirs, files in os.walk("vera/brain/agents"):
     for f in files:
         if f.endswith(".py") and f != "__init__.py":
             with open(path, encoding="utf-8") as fh:
-                    tree = ast.parse(fh.read())
-                    for node in ast.walk(tree):
-                        if isinstance(node, ast.ClassDef):
-                            for base in node.bases:
-                                if isinstance(base, ast.Name) and base.id == "Tool":
-                                    tool_count += 1
+                tree = ast.parse(fh.read())
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.ClassDef):
+                        for base in node.bases:
+                            if isinstance(base, ast.Name) and base.id == "Tool":
+                                tool_count += 1
 for f in os.listdir("plugins"):
     if f.endswith(".py") and not f.startswith("_"):
         with open(os.path.join("plugins", f), encoding="utf-8") as fh:

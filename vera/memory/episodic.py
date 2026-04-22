@@ -75,7 +75,7 @@ class EpisodicMemory:
 
         # Prune old events to prevent unbounded growth
         if len(self._events) > self.MAX_EVENTS:
-            self._events = self._events[-self.MAX_EVENTS:]
+            self._events = self._events[-self.MAX_EVENTS :]
             # Rebuild FAISS index
             if self._index is not None:
                 self._rebuild_index()
@@ -90,6 +90,7 @@ class EpisodicMemory:
         """Rebuild FAISS index from current events."""
         try:
             import faiss
+
             self._index = faiss.IndexFlatL2(self._dimension)
             if self._events:
                 texts = [e.text for e in self._events]

@@ -6,9 +6,11 @@ import pytest
 
 # ── ConversationStore tests ─────────────────────────────────────
 
+
 class TestConversationStore:
     def test_save_and_load_turns(self, tmp_path):
         from vera.memory.persistence import ConversationStore
+
         store = ConversationStore(db_path=tmp_path / "conv.db")
         store.save_turn("user", "Hello!", session_id="s1")
         store.save_turn("assistant", "Hi there!", session_id="s1", agent="companion")
@@ -23,6 +25,7 @@ class TestConversationStore:
 
     def test_load_turns_order(self, tmp_path):
         from vera.memory.persistence import ConversationStore
+
         store = ConversationStore(db_path=tmp_path / "conv.db")
         for i in range(5):
             store.save_turn("user", f"Message {i}", session_id="s1")
@@ -36,6 +39,7 @@ class TestConversationStore:
 
     def test_list_sessions(self, tmp_path):
         from vera.memory.persistence import ConversationStore
+
         store = ConversationStore(db_path=tmp_path / "conv.db")
         store.save_turn("user", "A", session_id="alpha")
         store.save_turn("user", "B", session_id="beta")
@@ -49,6 +53,7 @@ class TestConversationStore:
 
     def test_delete_session(self, tmp_path):
         from vera.memory.persistence import ConversationStore
+
         store = ConversationStore(db_path=tmp_path / "conv.db")
         store.save_turn("user", "A", session_id="to_delete")
         store.save_turn("user", "B", session_id="to_keep")
@@ -61,6 +66,7 @@ class TestConversationStore:
 
     def test_prune_old_turns(self, tmp_path):
         from vera.memory.persistence import ConversationStore
+
         store = ConversationStore(db_path=tmp_path / "conv.db")
         store.save_turn("user", "Recent", session_id="s1")
 
@@ -71,12 +77,14 @@ class TestConversationStore:
 
     def test_close_works(self, tmp_path):
         from vera.memory.persistence import ConversationStore
+
         store = ConversationStore(db_path=tmp_path / "conv.db")
         store.save_turn("user", "test")
         store.close()
 
     def test_metadata_roundtrip(self, tmp_path):
         from vera.memory.persistence import ConversationStore
+
         store = ConversationStore(db_path=tmp_path / "conv.db")
         store.save_turn("user", "Hello", metadata={"intent": "greeting", "score": 0.95})
         turns = store.load_turns()
@@ -85,6 +93,7 @@ class TestConversationStore:
 
     def test_default_session_id(self, tmp_path):
         from vera.memory.persistence import ConversationStore
+
         store = ConversationStore(db_path=tmp_path / "conv.db")
         store.save_turn("user", "Hello")
         turns = store.load_turns(session_id="default")
@@ -94,9 +103,11 @@ class TestConversationStore:
 
 # ── WorkingMemory session tests ─────────────────────────────────
 
+
 class TestWorkingMemorySessions:
     def test_add_to_session(self):
         from vera.memory.working import WorkingMemory
+
         wm = WorkingMemory(max_turns=10)
         wm.add("user", "Hello", session_id="s1")
         wm.add("assistant", "Hi!", session_id="s1")
@@ -106,6 +117,7 @@ class TestWorkingMemorySessions:
 
     def test_session_trimming(self):
         from vera.memory.working import WorkingMemory
+
         wm = WorkingMemory(max_turns=3)
         for i in range(5):
             wm.add("user", f"Msg {i}", session_id="s1")
@@ -115,6 +127,7 @@ class TestWorkingMemorySessions:
 
     def test_get_recent_with_session(self):
         from vera.memory.working import WorkingMemory
+
         wm = WorkingMemory(max_turns=10)
         for i in range(5):
             wm.add("user", f"Msg {i}", session_id="s1")
@@ -125,6 +138,7 @@ class TestWorkingMemorySessions:
 
     def test_clear_session_only(self):
         from vera.memory.working import WorkingMemory
+
         wm = WorkingMemory(max_turns=10)
         wm.add("user", "A", session_id="s1")
         wm.add("user", "B", session_id="s2")
@@ -134,6 +148,7 @@ class TestWorkingMemorySessions:
 
     def test_remove_session(self):
         from vera.memory.working import WorkingMemory
+
         wm = WorkingMemory(max_turns=10)
         wm.add("user", "A", session_id="s1")
         wm.add("user", "B", session_id="s2")
@@ -142,6 +157,7 @@ class TestWorkingMemorySessions:
 
     def test_session_count_property(self):
         from vera.memory.working import WorkingMemory
+
         wm = WorkingMemory(max_turns=10)
         assert wm.session_count == 0
         wm.add("user", "A", session_id="s1")
@@ -150,6 +166,7 @@ class TestWorkingMemorySessions:
 
     def test_turn_count_property(self):
         from vera.memory.working import WorkingMemory
+
         wm = WorkingMemory(max_turns=10)
         assert wm.turn_count == 0
         wm.add("user", "A")
@@ -158,6 +175,7 @@ class TestWorkingMemorySessions:
 
     def test_get_last_agent_with_session(self):
         from vera.memory.working import WorkingMemory
+
         wm = WorkingMemory(max_turns=10)
         wm.add("user", "hello", session_id="s1")
         wm.add("assistant", "hi", agent="companion", session_id="s1")
@@ -166,6 +184,7 @@ class TestWorkingMemorySessions:
 
     def test_clear_all_sessions(self):
         from vera.memory.working import WorkingMemory
+
         wm = WorkingMemory(max_turns=10)
         wm.add("user", "A", session_id="s1")
         wm.add("user", "B", session_id="s2")

@@ -70,25 +70,34 @@ class StartWorkOnTicketTool(Tool):
 
         # 1. Fetch ticket details from Jira
         from vera.brain.agents.jira_agent import GetTicketTool
+
         ticket_tool = GetTicketTool()
         ticket_result = await ticket_tool.execute(ticket_id=ticket_id)
 
         if ticket_result.get("status") != "success":
-            return {"status": "error", "message": f"Failed to fetch ticket: {ticket_result.get('message', 'unknown error')}"}
+            return {
+                "status": "error",
+                "message": f"Failed to fetch ticket: {ticket_result.get('message', 'unknown error')}",
+            }
 
         ticket = ticket_result.get("ticket", {})
 
         # 2. Create feature branch
         branch_name = f"feature/{ticket_id.lower()}"
         from vera.brain.agents.git_agent import GitBranchTool
+
         branch_tool = GitBranchTool()
         branch_result = await branch_tool.execute(action="create", name=branch_name, repo_path=repo_path)
 
         if branch_result.get("status") != "success":
-            return {"status": "error", "message": f"Failed to create branch: {branch_result.get('error', branch_result.get('message', ''))}"}
+            return {
+                "status": "error",
+                "message": f"Failed to create branch: {branch_result.get('error', branch_result.get('message', ''))}",
+            }
 
         # 3. Update Jira status to "In Progress"
         from vera.brain.agents.jira_agent import UpdateTicketStatusTool
+
         status_tool = UpdateTicketStatusTool()
         await status_tool.execute(ticket_id=ticket_id, status="In Progress")
 
@@ -139,6 +148,7 @@ class CheckWorkStatusTool(Tool):
 
         # Get git status for the repo
         from vera.brain.agents.git_agent import GitStatusTool
+
         git_status = await GitStatusTool().execute(repo_path=item.get("repo_path", "."))
 
         return {
@@ -182,6 +192,7 @@ class CompleteWorkItemTool(Tool):
 
         # 1. Check for changes
         from vera.brain.agents.git_agent import GitCommitTool, GitCreatePRTool, GitPushTool, GitStatusTool
+
         status_result = await GitStatusTool().execute(repo_path=repo)
         if status_result.get("status") == "success" and not status_result.get("output", "").strip():
             return {"status": "error", "message": "No changes to commit. Make code changes first."}
@@ -203,13 +214,18 @@ class CompleteWorkItemTool(Tool):
         reviewers = kwargs.get("reviewers", "")
 
         pr_result = await GitCreatePRTool().execute(
-            title=pr_title, body=pr_body, head_branch=branch, reviewers=reviewers, repo_path=repo,
+            title=pr_title,
+            body=pr_body,
+            head_branch=branch,
+            reviewers=reviewers,
+            repo_path=repo,
         )
 
         pr_url = pr_result.get("pr_url", "")
 
         # 5. Update Jira — move to "In Review"
         from vera.brain.agents.jira_agent import AddCommentTool, UpdateTicketStatusTool
+
         await UpdateTicketStatusTool().execute(ticket_id=ticket_id, status="In Review")
 
         # 6. Add PR link as Jira comment

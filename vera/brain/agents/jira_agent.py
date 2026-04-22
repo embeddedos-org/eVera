@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 def _get_jira_settings():
     from config import settings
+
     return settings.jira
 
 
@@ -48,6 +49,7 @@ async def _jira_request(method: str, endpoint: str, **kwargs) -> dict[str, Any]:
 
     try:
         import httpx
+
         async with httpx.AsyncClient(timeout=30) as client:
             response = await client.request(method, url, headers=headers, **kwargs)
             if response.status_code >= 400:
@@ -139,7 +141,9 @@ class ListSprintTicketsTool(Tool):
         if not board_id:
             return {"status": "error", "message": "board_id is required — set VERA_JIRA_BOARD_ID or pass it directly"}
 
-        sprints_result = await _jira_request("GET", f"/rest/agile/1.0/board/{board_id}/sprint", params={"state": "active"})
+        sprints_result = await _jira_request(
+            "GET", f"/rest/agile/1.0/board/{board_id}/sprint", params={"state": "active"}
+        )
         if sprints_result["status"] != "success":
             return sprints_result
 
@@ -151,7 +155,9 @@ class ListSprintTicketsTool(Tool):
         sprint_name = sprints[0].get("name", "")
 
         issues_result = await _jira_request(
-            "GET", f"/rest/agile/1.0/sprint/{sprint_id}/issue", params={"maxResults": 50},
+            "GET",
+            f"/rest/agile/1.0/sprint/{sprint_id}/issue",
+            params={"maxResults": 50},
         )
         if issues_result["status"] != "success":
             return issues_result
@@ -174,7 +180,10 @@ class CreateTicketTool(Tool):
                 "summary": {"type": "str", "description": "Ticket title/summary"},
                 "description": {"type": "str", "description": "Ticket description"},
                 "type": {"type": "str", "description": "Issue type: Task, Bug, Story, Epic (default: Task)"},
-                "priority": {"type": "str", "description": "Priority: Highest, High, Medium, Low, Lowest (default: Medium)"},
+                "priority": {
+                    "type": "str",
+                    "description": "Priority: Highest, High, Medium, Low, Lowest (default: Medium)",
+                },
                 "project_key": {"type": "str", "description": "Project key (uses default if not set)"},
             },
         )
@@ -196,7 +205,9 @@ class CreateTicketTool(Tool):
                 "description": {
                     "type": "doc",
                     "version": 1,
-                    "content": [{"type": "paragraph", "content": [{"type": "text", "text": kwargs.get("description", "")}]}],
+                    "content": [
+                        {"type": "paragraph", "content": [{"type": "text", "text": kwargs.get("description", "")}]}
+                    ],
                 },
                 "issuetype": {"name": kwargs.get("type", "Task")},
                 "priority": {"name": kwargs.get("priority", "Medium")},
@@ -244,7 +255,8 @@ class UpdateTicketStatusTool(Tool):
             return {"status": "error", "message": f"Status '{target_status}' not available. Options: {available}"}
 
         result = await _jira_request(
-            "POST", f"/rest/api/3/issue/{ticket_id}/transitions",
+            "POST",
+            f"/rest/api/3/issue/{ticket_id}/transitions",
             json={"transition": {"id": target["id"]}},
         )
         if result["status"] != "success":
@@ -298,7 +310,11 @@ class SearchTicketsTool(Tool):
         if not query:
             return {"status": "error", "message": "query is required"}
 
-        jql = query if any(kw in query.lower() for kw in ["=", "and", "or", "order by"]) else f'text ~ "{query}" ORDER BY updated DESC'
+        jql = (
+            query
+            if any(kw in query.lower() for kw in ["=", "and", "or", "order by"])
+            else f'text ~ "{query}" ORDER BY updated DESC'
+        )
 
         result = await _jira_request("GET", "/rest/api/3/search", params={"jql": jql, "maxResults": 15})
         if result["status"] != "success":

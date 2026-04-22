@@ -25,17 +25,24 @@ class WorkingMemory:
         self._max_turns = max_turns
         self._sessions: dict[str, list[Turn]] = {}
 
-    def add(self, role: str, content: str, agent: str | None = None, metadata: dict | None = None, session_id: str | None = None) -> None:
+    def add(
+        self,
+        role: str,
+        content: str,
+        agent: str | None = None,
+        metadata: dict | None = None,
+        session_id: str | None = None,
+    ) -> None:
         turn = Turn(role=role, content=content, agent=agent, metadata=metadata)
         if session_id:
             if session_id not in self._sessions:
                 self._sessions[session_id] = []
             self._sessions[session_id].append(turn)
             if len(self._sessions[session_id]) > self._max_turns:
-                self._sessions[session_id] = self._sessions[session_id][-self._max_turns:]
+                self._sessions[session_id] = self._sessions[session_id][-self._max_turns :]
         self._turns.append(turn)
         if len(self._turns) > self._max_turns:
-            self._turns = self._turns[-self._max_turns:]
+            self._turns = self._turns[-self._max_turns :]
 
     def get_context(self, session_id: str | None = None) -> list[dict[str, str]]:
         """Return conversation history in LLM message format."""

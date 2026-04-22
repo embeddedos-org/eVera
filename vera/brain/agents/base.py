@@ -85,7 +85,7 @@ TOOL_CALL_PATTERN = re.compile(r"\[TOOL:\s*(\w+)\(([^)]*)\)\]", re.IGNORECASE)
 TOOL_CALL_INSTRUCTIONS = (
     "\n\nTOOL USAGE FALLBACK:\n"
     "If function calling is not available, call tools using this format:\n"
-    "[TOOL: tool_name(param1=\"value1\", param2=\"value2\")]\n"
+    '[TOOL: tool_name(param1="value1", param2="value2")]\n'
 )
 
 MAX_TOOL_LOOPS = 5
@@ -198,6 +198,7 @@ class BaseAgent(abc.ABC):
     async def _broadcast_status(self, status: str, **kwargs: Any) -> None:
         """Broadcast agent status to the global agent status stream."""
         from vera.events.bus import _agent_status_queue
+
         event = {"agent": self.name, "status": status, **kwargs}
         try:
             _agent_status_queue.put_nowait(event)
@@ -234,7 +235,9 @@ class BaseAgent(abc.ABC):
             for loop_idx in range(MAX_TOOL_LOOPS):
                 progress = loop_idx / MAX_TOOL_LOOPS
                 result = await provider.complete(
-                    messages=messages, tier=self.tier, tools=tools_schema,
+                    messages=messages,
+                    tier=self.tier,
+                    tools=tools_schema,
                 )
 
                 # --- Native function calling path ---
@@ -242,7 +245,9 @@ class BaseAgent(abc.ABC):
                     tool_outputs = []
                     for tc in result.tool_calls:
                         await self._broadcast_status(
-                            "working", tool=tc.name, args=tc.arguments,
+                            "working",
+                            tool=tc.name,
+                            args=tc.arguments,
                             progress=progress + 0.1,
                         )
                         tool = self.get_tool(tc.name)
@@ -256,11 +261,13 @@ class BaseAgent(abc.ABC):
                                 tool_result = {"error": str(e)}
 
                         all_tool_results.append({"tool": tc.name, "result": tool_result})
-                        tool_outputs.append({
-                            "role": "tool",
-                            "tool_call_id": tc.id,
-                            "content": json.dumps(tool_result, default=str),
-                        })
+                        tool_outputs.append(
+                            {
+                                "role": "tool",
+                                "tool_call_id": tc.id,
+                                "content": json.dumps(tool_result, default=str),
+                            }
+                        )
 
                     # Add assistant message with tool calls for context
                     if result.content:
@@ -278,7 +285,9 @@ class BaseAgent(abc.ABC):
                     for tool_name, raw_args in regex_calls:
                         parsed_args = self._parse_tool_args(raw_args)
                         await self._broadcast_status(
-                            "working", tool=tool_name, args=parsed_args,
+                            "working",
+                            tool=tool_name,
+                            args=parsed_args,
                             progress=progress + 0.1,
                         )
                         tool = self.get_tool(tool_name)
@@ -292,9 +301,7 @@ class BaseAgent(abc.ABC):
                                 tool_result = {"error": str(e)}
 
                         all_tool_results.append({"tool": tool_name, "result": tool_result})
-                        tool_output_parts.append(
-                            f"[TOOL_RESULT: {tool_name}] {json.dumps(tool_result, default=str)}"
-                        )
+                        tool_output_parts.append(f"[TOOL_RESULT: {tool_name}] {json.dumps(tool_result, default=str)}")
 
                     clean_response = TOOL_CALL_PATTERN.sub("", response_text).strip()
                     if clean_response:
@@ -316,11 +323,15 @@ class BaseAgent(abc.ABC):
                 state["metadata"]["tool_calls"] = len(all_tool_results)
 
                 await self._broadcast_status(
-                    "done", result=response_text[:100], progress=1,
+                    "done",
+                    result=response_text[:100],
+                    progress=1,
                 )
                 break
             else:
-                state["agent_response"] = "I tried several tools but couldn't complete the task. Can you try rephrasing? 🤔"
+                state["agent_response"] = (
+                    "I tried several tools but couldn't complete the task. Can you try rephrasing? 🤔"
+                )
                 state["mood"] = "thinking"
                 await self._broadcast_status("done", progress=1)
 

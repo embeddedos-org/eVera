@@ -13,6 +13,7 @@ from vera.safety.policy import PolicyAction, PolicyDecision
 def operator_agent():
     """Create an OperatorAgent instance."""
     from vera.brain.agents.operator import OperatorAgent
+
     return OperatorAgent()
 
 

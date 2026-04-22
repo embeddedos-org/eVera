@@ -75,10 +75,7 @@ async def summarize_code(
             {
                 "role": "user",
                 "content": (
-                    f"File: {file_path}\n"
-                    f"Symbols: {defs_text}\n"
-                    f"Complexity: {complexity}\n\n"
-                    f"```\n{content[:6000]}\n```"
+                    f"File: {file_path}\nSymbols: {defs_text}\nComplexity: {complexity}\n\n```\n{content[:6000]}\n```"
                 ),
             },
         ],
@@ -87,6 +84,7 @@ async def summarize_code(
 
     try:
         import json
+
         data = json.loads(result.content)
     except Exception:
         data = {"summary": result.content.strip(), "key_concepts": []}
@@ -128,6 +126,7 @@ async def explain_code(
 
     try:
         import json
+
         data = json.loads(result.content)
     except Exception:
         data = {"steps": [result.content.strip()], "key_line": {"number": 1, "explanation": ""}}
@@ -156,7 +155,7 @@ async def find_issues(
                     "security issues, and improvements. Return JSON with key: issues (array of objects "
                     "with keys: line (int), severity ('low'|'medium'|'high'|'critical'), "
                     "description (string), suggestion (string)). "
-                    "If no issues found, return {\"issues\": []}. "
+                    'If no issues found, return {"issues": []}. '
                     "Only output valid JSON, no markdown fences."
                 ),
             },
@@ -170,6 +169,7 @@ async def find_issues(
 
     try:
         import json
+
         data = json.loads(result.content)
     except Exception:
         data = {"issues": []}

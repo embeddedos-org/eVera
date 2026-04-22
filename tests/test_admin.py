@@ -13,6 +13,7 @@ import pytest
 @pytest.fixture(autouse=True)
 def _reset_admin():
     from config import settings
+
     original = settings.safety.admin_enabled
     yield
     settings.safety.admin_enabled = original
@@ -22,8 +23,10 @@ class TestElevatedScriptTool:
     @pytest.mark.asyncio
     async def test_disabled_by_default(self):
         from config import settings
+
         settings.safety.admin_enabled = False
         from vera.brain.agents.operator import ElevatedScriptTool
+
         tool = ElevatedScriptTool()
         result = await tool.execute(command="whoami")
         assert result["status"] == "denied"
@@ -32,8 +35,10 @@ class TestElevatedScriptTool:
     @pytest.mark.asyncio
     async def test_hard_block(self):
         from config import settings
+
         settings.safety.admin_enabled = True
         from vera.brain.agents.operator import ElevatedScriptTool
+
         tool = ElevatedScriptTool()
         result = await tool.execute(command="rm -rf /")
         assert result["status"] == "denied"
@@ -42,9 +47,11 @@ class TestElevatedScriptTool:
     @pytest.mark.asyncio
     async def test_whitelist_rejection(self):
         from config import settings
+
         settings.safety.admin_enabled = True
         settings.safety.admin_allowed_commands = ["apt install *"]
         from vera.brain.agents.operator import ElevatedScriptTool
+
         tool = ElevatedScriptTool()
         result = await tool.execute(command="systemctl restart nginx")
         assert result["status"] == "denied"
@@ -53,6 +60,7 @@ class TestElevatedScriptTool:
     @pytest.mark.asyncio
     async def test_whitelist_match(self):
         from config import settings
+
         settings.safety.admin_enabled = True
         settings.safety.admin_allowed_commands = ["whoami"]
 
@@ -60,6 +68,7 @@ class TestElevatedScriptTool:
             settings.safety.admin_audit_log = f.name
 
         from vera.brain.agents.operator import ElevatedScriptTool
+
         tool = ElevatedScriptTool()
 
         with patch("subprocess.run") as mock_run:
@@ -76,8 +85,10 @@ class TestElevatedScriptTool:
     @pytest.mark.asyncio
     async def test_empty_command(self):
         from config import settings
+
         settings.safety.admin_enabled = True
         from vera.brain.agents.operator import ElevatedScriptTool
+
         tool = ElevatedScriptTool()
         result = await tool.execute(command="")
         assert result["status"] == "error"

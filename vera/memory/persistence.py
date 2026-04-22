@@ -88,9 +88,7 @@ class ConversationStore:
         )
         self._conn.commit()
 
-    def load_turns(
-        self, session_id: str = "default", limit: int = 20
-    ) -> list[dict]:
+    def load_turns(self, session_id: str = "default", limit: int = 20) -> list[dict]:
         """Load recent turns for a session.
 
         @param session_id: Session identifier.
@@ -106,20 +104,20 @@ class ConversationStore:
         turns = []
         for row in reversed(rows):
             meta = json.loads(row["metadata"]) if row["metadata"] else None
-            turns.append({
-                "role": row["role"],
-                "content": row["content"],
-                "agent": row["agent"],
-                "metadata": meta,
-                "timestamp": row["timestamp"],
-            })
+            turns.append(
+                {
+                    "role": row["role"],
+                    "content": row["content"],
+                    "agent": row["agent"],
+                    "metadata": meta,
+                    "timestamp": row["timestamp"],
+                }
+            )
         return turns
 
     def list_sessions(self) -> list[str]:
         """List all session IDs with conversations."""
-        cursor = self._conn.execute(
-            "SELECT DISTINCT session_id FROM turns ORDER BY session_id"
-        )
+        cursor = self._conn.execute("SELECT DISTINCT session_id FROM turns ORDER BY session_id")
         return [row["session_id"] for row in cursor.fetchall()]
 
     def delete_session(self, session_id: str) -> int:
@@ -128,9 +126,7 @@ class ConversationStore:
         @param session_id: Session to delete.
         @return Number of turns deleted.
         """
-        cursor = self._conn.execute(
-            "DELETE FROM turns WHERE session_id = ?", (session_id,)
-        )
+        cursor = self._conn.execute("DELETE FROM turns WHERE session_id = ?", (session_id,))
         self._conn.commit()
         return cursor.rowcount
 
@@ -141,9 +137,7 @@ class ConversationStore:
         @return Number of turns pruned.
         """
         cutoff = time.time() - (max_age_days * 86400)
-        cursor = self._conn.execute(
-            "DELETE FROM turns WHERE timestamp < ?", (cutoff,)
-        )
+        cursor = self._conn.execute("DELETE FROM turns WHERE timestamp < ?", (cutoff,))
         self._conn.commit()
         return cursor.rowcount
 

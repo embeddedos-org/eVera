@@ -47,12 +47,14 @@ $bitmap.Dispose()
 """
                 subprocess.run(
                     ["powershell", "-Command", ps_script],
-                    capture_output=True, timeout=10,
+                    capture_output=True,
+                    timeout=10,
                 )
             elif SYSTEM == "Darwin":
                 subprocess.run(
                     ["screencapture", "-x", str(screenshot_path)],
-                    capture_output=True, timeout=10,
+                    capture_output=True,
+                    timeout=10,
                 )
             else:
                 # Linux — try multiple tools
@@ -186,6 +188,7 @@ class OCRScreenTool(Tool):
 # ---------------------------------------------------------------------------
 # VisionMonitor — periodic screen capture + analysis loop
 # ---------------------------------------------------------------------------
+
 
 class VisionMonitor:
     """Async background loop that periodically captures the screen, hashes the

@@ -36,6 +36,7 @@ def mock_brain():
 @pytest.fixture
 def app(mock_brain):
     from vera.app import create_app
+
     return create_app(mock_brain)
 
 

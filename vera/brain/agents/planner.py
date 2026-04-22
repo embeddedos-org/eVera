@@ -115,11 +115,13 @@ class PriorityScoreTool(Tool):
 
         scored = []
         for i, task in enumerate(task_list):
-            scored.append({
-                "rank": i + 1,
-                "task": task,
-                "note": "Priority scoring requires LLM — pass this to the LLM for Eisenhower matrix analysis",
-            })
+            scored.append(
+                {
+                    "rank": i + 1,
+                    "task": task,
+                    "note": "Priority scoring requires LLM — pass this to the LLM for Eisenhower matrix analysis",
+                }
+            )
 
         return {
             "status": "success",
@@ -320,7 +322,10 @@ class CheckGoalsTool(Tool):
             name="check_goals",
             description="View active goals and their progress (completed sub-tasks, % done)",
             parameters={
-                "status_filter": {"type": "str", "description": "Filter by status: active, completed, all. Default: active"},
+                "status_filter": {
+                    "type": "str",
+                    "description": "Filter by status: active, completed, all. Default: active",
+                },
             },
         )
 

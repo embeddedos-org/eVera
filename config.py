@@ -31,6 +31,7 @@ class LLMSettings(BaseSettings):
     @param gemini_model: Default Gemini model identifier.
     @param fallback_order: Provider priority list for automatic fallback.
     """
+
     ollama_url: str = Field("http://localhost:11434", description="Ollama API URL")
     ollama_model: str = Field("llama3.2", description="Default Ollama model")
     openai_api_key: str | None = Field(None, description="OpenAI API key")
@@ -60,6 +61,7 @@ class VoiceSettings(BaseSettings):
     @param sample_rate: Audio sample rate in Hz.
     @param chunk_duration_ms: Audio chunk size for VAD processing.
     """
+
     stt_model: str = Field("small", description="faster-whisper model size")
     stt_device: str = Field("cpu", description="STT compute device")
     stt_compute_type: str = Field("int8", description="STT quantization")
@@ -81,6 +83,7 @@ class VoiceSettings(BaseSettings):
 
 class VisionSettings(BaseSettings):
     """Real-time screen vision monitoring configuration."""
+
     monitor_enabled: bool = Field(False, description="Enable periodic screen monitoring")
     monitor_interval_s: int = Field(10, description="Seconds between screen captures")
     monitor_model: str = Field("gpt-4o", description="Vision LLM model to use")
@@ -94,6 +97,7 @@ class VisionSettings(BaseSettings):
 
 class MobileSettings(BaseSettings):
     """Mobile device control configuration."""
+
     control_enabled: bool = Field(False, description="Enable mobile device control via WebSocket")
     control_commands: list[str] = Field(
         default=["notification", "clipboard", "open_app", "set_alarm", "toggle_setting", "device_info"],
@@ -106,6 +110,7 @@ class MobileSettings(BaseSettings):
 
 class JobHunterSettings(BaseSettings):
     """Autonomous job searching and application configuration."""
+
     enabled: bool = Field(False, description="Master toggle for job hunter agent")
     auto_apply: bool = Field(True, description="Fully automatic mode (vs. review-first)")
     scan_interval_minutes: int = Field(120, description="Minutes between automatic job scans")
@@ -134,30 +139,15 @@ class MemorySettings(BaseSettings):
     @param secure_vault_path: Encrypted vault file path.
     @param working_memory_max_turns: Max conversation turns to retain.
     """
-    faiss_index_path: Path = Field(
-        Path("data/faiss_index"), description="FAISS index storage path"
-    )
-    embedding_model: str = Field(
-        "all-MiniLM-L6-v2", description="Sentence-transformers model"
-    )
-    semantic_store_path: Path = Field(
-        Path("data/semantic.json"), description="Semantic memory JSON path"
-    )
-    secure_vault_path: Path = Field(
-        Path("data/vault.enc"), description="Encrypted vault file path"
-    )
-    working_memory_max_turns: int = Field(
-        20, description="Max conversation turns in working memory"
-    )
-    fact_extraction_enabled: bool = Field(
-        True, description="Enable LLM-powered fact extraction from conversations"
-    )
-    fact_extraction_tier: str = Field(
-        "EXECUTOR", description="ModelTier for fact extraction LLM calls"
-    )
-    fact_extraction_min_words: int = Field(
-        5, description="Minimum transcript word count to trigger fact extraction"
-    )
+
+    faiss_index_path: Path = Field(Path("data/faiss_index"), description="FAISS index storage path")
+    embedding_model: str = Field("all-MiniLM-L6-v2", description="Sentence-transformers model")
+    semantic_store_path: Path = Field(Path("data/semantic.json"), description="Semantic memory JSON path")
+    secure_vault_path: Path = Field(Path("data/vault.enc"), description="Encrypted vault file path")
+    working_memory_max_turns: int = Field(20, description="Max conversation turns in working memory")
+    fact_extraction_enabled: bool = Field(True, description="Enable LLM-powered fact extraction from conversations")
+    fact_extraction_tier: str = Field("EXECUTOR", description="ModelTier for fact extraction LLM calls")
+    fact_extraction_min_words: int = Field(5, description="Minimum transcript word count to trigger fact extraction")
 
     model_config = {"env_prefix": "VERA_MEMORY_"}
 
@@ -173,6 +163,7 @@ class SafetySettings(BaseSettings):
     @param confirm_actions: Actions requiring explicit user approval.
     @param denied_actions: Actions that are always blocked.
     """
+
     allowed_actions: list[str] = Field(
         default=["chat", "check_mood", "suggest_activity", "tell_joke", "get_time"],
         description="Actions that need no confirmation",
@@ -186,19 +177,24 @@ class SafetySettings(BaseSettings):
         description="Actions that are always blocked",
     )
     coder_unsafe_paths: bool = Field(
-        False, description="Skip BLOCKED_PATHS check in Coder agent (still logs warnings)",
+        False,
+        description="Skip BLOCKED_PATHS check in Coder agent (still logs warnings)",
     )
     coder_allowed_extra_paths: list[str] = Field(
-        default=[], description="Additional root paths the Coder agent may access",
+        default=[],
+        description="Additional root paths the Coder agent may access",
     )
     admin_enabled: bool = Field(
-        False, description="Enable elevated/admin command execution",
+        False,
+        description="Enable elevated/admin command execution",
     )
     admin_allowed_commands: list[str] = Field(
-        default=[], description="fnmatch patterns for allowed admin commands",
+        default=[],
+        description="fnmatch patterns for allowed admin commands",
     )
     admin_audit_log: str = Field(
-        "data/admin_audit.log", description="Path for admin command audit log",
+        "data/admin_audit.log",
+        description="Path for admin command audit log",
     )
 
     model_config = {"env_prefix": "VERA_SAFETY_"}
@@ -215,6 +211,7 @@ class ServerSettings(BaseSettings):
     @param api_key: Bearer token for API authentication (empty = disabled).
     @param webhook_secret: Shared secret for TradingView webhook verification.
     """
+
     host: str = Field(
         "127.0.0.1",
         description="Server bind host (127.0.0.1 for local, 0.0.0.0 for network)",
@@ -225,10 +222,12 @@ class ServerSettings(BaseSettings):
         description="CORS allowed origins",
     )
     api_key: str = Field(
-        "", description="API key for authenticating requests (empty = no auth)",
+        "",
+        description="API key for authenticating requests (empty = no auth)",
     )
     webhook_secret: str = Field(
-        "", description="Shared secret for TradingView webhook verification",
+        "",
+        description="Shared secret for TradingView webhook verification",
     )
 
     model_config = {"env_prefix": "VERA_SERVER_"}
@@ -236,6 +235,7 @@ class ServerSettings(BaseSettings):
 
 class PlannerSettings(BaseSettings):
     """Planner agent configuration — daily/weekly/monthly planning cycles."""
+
     enabled: bool = Field(True, description="Enable planner agent")
     morning_plan_time: str = Field("08:00", description="Time to generate morning plan (HH:MM)")
     daily_review_time: str = Field("18:00", description="Time to prompt daily review (HH:MM)")
@@ -247,6 +247,7 @@ class PlannerSettings(BaseSettings):
 
 class WellnessSettings(BaseSettings):
     """Wellness agent configuration — focus sessions, breaks, burnout prevention."""
+
     enabled: bool = Field(True, description="Enable wellness agent")
     focus_duration_min: int = Field(25, description="Default pomodoro/focus duration in minutes")
     break_duration_min: int = Field(5, description="Default break duration in minutes")
@@ -259,6 +260,7 @@ class WellnessSettings(BaseSettings):
 
 class EmotionalSettings(BaseSettings):
     """Emotional intelligence configuration — sentiment analysis and mood tracking."""
+
     enabled: bool = Field(True, description="Master toggle for emotional intelligence")
     sentiment_method: str = Field("hybrid", description="Sentiment method: keyword, llm, or hybrid")
     sentiment_tier: str = Field("EXECUTOR", description="ModelTier for LLM sentiment calls")
@@ -272,6 +274,7 @@ class EmotionalSettings(BaseSettings):
 
 class DigestSettings(BaseSettings):
     """Digest agent configuration — RSS feeds, news digests, information filtering."""
+
     enabled: bool = Field(True, description="Enable digest agent")
     digest_time: str = Field("07:30", description="Time to generate daily digest (HH:MM)")
     max_items_per_source: int = Field(5, description="Maximum items to fetch per source")
@@ -282,6 +285,7 @@ class DigestSettings(BaseSettings):
 
 class JiraSettings(BaseSettings):
     """Jira/ticket system integration configuration."""
+
     enabled: bool = Field(False, description="Enable Jira integration")
     base_url: str = Field("", description="Jira Cloud base URL (e.g. https://myorg.atlassian.net)")
     api_token: str = Field("", description="Jira API token")
@@ -296,6 +300,7 @@ class JiraSettings(BaseSettings):
 
 class ChannelMonitorSettings(BaseSettings):
     """Slack/Teams channel monitoring configuration."""
+
     enabled: bool = Field(False, description="Enable channel monitoring")
     channels: list[str] = Field(default=[], description="Channel IDs to monitor")
     poll_interval_min: int = Field(5, description="Minutes between channel polls")
@@ -307,6 +312,7 @@ class ChannelMonitorSettings(BaseSettings):
 
 class CodebaseIndexerSettings(BaseSettings):
     """Codebase indexing and analysis configuration."""
+
     enabled: bool = Field(True, description="Enable codebase indexer agent")
     default_project_path: str = Field(".", description="Default project path to index")
     max_files: int = Field(500, description="Maximum files to index per project")
@@ -320,6 +326,7 @@ class CodebaseIndexerSettings(BaseSettings):
 
 class MeetingSettings(BaseSettings):
     """Meeting notes processing configuration."""
+
     enabled: bool = Field(True, description="Enable meeting agent")
     auto_create_tickets: bool = Field(False, description="Auto-create Jira tickets from action items")
     auto_create_todos: bool = Field(True, description="Auto-create todos from action items")
@@ -341,6 +348,7 @@ class Settings(BaseSettings):
     @param debug: Enable verbose debug logging.
     @param data_dir: Root directory for persistent data storage.
     """
+
     llm: LLMSettings = Field(default_factory=LLMSettings)
     voice: VoiceSettings = Field(default_factory=VoiceSettings)
     vision: VisionSettings = Field(default_factory=VisionSettings)

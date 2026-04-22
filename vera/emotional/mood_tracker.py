@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MoodEntry:
     """A single mood observation."""
+
     timestamp: str
     mood: str
     confidence: float
@@ -51,18 +52,12 @@ class MoodTracker:
     def recent(self, hours: int = 24) -> list[MoodEntry]:
         """Get mood entries within the last N hours."""
         cutoff = datetime.now() - timedelta(hours=hours)
-        return [
-            e for e in self._entries
-            if datetime.fromisoformat(e.timestamp) >= cutoff
-        ]
+        return [e for e in self._entries if datetime.fromisoformat(e.timestamp) >= cutoff]
 
     def history(self, days: int = 14) -> list[MoodEntry]:
         """Get mood entries within the last N days."""
         cutoff = datetime.now() - timedelta(days=days)
-        return [
-            e for e in self._entries
-            if datetime.fromisoformat(e.timestamp) >= cutoff
-        ]
+        return [e for e in self._entries if datetime.fromisoformat(e.timestamp) >= cutoff]
 
     def _load(self) -> None:
         """Load mood history from disk."""
@@ -81,8 +76,6 @@ class MoodTracker:
         """Persist mood history to disk."""
         try:
             self._path.parent.mkdir(parents=True, exist_ok=True)
-            self._path.write_text(
-                json.dumps([asdict(e) for e in self._entries], indent=2, default=str)
-            )
+            self._path.write_text(json.dumps([asdict(e) for e in self._entries], indent=2, default=str))
         except OSError as e:
             logger.warning("Failed to save mood history: %s", e)

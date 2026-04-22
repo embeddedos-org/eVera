@@ -40,6 +40,7 @@ def _ensure_playwright() -> bool:
 
     try:
         import playwright  # noqa: F401
+
         _playwright_ready = True
         return True
     except ImportError:
@@ -51,11 +52,15 @@ def _ensure_playwright() -> bool:
     try:
         subprocess.check_call(
             [sys.executable, "-m", "pip", "install", "playwright"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=120,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=120,
         )
         subprocess.check_call(
             [sys.executable, "-m", "playwright", "install", "chromium"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=180,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=180,
         )
         _playwright_ready = True
         logger.info("Playwright + Chromium installed successfully")
@@ -128,6 +133,7 @@ async def _save_cookies():
 
 # --- Tool implementations ---
 
+
 class NavigateTool(Tool):
     """Navigate to a URL."""
 
@@ -137,7 +143,10 @@ class NavigateTool(Tool):
             description="Navigate the browser to a URL",
             parameters={
                 "url": {"type": "str", "description": "URL to navigate to (e.g. https://google.com)"},
-                "wait_for": {"type": "str", "description": "Wait condition: load, domcontentloaded, networkidle (default: load)"},
+                "wait_for": {
+                    "type": "str",
+                    "description": "Wait condition: load, domcontentloaded, networkidle (default: load)",
+                },
             },
         )
 
@@ -354,7 +363,9 @@ class AnalyzePageTool(Tool):
         self._screenshot = PageScreenshotTool()
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
-        question = kwargs.get("question", "Describe the page layout and main content. List all clickable buttons and links.")
+        question = kwargs.get(
+            "question", "Describe the page layout and main content. List all clickable buttons and links."
+        )
 
         shot_result = await self._screenshot.execute(full_page=False)
         if shot_result.get("status") != "success":
@@ -377,13 +388,15 @@ class AnalyzePageTool(Tool):
             if not models:
                 return {"status": "error", "message": "No vision LLM configured"}
 
-            messages = [{
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": question},
-                    {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
-                ],
-            }]
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": question},
+                        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
+                    ],
+                }
+            ]
 
             for model in models:
                 try:
@@ -410,7 +423,10 @@ class GetPageElementsTool(Tool):
             name="get_page_elements",
             description="List all interactive elements (links, buttons, inputs) on the page",
             parameters={
-                "element_type": {"type": "str", "description": "Type to list: all, links, buttons, inputs (default: all)"},
+                "element_type": {
+                    "type": "str",
+                    "description": "Type to list: all, links, buttons, inputs (default: all)",
+                },
             },
         )
 
@@ -425,14 +441,14 @@ class GetPageElementsTool(Tool):
             if element_type in ("all", "links"):
                 links = await page.eval_on_selector_all(
                     "a[href]",
-                    "els => els.slice(0, 30).map(el => ({type: 'link', text: el.innerText.trim().substring(0, 80), href: el.href}))"
+                    "els => els.slice(0, 30).map(el => ({type: 'link', text: el.innerText.trim().substring(0, 80), href: el.href}))",
                 )
                 elements.extend(links)
 
             if element_type in ("all", "buttons"):
                 buttons = await page.eval_on_selector_all(
                     "button, [role='button'], input[type='submit']",
-                    "els => els.slice(0, 20).map(el => ({type: 'button', text: (el.innerText || el.value || el.ariaLabel || '').trim().substring(0, 80)}))"
+                    "els => els.slice(0, 20).map(el => ({type: 'button', text: (el.innerText || el.value || el.ariaLabel || '').trim().substring(0, 80)}))",
                 )
                 elements.extend(buttons)
 
@@ -446,7 +462,7 @@ class GetPageElementsTool(Tool):
                         placeholder: el.placeholder || '',
                         label: el.ariaLabel || '',
                         value: el.value ? el.value.substring(0, 50) : ''
-                    }))"""
+                    }))""",
                 )
                 elements.extend(inputs)
 
@@ -485,6 +501,7 @@ class LoginTool(Tool):
         # Check saved credentials (encrypted)
         _ensure_dirs()
         from vera.memory.secure import SecureVault
+
         vault = SecureVault(vault_path=COOKIES_DIR / "creds.enc")
 
         site_key = site.lower().replace("https://", "").replace("http://", "").replace("www.", "").split("/")[0]
@@ -529,13 +546,21 @@ class LoginTool(Tool):
 
             # Try to fill login form — common field names
             username_selectors = [
-                'input[name="username"]', 'input[name="email"]', 'input[name="login"]',
-                'input[name="identifier"]', 'input[type="email"]', 'input[name="user"]',
-                'input[id="username"]', 'input[id="email"]', 'input[id="login_field"]',
+                'input[name="username"]',
+                'input[name="email"]',
+                'input[name="login"]',
+                'input[name="identifier"]',
+                'input[type="email"]',
+                'input[name="user"]',
+                'input[id="username"]',
+                'input[id="email"]',
+                'input[id="login_field"]',
             ]
             password_selectors = [
-                'input[name="password"]', 'input[type="password"]',
-                'input[id="password"]', 'input[name="pass"]',
+                'input[name="password"]',
+                'input[type="password"]',
+                'input[id="password"]',
+                'input[name="pass"]',
             ]
 
             # Fill username
@@ -689,6 +714,7 @@ class GoBackTool(Tool):
 
 
 # --- Browser Agent ---
+
 
 class BrowserAgent(BaseAgent):
     """Automates web browsing — navigates sites, fills forms, logs in, completes tasks."""

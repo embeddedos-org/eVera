@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 # TTSEngine protocol
 # ---------------------------------------------------------------------------
 
+
 @runtime_checkable
 class TTSEngine(Protocol):
     """Minimal interface every TTS backend must satisfy."""
@@ -42,6 +43,7 @@ class TTSEngine(Protocol):
 # LocalTTSEngine — wraps existing pyttsx3 logic
 # ---------------------------------------------------------------------------
 
+
 class LocalTTSEngine:
     """pyttsx3-based TTS — plays audio locally, no streaming support."""
 
@@ -55,6 +57,7 @@ class LocalTTSEngine:
     def _init(self) -> None:
         try:
             import pyttsx3
+
             self._engine = pyttsx3.init()
             self._engine.setProperty("rate", self._rate)
             voices = self._engine.getProperty("voices")
@@ -96,6 +99,7 @@ class LocalTTSEngine:
 # EdgeTTSEngine — uses edge-tts for high-quality streaming synthesis
 # ---------------------------------------------------------------------------
 
+
 class EdgeTTSEngine:
     """Microsoft Edge TTS — free, high-quality, streamable audio."""
 
@@ -106,23 +110,27 @@ class EdgeTTSEngine:
     async def speak(self, text: str) -> None:
         """Synthesise and play locally via a temp file."""
         import tempfile
+
         tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
         tmp_path = tmp.name
         tmp.close()
 
         try:
             import edge_tts
+
             comm = edge_tts.Communicate(text, self._voice)
             await comm.save(tmp_path)
 
             # Play the file
             import platform
             import subprocess
+
             system = platform.system()
             if system == "Windows":
                 subprocess.Popen(
                     ["powershell", "-c", f'(New-Object Media.SoundPlayer "{tmp_path}").PlaySync()'],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
                 )
             elif system == "Darwin":
                 subprocess.Popen(["afplay", tmp_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -131,7 +139,8 @@ class EdgeTTSEngine:
                     try:
                         subprocess.Popen(
                             [player, "-nodisp", "-autoexit", tmp_path] if player == "ffplay" else [player, tmp_path],
-                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
                         )
                         break
                     except FileNotFoundError:
@@ -165,6 +174,7 @@ class EdgeTTSEngine:
 # Factory
 # ---------------------------------------------------------------------------
 
+
 def get_tts_engine(name: str | None = None) -> LocalTTSEngine | EdgeTTSEngine:
     """Return a TTS engine instance by name (default: from config)."""
     name = (name or settings.voice.tts_engine).lower().replace("-", "")
@@ -176,6 +186,7 @@ def get_tts_engine(name: str | None = None) -> LocalTTSEngine | EdgeTTSEngine:
 # ---------------------------------------------------------------------------
 # TextToSpeech — backward-compatible wrapper used by voice_loop / app
 # ---------------------------------------------------------------------------
+
 
 class TextToSpeech:
     """High-level TTS interface with event-bus integration."""
@@ -213,6 +224,7 @@ class TextToSpeech:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _split_sentences(text: str) -> list[str]:
     sentences = re.split(r"(?<=[.!?])\s+", text)

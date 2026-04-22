@@ -48,17 +48,20 @@ def parse_dependencies(
 
         if file_id not in seen_ids:
             from vera.brain.agents.code_analysis import compute_complexity
+
             try:
                 content = filepath.read_text(errors="ignore")
             except Exception:
                 content = ""
-            nodes.append({
-                "id": file_id,
-                "label": filepath.name,
-                "type": "file",
-                "complexity": compute_complexity(content, rel),
-                "path": rel,
-            })
+            nodes.append(
+                {
+                    "id": file_id,
+                    "label": filepath.name,
+                    "type": "file",
+                    "complexity": compute_complexity(content, rel),
+                    "path": rel,
+                }
+            )
             seen_ids.add(file_id)
 
         suffix = filepath.suffix.lower()
@@ -113,13 +116,15 @@ def _parse_python(
         if isinstance(node, ast.ClassDef):
             cls_id = f"{file_id}__class_{node.name}"
             if cls_id not in seen_ids:
-                nodes.append({
-                    "id": cls_id,
-                    "label": node.name,
-                    "type": "class",
-                    "complexity": "medium",
-                    "path": rel,
-                })
+                nodes.append(
+                    {
+                        "id": cls_id,
+                        "label": node.name,
+                        "type": "class",
+                        "complexity": "medium",
+                        "path": rel,
+                    }
+                )
                 seen_ids.add(cls_id)
             edges.append({"source": file_id, "target": cls_id, "type": "contains"})
 
@@ -128,28 +133,32 @@ def _parse_python(
                 if base_name and base_name != "object":
                     base_id = f"ext_{base_name}"
                     if base_id not in seen_ids:
-                        nodes.append({
-                            "id": base_id,
-                            "label": base_name,
-                            "type": "class",
-                            "complexity": "low",
-                            "path": "",
-                        })
+                        nodes.append(
+                            {
+                                "id": base_id,
+                                "label": base_name,
+                                "type": "class",
+                                "complexity": "low",
+                                "path": "",
+                            }
+                        )
                         seen_ids.add(base_id)
                     edges.append({"source": cls_id, "target": base_id, "type": "inherits"})
 
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            if isinstance(getattr(node, '_parent', None), ast.ClassDef):
+            if isinstance(getattr(node, "_parent", None), ast.ClassDef):
                 continue
             fn_id = f"{file_id}__fn_{node.name}"
             if fn_id not in seen_ids:
-                nodes.append({
-                    "id": fn_id,
-                    "label": node.name,
-                    "type": "function",
-                    "complexity": "low",
-                    "path": rel,
-                })
+                nodes.append(
+                    {
+                        "id": fn_id,
+                        "label": node.name,
+                        "type": "function",
+                        "complexity": "low",
+                        "path": rel,
+                    }
+                )
                 seen_ids.add(fn_id)
             edges.append({"source": file_id, "target": fn_id, "type": "contains"})
 
@@ -177,24 +186,28 @@ def _add_import_edge(
         rel = str(candidate.relative_to(root))
         target_id = _make_id(rel)
         if target_id not in seen_ids:
-            nodes.append({
-                "id": target_id,
-                "label": candidate.name,
-                "type": "file",
-                "complexity": "low",
-                "path": rel,
-            })
+            nodes.append(
+                {
+                    "id": target_id,
+                    "label": candidate.name,
+                    "type": "file",
+                    "complexity": "low",
+                    "path": rel,
+                }
+            )
             seen_ids.add(target_id)
     else:
         target_id = f"ext_{module_name.replace('.', '_')}"
         if target_id not in seen_ids:
-            nodes.append({
-                "id": target_id,
-                "label": module_name.split(".")[-1],
-                "type": "file",
-                "complexity": "low",
-                "path": "",
-            })
+            nodes.append(
+                {
+                    "id": target_id,
+                    "label": module_name.split(".")[-1],
+                    "type": "file",
+                    "complexity": "low",
+                    "path": "",
+                }
+            )
             seen_ids.add(target_id)
 
     edges.append({"source": source_id, "target": target_id, "type": "imports"})
@@ -227,13 +240,15 @@ def _parse_js(
             target_id = f"ext_{mod.replace('/', '_').replace('.', '_').replace('@', '')}"
 
         if target_id not in seen_ids:
-            nodes.append({
-                "id": target_id,
-                "label": mod.split("/")[-1],
-                "type": "file",
-                "complexity": "low",
-                "path": mod if mod.startswith(".") else "",
-            })
+            nodes.append(
+                {
+                    "id": target_id,
+                    "label": mod.split("/")[-1],
+                    "type": "file",
+                    "complexity": "low",
+                    "path": mod if mod.startswith(".") else "",
+                }
+            )
             seen_ids.add(target_id)
 
         edges.append({"source": file_id, "target": target_id, "type": "imports"})
@@ -245,13 +260,15 @@ def _parse_js(
         def_id = f"{file_id}__def_{match.group(1)}"
         if def_id not in seen_ids:
             kind = "class" if "class" in match.group(0) else "function"
-            nodes.append({
-                "id": def_id,
-                "label": match.group(1),
-                "type": kind,
-                "complexity": "low",
-                "path": rel,
-            })
+            nodes.append(
+                {
+                    "id": def_id,
+                    "label": match.group(1),
+                    "type": kind,
+                    "complexity": "low",
+                    "path": rel,
+                }
+            )
             seen_ids.add(def_id)
         edges.append({"source": file_id, "target": def_id, "type": "contains"})
 

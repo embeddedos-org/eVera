@@ -41,29 +41,34 @@ class TestGUITools:
     @pytest.mark.asyncio
     async def test_message_box_tool_exists(self):
         from vera.brain.agents.operator import ShowMessageBoxTool
+
         tool = ShowMessageBoxTool()
         assert tool.name == "show_message_box"
 
     @pytest.mark.asyncio
     async def test_input_dialog_tool_exists(self):
         from vera.brain.agents.operator import ShowInputDialogTool
+
         tool = ShowInputDialogTool()
         assert tool.name == "show_input_dialog"
 
     @pytest.mark.asyncio
     async def test_file_chooser_tool_exists(self):
         from vera.brain.agents.operator import ShowFileChooserTool
+
         tool = ShowFileChooserTool()
         assert tool.name == "show_file_chooser"
 
     @pytest.mark.asyncio
     async def test_progress_bar_tool_exists(self):
         from vera.brain.agents.operator import ShowProgressBarTool
+
         tool = ShowProgressBarTool()
         assert tool.name == "show_progress_bar"
 
     @pytest.mark.asyncio
     async def test_form_tool_exists(self):
         from vera.brain.agents.operator import ShowFormTool
+
         tool = ShowFormTool()
         assert tool.name == "show_form"

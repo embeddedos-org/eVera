@@ -29,10 +29,7 @@ class SemanticMemory:
     def search(self, query: str) -> dict[str, str]:
         """Find facts whose key or value contains the query."""
         query_lower = query.lower()
-        return {
-            k: v for k, v in self._facts.items()
-            if query_lower in k or query_lower in v.lower()
-        }
+        return {k: v for k, v in self._facts.items() if query_lower in k or query_lower in v.lower()}
 
     def get_all(self) -> dict[str, str]:
         return dict(self._facts)

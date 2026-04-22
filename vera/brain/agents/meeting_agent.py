@@ -59,6 +59,7 @@ class ExtractActionItemsTool(Tool):
 
         try:
             from vera.providers.manager import ProviderManager
+
             provider = ProviderManager()
             result = await provider.complete(
                 messages=[
@@ -102,6 +103,7 @@ class ParseMeetingNotesTool(Tool):
 
         try:
             from vera.providers.manager import ProviderManager
+
             provider = ProviderManager()
 
             format_instructions = {
@@ -112,7 +114,11 @@ class ParseMeetingNotesTool(Tool):
 
             result = await provider.complete(
                 messages=[
-                    {"role": "system", "content": EXTRACTION_PROMPT + f"\n\nFormat: {format_instructions.get(output_format, format_instructions['structured'])}"},
+                    {
+                        "role": "system",
+                        "content": EXTRACTION_PROMPT
+                        + f"\n\nFormat: {format_instructions.get(output_format, format_instructions['structured'])}",
+                    },
                     {"role": "user", "content": text},
                 ],
                 tier=ModelTier.SPECIALIST,
@@ -186,13 +192,16 @@ class CreateTasksFromMeetingTool(Tool):
         if settings.meeting.auto_create_tickets and settings.jira.enabled:
             try:
                 from vera.brain.agents.jira_agent import CreateTicketTool
+
                 ticket_tool = CreateTicketTool()
 
                 for item in action_items:
                     result = await ticket_tool.execute(
                         summary=item.get("task", "Meeting action item"),
                         description=f"From meeting notes. Assignee: {item.get('assignee', 'unassigned')}. Deadline: {item.get('deadline', 'none')}.",
-                        priority={"high": "High", "medium": "Medium", "low": "Low"}.get(item.get("priority", "medium"), "Medium"),
+                        priority={"high": "High", "medium": "Medium", "low": "Low"}.get(
+                            item.get("priority", "medium"), "Medium"
+                        ),
                     )
                     if result.get("status") == "success":
                         jira_tickets_created += 1

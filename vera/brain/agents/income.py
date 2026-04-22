@@ -56,6 +56,7 @@ def _save_portfolio(portfolio: dict):
 
 # --- Tool implementations ---
 
+
 class GetStockPriceTool(Tool):
     """Get real-time stock price and info."""
 
@@ -75,6 +76,7 @@ class GetStockPriceTool(Tool):
 
         try:
             import yfinance as yf
+
             ticker = yf.Ticker(symbol)
             info = ticker.info
 
@@ -96,7 +98,11 @@ class GetStockPriceTool(Tool):
                 "price": info.get("regularMarketPrice"),
                 "previous_close": info.get("regularMarketPreviousClose"),
                 "change": round(info.get("regularMarketPrice", 0) - info.get("regularMarketPreviousClose", 0), 2),
-                "change_pct": round(((info.get("regularMarketPrice", 0) / max(info.get("regularMarketPreviousClose", 1), 0.01)) - 1) * 100, 2),
+                "change_pct": round(
+                    ((info.get("regularMarketPrice", 0) / max(info.get("regularMarketPreviousClose", 1), 0.01)) - 1)
+                    * 100,
+                    2,
+                ),
                 "volume": info.get("regularMarketVolume"),
                 "market_cap": info.get("marketCap"),
                 "pe_ratio": info.get("trailingPE"),
@@ -134,6 +140,7 @@ class GetStockHistoryTool(Tool):
 
         try:
             import yfinance as yf
+
             ticker = yf.Ticker(symbol)
             hist = ticker.history(period=period)
 
@@ -142,14 +149,16 @@ class GetStockHistoryTool(Tool):
 
             data_points = []
             for date, row in hist.tail(30).iterrows():
-                data_points.append({
-                    "date": str(date.date()),
-                    "open": round(row["Open"], 2),
-                    "high": round(row["High"], 2),
-                    "low": round(row["Low"], 2),
-                    "close": round(row["Close"], 2),
-                    "volume": int(row["Volume"]),
-                })
+                data_points.append(
+                    {
+                        "date": str(date.date()),
+                        "open": round(row["Open"], 2),
+                        "high": round(row["High"], 2),
+                        "low": round(row["Low"], 2),
+                        "close": round(row["Close"], 2),
+                        "volume": int(row["Volume"]),
+                    }
+                )
 
             start_price = data_points[0]["close"] if data_points else 0
             end_price = data_points[-1]["close"] if data_points else 0
@@ -280,15 +289,17 @@ class PortfolioTool(Tool):
             gain = round(market_value - cost_basis, 2)
             gain_pct = round((gain / max(cost_basis, 0.01)) * 100, 2)
 
-            holdings.append({
-                "symbol": symbol,
-                "shares": holding["shares"],
-                "avg_cost": holding["avg_cost"],
-                "current_price": current_price,
-                "market_value": market_value,
-                "gain_loss": gain,
-                "gain_loss_pct": gain_pct,
-            })
+            holdings.append(
+                {
+                    "symbol": symbol,
+                    "shares": holding["shares"],
+                    "avg_cost": holding["avg_cost"],
+                    "current_price": current_price,
+                    "market_value": market_value,
+                    "gain_loss": gain,
+                    "gain_loss_pct": gain_pct,
+                }
+            )
             total_value += market_value
 
         return {
@@ -340,12 +351,14 @@ class WatchlistTool(Tool):
             for sym in portfolio["watchlist"]:
                 result = await price_tool.execute(symbol=sym)
                 if result.get("status") == "success":
-                    watchlist_data.append({
-                        "symbol": sym,
-                        "price": result.get("price"),
-                        "change": result.get("change"),
-                        "change_pct": result.get("change_pct"),
-                    })
+                    watchlist_data.append(
+                        {
+                            "symbol": sym,
+                            "price": result.get("price"),
+                            "change": result.get("change"),
+                            "change_pct": result.get("change_pct"),
+                        }
+                    )
             return {"status": "success", "watchlist": watchlist_data, "count": len(watchlist_data)}
 
 
@@ -374,13 +387,15 @@ class MarketOverviewTool(Tool):
         for name, symbol in indices.items():
             result = await price_tool.execute(symbol=symbol)
             if result.get("status") == "success":
-                results.append({
-                    "name": name,
-                    "symbol": symbol,
-                    "price": result.get("price"),
-                    "change": result.get("change"),
-                    "change_pct": result.get("change_pct"),
-                })
+                results.append(
+                    {
+                        "name": name,
+                        "symbol": symbol,
+                        "price": result.get("price"),
+                        "change": result.get("change"),
+                        "change_pct": result.get("change_pct"),
+                    }
+                )
 
         return {"status": "success", "indices": results}
 
@@ -404,17 +419,20 @@ class StockNewsTool(Tool):
 
         try:
             import yfinance as yf
+
             ticker = yf.Ticker(symbol)
             news = ticker.news or []
 
             articles = []
             for item in news[:10]:
-                articles.append({
-                    "title": item.get("title", ""),
-                    "publisher": item.get("publisher", ""),
-                    "link": item.get("link", ""),
-                    "published": item.get("providerPublishTime", ""),
-                })
+                articles.append(
+                    {
+                        "title": item.get("title", ""),
+                        "publisher": item.get("publisher", ""),
+                        "link": item.get("link", ""),
+                        "published": item.get("providerPublishTime", ""),
+                    }
+                )
 
             return {"status": "success", "symbol": symbol, "news": articles, "count": len(articles)}
         except ImportError:
@@ -464,6 +482,7 @@ class IncomeAgent(BaseAgent):
 
     def _setup_tools(self) -> None:
         from vera.brain.agents.brokers import BROKER_TOOLS
+
         self._tools = [
             GetStockPriceTool(),
             GetStockHistoryTool(),

@@ -45,12 +45,14 @@ async def _send_to_mobile(
     session.setdefault("pending", {})[cmd_id] = future
 
     try:
-        await ws.send_json({
-            "type": "device_command",
-            "id": cmd_id,
-            "command": command,
-            "params": params or {},
-        })
+        await ws.send_json(
+            {
+                "type": "device_command",
+                "id": cmd_id,
+                "command": command,
+                "params": params or {},
+            }
+        )
 
         result = await asyncio.wait_for(future, timeout=timeout)
         return {
@@ -135,7 +137,10 @@ class ToggleSettingTool(Tool):
             name="toggle_mobile_setting",
             description="Toggle a device setting (wifi, bluetooth, flashlight, etc.)",
             parameters={
-                "setting": {"type": "str", "description": "Setting to toggle: wifi, bluetooth, flashlight, airplane_mode, dnd"},
+                "setting": {
+                    "type": "str",
+                    "description": "Setting to toggle: wifi, bluetooth, flashlight, airplane_mode, dnd",
+                },
                 "enabled": {"type": "bool", "description": "True to enable, False to disable"},
             },
         )

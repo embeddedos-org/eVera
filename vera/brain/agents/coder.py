@@ -28,9 +28,14 @@ for _extra in settings.safety.coder_allowed_extra_paths:
 
 # Blocked paths (never allow reading/writing these)
 BLOCKED_PATHS = [
-    ".ssh", ".gnupg", ".aws", ".config/gcloud",
+    ".ssh",
+    ".gnupg",
+    ".aws",
+    ".config/gcloud",
     "AppData/Roaming/Microsoft/Credentials",
-    ".env", ".env.local", ".env.production",
+    ".env",
+    ".env.local",
+    ".env.production",
 ]
 
 
@@ -49,7 +54,8 @@ def _is_path_safe(path: Path) -> tuple[bool, str]:
             if settings.safety.coder_unsafe_paths:
                 logger.warning(
                     "UNSAFE-PATH override: allowing blocked segment '%s' in %s",
-                    blocked, resolved,
+                    blocked,
+                    resolved,
                 )
                 break  # skip block, fall through to root check
             return False, f"Access denied: path contains blocked segment '{blocked}'"
@@ -105,7 +111,7 @@ class ReadFileTool(Tool):
             lines = content.splitlines()
 
             if start and end:
-                lines = lines[max(0, start - 1):end]
+                lines = lines[max(0, start - 1) : end]
                 content = "\n".join(lines)
 
             # Truncate if too large
@@ -246,11 +252,13 @@ class SearchInFilesTool(Tool):
                     content = file_path.read_text(encoding="utf-8", errors="replace")
                     for i, line in enumerate(content.splitlines(), 1):
                         if regex.search(line):
-                            matches.append({
-                                "file": str(file_path),
-                                "line": i,
-                                "text": line.strip()[:200],
-                            })
+                            matches.append(
+                                {
+                                    "file": str(file_path),
+                                    "line": i,
+                                    "text": line.strip()[:200],
+                                }
+                            )
                             if len(matches) >= 50:
                                 break
                 except (UnicodeDecodeError, PermissionError):

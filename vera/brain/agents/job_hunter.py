@@ -70,6 +70,7 @@ def _today_application_count() -> int:
 # Tools
 # ---------------------------------------------------------------------------
 
+
 class SearchJobsTool(Tool):
     """Search for jobs using DuckDuckGo + direct site queries."""
 
@@ -88,6 +89,7 @@ class SearchJobsTool(Tool):
         num = kwargs.get("num_results", 10)
         if not query:
             from config import settings
+
             titles = settings.job_hunter.target_titles
             locations = settings.job_hunter.target_locations
             if titles:
@@ -101,22 +103,24 @@ class SearchJobsTool(Tool):
 
         try:
             from duckduckgo_search import DDGS
+
             with DDGS() as ddgs:
                 results = list(ddgs.text(search_query, max_results=num))
             jobs = [
-                {"title": r.get("title", ""), "url": r.get("href", ""), "snippet": r.get("body", "")}
-                for r in results
+                {"title": r.get("title", ""), "url": r.get("href", ""), "snippet": r.get("body", "")} for r in results
             ]
             return {"status": "success", "query": query, "jobs": jobs, "count": len(jobs)}
         except Exception as e:
             try:
                 import httpx
+
                 url = f"https://html.duckduckgo.com/html/?q={quote_plus(search_query)}"
                 headers = {"User-Agent": "Mozilla/5.0 (compatible; Vera/1.0)"}
                 async with httpx.AsyncClient(timeout=15) as client:
                     resp = await client.get(url, headers=headers, follow_redirects=True)
 
                 import re
+
                 links = re.findall(r'class="result__a"[^>]*href="([^"]*)"[^>]*>([^<]*)</a>', resp.text)
                 snippets = re.findall(r'class="result__snippet"[^>]*>([^<]*)<', resp.text)
                 jobs = []
@@ -154,7 +158,8 @@ class BrowseJobBoardTool(Tool):
             await page.goto(url, wait_until="domcontentloaded", timeout=30000)
             await page.wait_for_timeout(2000)
 
-            listings = await page.evaluate("""(max) => {
+            listings = await page.evaluate(
+                """(max) => {
                 const cards = document.querySelectorAll(
                     '[class*="job"], [class*="result"], [class*="posting"], [class*="card"], [class*="listing"]'
                 );
@@ -174,7 +179,9 @@ class BrowseJobBoardTool(Tool):
                     }
                 }
                 return results;
-            }""", max_listings)
+            }""",
+                max_listings,
+            )
 
             await _save_cookies()
             return {"status": "success", "url": url, "listings": listings, "count": len(listings)}
@@ -202,12 +209,14 @@ class ReadJobPostingTool(Tool):
         # Try httpx + BeautifulSoup first (faster)
         try:
             import httpx
+
             headers = {"User-Agent": "Mozilla/5.0 (compatible; Vera/1.0)"}
             async with httpx.AsyncClient(timeout=20) as client:
                 resp = await client.get(url, headers=headers, follow_redirects=True)
 
             try:
                 from bs4 import BeautifulSoup
+
                 soup = BeautifulSoup(resp.text, "html.parser")
                 for tag in soup(["script", "style", "nav", "footer", "header"]):
                     tag.decompose()
@@ -217,6 +226,7 @@ class ReadJobPostingTool(Tool):
                     return {"status": "success", "url": url, "title": title, "description": text}
             except ImportError:
                 import re
+
                 text = re.sub(r"<[^>]+>", " ", resp.text)
                 text = re.sub(r"\s+", " ", text).strip()[:5000]
                 if len(text) > 500:
@@ -265,9 +275,15 @@ class EvaluateJobFitTool(Tool):
             return {"status": "error", "message": "No job profile configured — use update_profile first"}
 
         from config import settings
+
         excluded = [c.lower() for c in settings.job_hunter.excluded_companies]
         if company.lower() in excluded:
-            return {"status": "skipped", "score": 0, "reasoning": f"{company} is in excluded companies list", "recommendation": "skip"}
+            return {
+                "status": "skipped",
+                "score": 0,
+                "reasoning": f"{company} is in excluded companies list",
+                "recommendation": "skip",
+            }
 
         prompt = (
             "You are a career matching expert. Score how well this job matches the candidate's profile.\n\n"
@@ -279,6 +295,7 @@ class EvaluateJobFitTool(Tool):
 
         try:
             from vera.providers.manager import ProviderManager
+
             provider = ProviderManager()
             result = await provider.complete(
                 messages=[{"role": "user", "content": prompt}],
@@ -332,6 +349,7 @@ class GenerateCoverLetterTool(Tool):
 
         try:
             from vera.providers.manager import ProviderManager
+
             provider = ProviderManager()
             result = await provider.complete(
                 messages=[{"role": "user", "content": prompt}],
@@ -422,7 +440,9 @@ class FillApplicationTool(Tool):
                 if not inp.get("visible") or not inp.get("selector"):
                     continue
 
-                identifiers = f"{inp.get('name', '')} {inp.get('placeholder', '')} {inp.get('label', '')} {inp.get('id', '')}"
+                identifiers = (
+                    f"{inp.get('name', '')} {inp.get('placeholder', '')} {inp.get('label', '')} {inp.get('id', '')}"
+                )
 
                 for keyword, value in field_map.items():
                     if value and keyword in identifiers:
@@ -549,7 +569,11 @@ class SubmitApplicationTool(Tool):
             apps.append(app_record)
             _save_applications(apps)
 
-            return {"status": "success", "message": f"Application submitted to {company} for {title}!", "record": app_record}
+            return {
+                "status": "success",
+                "message": f"Application submitted to {company} for {title}!",
+                "record": app_record,
+            }
         except Exception as e:
             # Log failed application
             app_record = {
@@ -578,7 +602,10 @@ class CheckApplicationStatusTool(Tool):
             name="check_application_status",
             description="Show a summary of all past job applications and their status",
             parameters={
-                "status_filter": {"type": "str", "description": "Filter by status: applied, skipped, failed, all (default: all)"},
+                "status_filter": {
+                    "type": "str",
+                    "description": "Filter by status: applied, skipped, failed, all (default: all)",
+                },
                 "limit": {"type": "int", "description": "Max entries to show (default 20)"},
             },
         )
@@ -604,10 +631,7 @@ class CheckApplicationStatusTool(Tool):
             "status": "success",
             "total": total,
             "summary": summary,
-            "applications": [
-                {k: v for k, v in a.items() if k != "cover_letter"}
-                for a in recent
-            ],
+            "applications": [{k: v for k, v in a.items() if k != "cover_letter"} for a in recent],
         }
 
 
@@ -619,7 +643,10 @@ class UpdateProfileTool(Tool):
             name="update_profile",
             description="Update your job application profile (personal info, experience, skills, etc.)",
             parameters={
-                "field": {"type": "str", "description": "Top-level field to update: personal, summary, experience, education, skills, certifications, common_answers"},
+                "field": {
+                    "type": "str",
+                    "description": "Top-level field to update: personal, summary, experience, education, skills, certifications, common_answers",
+                },
                 "value": {"type": "str", "description": "JSON string of the new value for the field"},
             },
         )
@@ -708,7 +735,10 @@ class RunJobScanTool(Tool):
         daily_count = _today_application_count()
         max_daily = settings.job_hunter.max_daily_applications
         if daily_count >= max_daily:
-            return {"status": "capped", "message": f"Daily cap reached ({daily_count}/{max_daily}). Try again tomorrow!"}
+            return {
+                "status": "capped",
+                "message": f"Daily cap reached ({daily_count}/{max_daily}). Try again tomorrow!",
+            }
 
         remaining = max_daily - daily_count
 
@@ -744,7 +774,9 @@ class RunJobScanTool(Tool):
 
             # Step 3: Evaluate fit
             eval_result = await evaluate.execute(
-                job_description=desc, job_title=title, company=job.get("company", ""),
+                job_description=desc,
+                job_title=title,
+                company=job.get("company", ""),
             )
             score = eval_result.get("score", 0)
             recommendation = eval_result.get("recommendation", "skip")
@@ -752,17 +784,19 @@ class RunJobScanTool(Tool):
             if recommendation == "skip" or score < settings.job_hunter.fit_threshold:
                 # Log as skipped
                 apps = _load_applications()
-                apps.append({
-                    "id": str(uuid.uuid4()),
-                    "title": title,
-                    "company": job.get("company", ""),
-                    "url": url,
-                    "source": "scan",
-                    "status": "skipped",
-                    "applied_at": datetime.now().isoformat(),
-                    "match_score": score,
-                    "error": eval_result.get("reasoning", "Below threshold"),
-                })
+                apps.append(
+                    {
+                        "id": str(uuid.uuid4()),
+                        "title": title,
+                        "company": job.get("company", ""),
+                        "url": url,
+                        "source": "scan",
+                        "status": "skipped",
+                        "applied_at": datetime.now().isoformat(),
+                        "match_score": score,
+                        "error": eval_result.get("reasoning", "Below threshold"),
+                    }
+                )
                 _save_applications(apps)
                 skipped += 1
                 continue
@@ -771,7 +805,9 @@ class RunJobScanTool(Tool):
             cover_letter = ""
             if settings.job_hunter.cover_letter_enabled:
                 cl_result = await cover_gen.execute(
-                    job_title=title, company=job.get("company", ""), job_description=desc,
+                    job_title=title,
+                    company=job.get("company", ""),
+                    job_description=desc,
                 )
                 cover_letter = cl_result.get("cover_letter", "")
 
@@ -782,8 +818,11 @@ class RunJobScanTool(Tool):
             if fill_result.get("status") == "success":
                 submitter = SubmitApplicationTool()
                 sub_result = await submitter.execute(
-                    job_title=title, company=job.get("company", ""),
-                    job_url=url, source="scan", cover_letter=cover_letter,
+                    job_title=title,
+                    company=job.get("company", ""),
+                    job_url=url,
+                    source="scan",
+                    cover_letter=cover_letter,
                     match_score=score,
                 )
                 if sub_result.get("status") == "success":
@@ -807,6 +846,7 @@ class RunJobScanTool(Tool):
 # ---------------------------------------------------------------------------
 # Agent
 # ---------------------------------------------------------------------------
+
 
 class JobHunterAgent(BaseAgent):
     """Autonomously searches for and applies to jobs — your personal AI recruiter."""

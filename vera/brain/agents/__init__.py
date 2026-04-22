@@ -54,25 +54,30 @@ from config import settings as _settings  # noqa: E402
 
 if _settings.mobile.control_enabled:
     from vera.brain.agents.mobile import MobileControlAgent
+
     AGENT_REGISTRY["mobile_controller"] = MobileControlAgent()
 
 # Conditionally register job hunter
 if _settings.job_hunter.enabled:
     from vera.brain.agents.job_hunter import JobHunterAgent
+
     AGENT_REGISTRY["job_hunter"] = JobHunterAgent()
 
 # Conditionally register jira agent
 if _settings.jira.enabled:
     from vera.brain.agents.jira_agent import JiraAgent
+
     AGENT_REGISTRY["jira"] = JiraAgent()
 
     # Work pilot depends on jira
     from vera.brain.agents.work_pilot import WorkPilotAgent
+
     AGENT_REGISTRY["work_pilot"] = WorkPilotAgent()
 
 # Load plugins
 try:
     from vera.brain.plugins import get_plugin_manager
+
     _pm = get_plugin_manager()
     _plugin_agents = _pm.load_all()
     AGENT_REGISTRY.update(_plugin_agents)
@@ -101,6 +106,7 @@ def list_agents() -> list[str]:
 def reload_plugins() -> dict[str, BaseAgent]:
     """Reload all plugins and return new agents."""
     from vera.brain.plugins import get_plugin_manager
+
     pm = get_plugin_manager()
     new_agents = pm.load_all()
     AGENT_REGISTRY.update(new_agents)

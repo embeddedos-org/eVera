@@ -15,12 +15,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 @pytest.fixture
 def event_bus():
     from vera.events.bus import EventBus
+
     return EventBus()
 
 
 @pytest.fixture
 def provider_manager():
     from vera.providers.manager import ProviderManager
+
     with patch("vera.providers.manager.litellm") as mock_litellm:
         mock_response = MagicMock()
         mock_response.choices = [MagicMock(message=MagicMock(content="Mock response"))]
@@ -38,6 +40,7 @@ def memory_vault(tmp_path):
         mock_settings.memory.semantic_store_path = tmp_path / "semantic.json"
         mock_settings.memory.secure_vault_path = tmp_path / "vault.enc"
         from vera.memory.vault import MemoryVault
+
         vault = MemoryVault()
         yield vault
 
@@ -45,10 +48,12 @@ def memory_vault(tmp_path):
 @pytest.fixture
 def policy_service():
     from vera.safety.policy import PolicyService
+
     return PolicyService()
 
 
 @pytest.fixture
 def privacy_guard():
     from vera.safety.privacy import PrivacyGuard
+
     return PrivacyGuard()

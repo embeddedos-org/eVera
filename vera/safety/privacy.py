@@ -19,9 +19,17 @@ PII_PATTERNS: dict[str, re.Pattern] = {
 
 # Keywords indicating sensitive topics
 SENSITIVE_KEYWORDS = {
-    "password", "secret", "api key", "token", "credential",
-    "bank account", "routing number", "social security",
-    "credit card", "ssn", "pin number",
+    "password",
+    "secret",
+    "api key",
+    "token",
+    "credential",
+    "bank account",
+    "routing number",
+    "social security",
+    "credit card",
+    "ssn",
+    "pin number",
 }
 
 

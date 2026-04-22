@@ -79,7 +79,9 @@ class PluginManager:
 
         logger.info(
             "Loaded %d plugins, %d agents, %d intents",
-            len(self._loaded), len(self._agents), len(self._intents),
+            len(self._loaded),
+            len(self._agents),
+            len(self._intents),
         )
         return self._agents
 
@@ -91,7 +93,8 @@ class PluginManager:
 
         # Dynamic import
         spec = importlib.util.spec_from_file_location(
-            f"vera_plugin_{name}", str(plugin_path),
+            f"vera_plugin_{name}",
+            str(plugin_path),
         )
         if spec is None or spec.loader is None:
             raise ImportError(f"Cannot load plugin: {name}")
@@ -110,12 +113,16 @@ class PluginManager:
                     self._agents[agent.name] = agent
                     logger.info(
                         "Plugin '%s' registered agent: %s (%d tools)",
-                        name, agent.name, len(agent.tools),
+                        name,
+                        agent.name,
+                        len(agent.tools),
                     )
                 except Exception as e:
                     logger.error(
                         "Plugin '%s' failed to instantiate agent %s: %s",
-                        name, agent_cls.__name__, e,
+                        name,
+                        agent_cls.__name__,
+                        e,
                     )
 
         # Register intents
@@ -154,7 +161,8 @@ class PluginManager:
     def _create_example_plugin(self) -> None:
         """Create an example plugin file for reference."""
         example = self._plugins_dir / "_example_plugin.py"
-        example.write_text('''"""Example Vera plugin -- rename this file (remove underscore) to activate."""
+        example.write_text(
+            '''"""Example Vera plugin -- rename this file (remove underscore) to activate."""
 
 from vera.brain.agents.base import BaseAgent, Tool
 from vera.providers.models import ModelTier
@@ -194,7 +202,9 @@ class ExampleAgent(BaseAgent):
 # Required: tells the plugin loader what to register
 PLUGIN_AGENTS = [ExampleAgent]
 PLUGIN_INTENTS = {"greet": "example", "hello_plugin": "example"}
-''', encoding="utf-8")
+''',
+            encoding="utf-8",
+        )
         logger.info("Created example plugin at %s", example)
 
 

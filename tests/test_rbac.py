@@ -9,6 +9,7 @@ import pytest
 def rbac_manager(tmp_path):
     import vera.rbac as rbac_mod
     from vera.rbac import RBACManager
+
     rbac_mod.RBAC_DIR = tmp_path / "rbac"
     return RBACManager()
 

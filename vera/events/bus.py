@@ -68,9 +68,7 @@ class EventBus:
 
     def unsubscribe(self, event_type: EventType, callback: EventCallback) -> None:
         if event_type in self._subscribers:
-            self._subscribers[event_type] = [
-                cb for cb in self._subscribers[event_type] if cb is not callback
-            ]
+            self._subscribers[event_type] = [cb for cb in self._subscribers[event_type] if cb is not callback]
 
     async def publish(self, event_type: EventType, data: dict[str, Any] | None = None) -> None:
         data = data or {}
@@ -108,11 +106,13 @@ class EventBus:
             except TimeoutError:
                 continue
 
-            self._event_log.append({
-                "type": event_type.value,
-                "data": data,
-                "timestamp": time.time(),
-            })
+            self._event_log.append(
+                {
+                    "type": event_type.value,
+                    "data": data,
+                    "timestamp": time.time(),
+                }
+            )
 
             callbacks = self._subscribers.get(event_type, [])
             for cb in callbacks:

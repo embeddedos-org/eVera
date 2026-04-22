@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MoodPattern:
     """A detected pattern in mood history."""
+
     pattern_type: str
     description: str
     confidence: float
@@ -36,10 +37,7 @@ def detect_patterns(
         return []
 
     cutoff = datetime.now() - timedelta(days=lookback_days)
-    recent = [
-        e for e in entries
-        if datetime.fromisoformat(e.timestamp) >= cutoff
-    ]
+    recent = [e for e in entries if datetime.fromisoformat(e.timestamp) >= cutoff]
 
     if len(recent) < 3:
         return []
@@ -187,12 +185,14 @@ def _detect_recurring_triggers(entries: list[MoodEntry]) -> list[MoodPattern]:
 
     for trigger, count in counts.most_common(5):
         if count >= 3:
-            patterns.append(MoodPattern(
-                pattern_type="recurring_trigger",
-                description=f'"{trigger}" has come up {count} times',
-                confidence=min(0.85, 0.5 + count * 0.1),
-                data={"trigger": trigger, "count": count},
-            ))
+            patterns.append(
+                MoodPattern(
+                    pattern_type="recurring_trigger",
+                    description=f'"{trigger}" has come up {count} times',
+                    confidence=min(0.85, 0.5 + count * 0.1),
+                    data={"trigger": trigger, "count": count},
+                )
+            )
 
     return patterns
 

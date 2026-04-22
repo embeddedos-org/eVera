@@ -35,6 +35,7 @@ STATIC_DIR = Path(__file__).parent / "static"
 
 # --- Request/Response models ---
 
+
 class ChatRequest(BaseModel):
     transcript: str
     session_id: str | None = None
@@ -61,6 +62,7 @@ class FactResponse(BaseModel):
 
 
 # --- App factory ---
+
 
 def create_app(brain: VeraBrain | None = None) -> FastAPI:
     """Create and configure the FastAPI application.
@@ -105,10 +107,7 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
             if path not in ("/", "/health") and not path.startswith("/static"):
                 auth_header = request.headers.get("Authorization", "")
                 query_key = request.query_params.get("api_key", "")
-                if (
-                    auth_header != f"Bearer {settings.server.api_key}"
-                    and query_key != settings.server.api_key
-                ):
+                if auth_header != f"Bearer {settings.server.api_key}" and query_key != settings.server.api_key:
                     return JSONResponse(
                         status_code=401,
                         content={"detail": "Invalid or missing API key"},
@@ -155,6 +154,7 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
                 return {"status": "error", "message": "Webhook needs action, symbol, quantity"}
 
             from vera.brain.agents.brokers import SmartTradeTool, _log_trade
+
             trade_tool = SmartTradeTool()
             result = await trade_tool.execute(action=action, symbol=symbol, quantity=quantity)
             _log_trade("tradingview", {"action": action, "symbol": symbol, "quantity": quantity, "result": result})
@@ -173,6 +173,7 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         body = await request.json()
         headers = dict(request.headers)
         from vera.messaging import handle_slack_event
+
         return await handle_slack_event(body, headers, brain_instance)
 
     @app.post("/webhook/discord")
@@ -180,6 +181,7 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         """Discord Interactions webhook."""
         body = await request.json()
         from vera.messaging import handle_discord_interaction
+
         return await handle_discord_interaction(body, brain_instance)
 
     @app.post("/webhook/telegram")
@@ -187,6 +189,7 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         """Telegram Bot webhook."""
         body = await request.json()
         from vera.messaging import handle_telegram_update
+
         return await handle_telegram_update(body, brain_instance)
 
     # --- Crew / Multi-agent endpoint ---
@@ -196,6 +199,7 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         """Run a multi-agent crew on a complex task."""
         body = await request.json()
         from vera.brain.crew import run_crew
+
         result = await run_crew(
             brain_instance,
             task=body.get("task", ""),
@@ -216,6 +220,7 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
     async def list_workflows():
         """List all saved workflows."""
         from vera.brain.workflow import WorkflowEngine
+
         engine = WorkflowEngine()
         return engine.list_all()
 
@@ -224,6 +229,7 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         """Create a new workflow."""
         body = await request.json()
         from vera.brain.workflow import WorkflowEngine
+
         engine = WorkflowEngine()
         wf = engine.create(body)
         return {"status": "created", "name": wf.name, "steps": len(wf.steps)}
@@ -233,6 +239,7 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         """Execute a workflow by name."""
         body = await request.json() if await request.body() else {}
         from vera.brain.workflow import WorkflowEngine
+
         engine = WorkflowEngine()
         return await engine.execute(name, brain_instance, variables=body.get("variables"))
 
@@ -241,11 +248,13 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
     @app.get("/admin/users")
     async def list_users():
         from vera.rbac import RBACManager
+
         return RBACManager().list_users()
 
     @app.get("/admin/audit")
     async def audit_log():
         from vera.rbac import RBACManager
+
         return RBACManager().get_audit_log(limit=100)
 
     @app.get("/status")
@@ -290,6 +299,7 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
     @app.get("/events/stream")
     async def event_stream():
         """SSE endpoint streaming live events from the EventBus."""
+
         async def generate():
             last_count = 0
             while True:
@@ -382,30 +392,35 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
             greeting = "Hey there! 👋 I'm Vera, your AI buddy! What should I call you?"
             mood = "excited"
 
-        await websocket.send_json({
-            "type": "response",
-            "response": greeting,
-            "agent": "companion",
-            "tier": 0,
-            "intent": "greeting",
-            "needs_confirmation": False,
-            "mood": mood,
-        })
+        await websocket.send_json(
+            {
+                "type": "response",
+                "response": greeting,
+                "agent": "companion",
+                "tier": 0,
+                "intent": "greeting",
+                "needs_confirmation": False,
+                "mood": mood,
+            }
+        )
 
         # Register proactive notification handler for this WebSocket
         async def push_notification(notification: dict) -> None:
             try:
-                await websocket.send_json({
-                    "type": "response",
-                    "response": notification.get("message", ""),
-                    "agent": "scheduler",
-                    "tier": 0,
-                    "intent": notification.get("type", "notification"),
-                    "needs_confirmation": False,
-                    "mood": notification.get("mood", "neutral"),
-                })
+                await websocket.send_json(
+                    {
+                        "type": "response",
+                        "response": notification.get("message", ""),
+                        "agent": "scheduler",
+                        "tier": 0,
+                        "intent": notification.get("type", "notification"),
+                        "needs_confirmation": False,
+                        "mood": notification.get("mood", "neutral"),
+                    }
+                )
                 # Also broadcast to messaging platforms
                 from vera.messaging import broadcast_notification
+
                 await broadcast_notification(notification.get("message", ""))
             except Exception:
                 pass
@@ -429,26 +444,30 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
                     lower = transcript.strip().lower()
                     if lower in ("yes", "yeah", "yep", "sure", "ok", "okay", "confirm", "do it", "go ahead", "proceed"):
                         result = await brain_instance.confirm_action(session_id)
-                        await websocket.send_json({
-                            "type": "response",
-                            "response": result.response,
-                            "agent": result.agent,
-                            "tier": result.tier,
-                            "intent": "confirm",
-                            "needs_confirmation": False,
-                            "mood": result.mood,
-                        })
+                        await websocket.send_json(
+                            {
+                                "type": "response",
+                                "response": result.response,
+                                "agent": result.agent,
+                                "tier": result.tier,
+                                "intent": "confirm",
+                                "needs_confirmation": False,
+                                "mood": result.mood,
+                            }
+                        )
                         continue
                     if lower in ("no", "nope", "cancel", "nevermind", "never mind", "don't", "stop"):
-                        await websocket.send_json({
-                            "type": "response",
-                            "response": "No worries, cancelled! 👍 Let me know if you need anything else.",
-                            "agent": "system",
-                            "tier": 0,
-                            "intent": "cancel",
-                            "needs_confirmation": False,
-                            "mood": "neutral",
-                        })
+                        await websocket.send_json(
+                            {
+                                "type": "response",
+                                "response": "No worries, cancelled! 👍 Let me know if you need anything else.",
+                                "agent": "system",
+                                "tier": 0,
+                                "intent": "cancel",
+                                "needs_confirmation": False,
+                                "mood": "neutral",
+                            }
+                        )
                         continue
 
                     result = await brain_instance.process(transcript, session_id)
@@ -458,6 +477,7 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
                         try:
                             from vera.brain.agents.base import BUDDY_PERSONALITY
                             from vera.providers.models import ModelTier
+
                             provider = brain_instance.provider_manager
                             messages = [
                                 {"role": "system", "content": BUDDY_PERSONALITY},
@@ -466,54 +486,66 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
                             full_response = ""
                             async for chunk in provider.stream(messages, tier=ModelTier.SPECIALIST):
                                 full_response += chunk
-                                await websocket.send_json({
-                                    "type": "stream_token",
-                                    "content": chunk,
-                                })
-                            await websocket.send_json({
-                                "type": "stream_end",
-                                "response": full_response,
-                                "agent": result.agent,
-                                "tier": result.tier,
-                                "intent": result.intent,
-                                "mood": result.mood,
-                            })
+                                await websocket.send_json(
+                                    {
+                                        "type": "stream_token",
+                                        "content": chunk,
+                                    }
+                                )
+                            await websocket.send_json(
+                                {
+                                    "type": "stream_end",
+                                    "response": full_response,
+                                    "agent": result.agent,
+                                    "tier": result.tier,
+                                    "intent": result.intent,
+                                    "mood": result.mood,
+                                }
+                            )
                             continue
                         except Exception:
                             pass  # Fall through to non-streaming response
 
-                    await websocket.send_json({
-                        "type": "response",
-                        "response": result.response,
-                        "agent": result.agent,
-                        "tier": result.tier,
-                        "intent": result.intent,
-                        "needs_confirmation": result.needs_confirmation,
-                        "mood": result.mood,
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "response",
+                            "response": result.response,
+                            "agent": result.agent,
+                            "tier": result.tier,
+                            "intent": result.intent,
+                            "needs_confirmation": result.needs_confirmation,
+                            "mood": result.mood,
+                        }
+                    )
 
                 elif msg_type == "confirm":
                     result = await brain_instance.confirm_action(session_id)
-                    await websocket.send_json({
-                        "type": "response",
-                        "response": result.response,
-                        "agent": result.agent,
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "response",
+                            "response": result.response,
+                            "agent": result.agent,
+                        }
+                    )
 
                 elif msg_type == "ping":
                     await websocket.send_json({"type": "pong"})
 
                 elif msg_type == "get_status":
-                    await websocket.send_json({
-                        "type": "status",
-                        **brain_instance.get_status(),
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "status",
+                            **brain_instance.get_status(),
+                        }
+                    )
 
                 else:
-                    await websocket.send_json({
-                        "type": "error",
-                        "message": f"Unknown message type: {msg_type}",
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "error",
+                            "message": f"Unknown message type: {msg_type}",
+                        }
+                    )
 
         except WebSocketDisconnect:
             logger.info("WebSocket disconnected: %s", session_id)
@@ -576,16 +608,21 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
                     if result.is_speech_end:
                         transcript = stt.transcribe(result.audio_buffer)
                         if transcript.strip():
-                            await websocket.send_json({
-                                "type": "transcript", "text": transcript,
-                            })
+                            await websocket.send_json(
+                                {
+                                    "type": "transcript",
+                                    "text": transcript,
+                                }
+                            )
 
                             response = await brain_instance.process(transcript, session_id)
-                            await websocket.send_json({
-                                "type": "response",
-                                "text": response.response,
-                                "agent": response.agent,
-                            })
+                            await websocket.send_json(
+                                {
+                                    "type": "response",
+                                    "text": response.response,
+                                    "agent": response.agent,
+                                }
+                            )
 
                             # Stream TTS audio back if using edge-tts
                             if isinstance(tts, EdgeTTSEngine):
@@ -650,7 +687,8 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
                     _mobile_sessions[session_id]["capabilities"] = msg.get("capabilities", [])
                     logger.info(
                         "Mobile device registered: %s (%s)",
-                        session_id, msg.get("platform"),
+                        session_id,
+                        msg.get("platform"),
                     )
 
                 elif msg_type == "device_command_result":
@@ -702,7 +740,9 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         try:
             result = subprocess.run(
                 ["mmdc", "-i", input_file, "-o", str(output_file), "-b", "transparent"],
-                capture_output=True, text=True, timeout=30,
+                capture_output=True,
+                text=True,
+                timeout=30,
             )
             if result.returncode != 0:
                 raise HTTPException(
@@ -727,6 +767,7 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
             raise HTTPException(status_code=504, detail="Diagram export timed out")
         finally:
             import os
+
             try:
                 os.unlink(input_file)
             except OSError:
@@ -780,25 +821,41 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
             raise HTTPException(status_code=500, detail=str(e))
 
         ext_map = {
-            ".py": "python", ".js": "javascript", ".jsx": "javascript",
-            ".ts": "typescript", ".tsx": "typescript", ".java": "java",
-            ".go": "go", ".rs": "rust", ".rb": "ruby", ".c": "c",
-            ".cpp": "cpp", ".h": "c", ".html": "html", ".css": "css",
-            ".json": "json", ".md": "markdown", ".yaml": "yaml",
-            ".yml": "yaml", ".toml": "toml", ".sh": "bash",
+            ".py": "python",
+            ".js": "javascript",
+            ".jsx": "javascript",
+            ".ts": "typescript",
+            ".tsx": "typescript",
+            ".java": "java",
+            ".go": "go",
+            ".rs": "rust",
+            ".rb": "ruby",
+            ".c": "c",
+            ".cpp": "cpp",
+            ".h": "c",
+            ".html": "html",
+            ".css": "css",
+            ".json": "json",
+            ".md": "markdown",
+            ".yaml": "yaml",
+            ".yml": "yaml",
+            ".toml": "toml",
+            ".sh": "bash",
         }
         language = ext_map.get(fp.suffix.lower(), "text")
         definitions = _extract_definitions(fp)
         complexity = compute_complexity(content, str(fp))
 
-        return JSONResponse({
-            "path": str(fp),
-            "name": fp.name,
-            "content": content,
-            "language": language,
-            "definitions": definitions,
-            "complexity": complexity,
-        })
+        return JSONResponse(
+            {
+                "path": str(fp),
+                "name": fp.name,
+                "content": content,
+                "language": language,
+                "definitions": definitions,
+                "complexity": complexity,
+            }
+        )
 
     class CodeAnalyzeRequest(BaseModel):
         path: str
@@ -867,14 +924,28 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         stats = vault.get_stats()
 
         nodes = [
-            {"id": "working", "label": "Working Memory", "type": "hub", "color": "#60a5fa",
-             "count": stats.get("working_turns", 0)},
-            {"id": "episodic", "label": "Episodic Memory", "type": "hub", "color": "#a78bfa",
-             "count": stats.get("episodic_events", 0)},
-            {"id": "semantic", "label": "Semantic Memory", "type": "hub", "color": "#4ade80",
-             "count": stats.get("semantic_facts", 0)},
-            {"id": "secure", "label": "Secure Vault", "type": "hub", "color": "#fb923c",
-             "count": 0},
+            {
+                "id": "working",
+                "label": "Working Memory",
+                "type": "hub",
+                "color": "#60a5fa",
+                "count": stats.get("working_turns", 0),
+            },
+            {
+                "id": "episodic",
+                "label": "Episodic Memory",
+                "type": "hub",
+                "color": "#a78bfa",
+                "count": stats.get("episodic_events", 0),
+            },
+            {
+                "id": "semantic",
+                "label": "Semantic Memory",
+                "type": "hub",
+                "color": "#4ade80",
+                "count": stats.get("semantic_facts", 0),
+            },
+            {"id": "secure", "label": "Secure Vault", "type": "hub", "color": "#fb923c", "count": 0},
         ]
         edges = []
 
@@ -882,13 +953,15 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         all_facts = vault.semantic.get_all()
         for i, (key, value) in enumerate(list(all_facts.items())[:30]):
             fact_id = f"fact_{i}"
-            nodes.append({
-                "id": fact_id,
-                "label": key,
-                "type": "fact",
-                "color": "#4ade80",
-                "value": str(value)[:80],
-            })
+            nodes.append(
+                {
+                    "id": fact_id,
+                    "label": key,
+                    "type": "fact",
+                    "color": "#4ade80",
+                    "value": str(value)[:80],
+                }
+            )
             edges.append({"source": "semantic", "target": fact_id, "type": "contains"})
 
         # Cross-layer relations

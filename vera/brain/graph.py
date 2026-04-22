@@ -37,7 +37,9 @@ from vera.safety.privacy import PrivacyGuard
 
 # Patterns to detect the user's name
 NAME_PATTERNS = [
-    re.compile(r"(?:my name is|i'm|i am|call me|they call me|name's)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)", re.IGNORECASE),
+    re.compile(
+        r"(?:my name is|i'm|i am|call me|they call me|name's)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)", re.IGNORECASE
+    ),
 ]
 
 logger = logging.getLogger(__name__)
@@ -144,7 +146,8 @@ def build_graph(
                 state["user_mood_trigger"] = ""
 
         await emit_pipeline_event(
-            "enrich_memory", "done",
+            "enrich_memory",
+            "done",
             corrected_text=state.get("transcript", ""),
             language=lang,
             user_name=state.get("user_name", ""),
@@ -156,7 +159,8 @@ def build_graph(
         await emit_pipeline_event("classify", "working")
         state = await supervisor.classify(state)
         await emit_pipeline_event(
-            "classify", "done",
+            "classify",
+            "done",
             agent_name=state.get("agent_name", ""),
             intent=state.get("intent", ""),
             tier=str(state.get("tier", "")),
@@ -187,14 +191,12 @@ def build_graph(
 
         if decision.action == PolicyAction.DENY:
             state["safety_approved"] = False
-            state["agent_response"] = (
-                f"I can't perform that action ({intent}). "
-                f"Reason: {decision.reason}"
-            )
+            state["agent_response"] = f"I can't perform that action ({intent}). Reason: {decision.reason}"
 
         logger.debug("Safety: %s for %s.%s", decision.action.value, agent_name, intent)
         await emit_pipeline_event(
-            "safety_check", "done",
+            "safety_check",
+            "done",
             approved=state.get("safety_approved", False),
             needs_confirmation=state.get("needs_confirmation", False),
             forced_local=state.get("metadata", {}).get("forced_local", False),
@@ -228,7 +230,8 @@ def build_graph(
         state["metadata"]["tier_used"] = ModelTier.REFLEX
         state["metadata"]["no_llm"] = True
         await emit_pipeline_event(
-            "tier0_handler", "done",
+            "tier0_handler",
+            "done",
             intent=state.get("intent", ""),
             response_preview=state.get("agent_response", "")[:80],
         )
@@ -250,7 +253,8 @@ def build_graph(
 
         state = await agent.run(state)
         await emit_pipeline_event(
-            "agent", "done",
+            "agent",
+            "done",
             agent_name=agent_name,
             tool_count=len(state.get("tool_results", [])),
         )
@@ -264,8 +268,7 @@ def build_graph(
         user_name = state.get("user_name", "")
         name_part = f" {user_name}" if user_name else ""
         state["agent_response"] = (
-            f"Hey{name_part}! I'd like to do '{intent}' for you using {agent_name}. "
-            "Should I go ahead? 🤔 (yes/no)"
+            f"Hey{name_part}! I'd like to do '{intent}' for you using {agent_name}. Should I go ahead? 🤔 (yes/no)"
         )
         state["mood"] = "thinking"
         pending = {
@@ -277,11 +280,13 @@ def build_graph(
 
         # Store in brain for confirm_action() to replay
         from vera.core import VeraBrain
+
         brain = VeraBrain()
         brain.store_pending_action(state.get("session_id", "default"), pending)
 
         await emit_pipeline_event(
-            "confirmation", "done",
+            "confirmation",
+            "done",
             pending_action=f"{agent_name}.{intent}",
         )
         return state
@@ -321,7 +326,8 @@ def build_graph(
                 logger.warning("Fact extraction failed: %s", e)
 
         await emit_pipeline_event(
-            "store_memory", "done",
+            "store_memory",
+            "done",
             facts_extracted=facts_count,
         )
         return state
@@ -331,7 +337,8 @@ def build_graph(
         await emit_pipeline_event("synthesize", "working")
         state["final_response"] = state.get("agent_response", "I have nothing to say.")
         await emit_pipeline_event(
-            "synthesize", "done",
+            "synthesize",
+            "done",
             response_length=len(state.get("final_response", "")),
         )
         return state

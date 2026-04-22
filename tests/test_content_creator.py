@@ -12,16 +12,19 @@ import pytest
 def cc_env(tmp_path):
     """Patch content_creator module DATA_DIR to tmp_path."""
     import vera.brain.agents.content_creator as cc_mod
+
     cc_mod.DATA_DIR = tmp_path
     return tmp_path
 
 
 # ── GenerateScriptTool ──────────────────────────────────────────
 
+
 class TestGenerateScript:
     @pytest.mark.asyncio
     async def test_generates_script_with_sections(self, cc_env):
         from vera.brain.agents.content_creator import GenerateScriptTool
+
         tool = GenerateScriptTool()
         result = await tool.execute(topic="AI", platform="youtube")
         assert result["status"] == "success"
@@ -39,6 +42,7 @@ class TestGenerateScript:
     @pytest.mark.asyncio
     async def test_empty_topic_returns_error(self, cc_env):
         from vera.brain.agents.content_creator import GenerateScriptTool
+
         tool = GenerateScriptTool()
         result = await tool.execute(topic="")
         assert result["status"] == "error"
@@ -47,6 +51,7 @@ class TestGenerateScript:
     @pytest.mark.asyncio
     async def test_script_persisted_to_disk(self, cc_env):
         from vera.brain.agents.content_creator import GenerateScriptTool
+
         tool = GenerateScriptTool()
         await tool.execute(topic="Python Tips", platform="tiktok")
         data = json.loads((cc_env / "content_scripts.json").read_text())
@@ -57,6 +62,7 @@ class TestGenerateScript:
     @pytest.mark.asyncio
     async def test_script_with_different_platforms(self, cc_env):
         from vera.brain.agents.content_creator import GenerateScriptTool
+
         tool = GenerateScriptTool()
         for platform in ["youtube", "tiktok", "instagram", "linkedin", "twitter"]:
             result = await tool.execute(topic="Test", platform=platform)
@@ -66,10 +72,12 @@ class TestGenerateScript:
 
 # ── CreateVideoTool ─────────────────────────────────────────────
 
+
 class TestCreateVideo:
     @pytest.mark.asyncio
     async def test_no_api_key_saves_job(self, cc_env):
         from vera.brain.agents.content_creator import CreateVideoTool
+
         tool = CreateVideoTool()
         result = await tool.execute(prompt="test video about cats")
         assert result["status"] == "saved"
@@ -83,6 +91,7 @@ class TestCreateVideo:
     @pytest.mark.asyncio
     async def test_empty_prompt_returns_error(self, cc_env):
         from vera.brain.agents.content_creator import CreateVideoTool
+
         tool = CreateVideoTool()
         result = await tool.execute(prompt="")
         assert result["status"] == "error"
@@ -91,6 +100,7 @@ class TestCreateVideo:
     @pytest.mark.asyncio
     async def test_video_job_has_correct_fields(self, cc_env):
         from vera.brain.agents.content_creator import CreateVideoTool
+
         tool = CreateVideoTool()
         result = await tool.execute(prompt="demo", provider="pika", duration=60, aspect_ratio="16:9")
         job = result["job"]
@@ -101,10 +111,12 @@ class TestCreateVideo:
 
 # ── SchedulePostTool ────────────────────────────────────────────
 
+
 class TestSchedulePost:
     @pytest.mark.asyncio
     async def test_schedule_now(self, cc_env):
         from vera.brain.agents.content_creator import SchedulePostTool
+
         tool = SchedulePostTool()
         result = await tool.execute(platform="twitter", content="Hello world!", schedule_at="now")
         assert result["status"] == "success"
@@ -114,6 +126,7 @@ class TestSchedulePost:
     @pytest.mark.asyncio
     async def test_schedule_relative_time(self, cc_env):
         from vera.brain.agents.content_creator import SchedulePostTool
+
         tool = SchedulePostTool()
         result = await tool.execute(platform="instagram", content="Check this out!", schedule_at="in 2h")
         assert result["status"] == "success"
@@ -125,6 +138,7 @@ class TestSchedulePost:
     @pytest.mark.asyncio
     async def test_schedule_iso_datetime(self, cc_env):
         from vera.brain.agents.content_creator import SchedulePostTool
+
         tool = SchedulePostTool()
         future = (datetime.now() + timedelta(days=1)).replace(microsecond=0).isoformat()
         result = await tool.execute(platform="linkedin", content="Professional post", schedule_at=future)
@@ -134,6 +148,7 @@ class TestSchedulePost:
     @pytest.mark.asyncio
     async def test_empty_platform_or_content_error(self, cc_env):
         from vera.brain.agents.content_creator import SchedulePostTool
+
         tool = SchedulePostTool()
         # Missing platform
         result = await tool.execute(platform="", content="hello")
@@ -145,6 +160,7 @@ class TestSchedulePost:
     @pytest.mark.asyncio
     async def test_hashtags_processing(self, cc_env):
         from vera.brain.agents.content_creator import SchedulePostTool
+
         tool = SchedulePostTool()
         result = await tool.execute(
             platform="twitter",
@@ -160,6 +176,7 @@ class TestSchedulePost:
     @pytest.mark.asyncio
     async def test_post_persisted_to_disk(self, cc_env):
         from vera.brain.agents.content_creator import SchedulePostTool
+
         tool = SchedulePostTool()
         await tool.execute(platform="twitter", content="Test", schedule_at="now")
         data = json.loads((cc_env / "scheduled_posts.json").read_text())
@@ -168,15 +185,15 @@ class TestSchedulePost:
     @pytest.mark.asyncio
     async def test_schedule_invalid_date_fallback(self, cc_env):
         from vera.brain.agents.content_creator import SchedulePostTool
+
         tool = SchedulePostTool()
-        result = await tool.execute(
-            platform="twitter", content="Post", schedule_at="invalid-date-string"
-        )
+        result = await tool.execute(platform="twitter", content="Post", schedule_at="invalid-date-string")
         assert result["status"] == "success"  # Falls back to now + 1h
 
     @pytest.mark.asyncio
     async def test_schedule_relative_minutes(self, cc_env):
         from vera.brain.agents.content_creator import SchedulePostTool
+
         tool = SchedulePostTool()
         result = await tool.execute(platform="twitter", content="Soon!", schedule_at="in 30m")
         assert result["status"] == "success"
@@ -184,10 +201,12 @@ class TestSchedulePost:
 
 # ── OptimizeSEOTool ─────────────────────────────────────────────
 
+
 class TestOptimizeSEO:
     @pytest.mark.asyncio
     async def test_seo_with_topic(self, cc_env):
         from vera.brain.agents.content_creator import OptimizeSEOTool
+
         tool = OptimizeSEOTool()
         result = await tool.execute(topic="Python programming")
         assert result["status"] == "success"
@@ -201,6 +220,7 @@ class TestOptimizeSEO:
     @pytest.mark.asyncio
     async def test_seo_empty_topic_error(self, cc_env):
         from vera.brain.agents.content_creator import OptimizeSEOTool
+
         tool = OptimizeSEOTool()
         result = await tool.execute(topic="")
         assert result["status"] == "error"
@@ -209,6 +229,7 @@ class TestOptimizeSEO:
     @pytest.mark.asyncio
     async def test_seo_with_custom_keywords(self, cc_env):
         from vera.brain.agents.content_creator import OptimizeSEOTool
+
         tool = OptimizeSEOTool()
         result = await tool.execute(topic="ML", keywords="machine learning, deep learning, neural nets")
         seo = result["seo"]
@@ -217,6 +238,7 @@ class TestOptimizeSEO:
     @pytest.mark.asyncio
     async def test_seo_platform_posting_times(self, cc_env):
         from vera.brain.agents.content_creator import OptimizeSEOTool
+
         tool = OptimizeSEOTool()
         for platform in ["youtube", "tiktok", "instagram"]:
             result = await tool.execute(topic="Test", platform=platform)
@@ -225,10 +247,12 @@ class TestOptimizeSEO:
 
 # ── TrackAnalyticsTool ──────────────────────────────────────────
 
+
 class TestTrackAnalytics:
     @pytest.mark.asyncio
     async def test_dashboard_empty(self, cc_env):
         from vera.brain.agents.content_creator import TrackAnalyticsTool
+
         tool = TrackAnalyticsTool()
         result = await tool.execute(action="dashboard")
         assert result["status"] == "success"
@@ -240,6 +264,7 @@ class TestTrackAnalytics:
     @pytest.mark.asyncio
     async def test_dashboard_with_data(self, cc_env):
         from vera.brain.agents.content_creator import TrackAnalyticsTool
+
         # Create some data files
         posts = [
             {"platform": "twitter", "status": "scheduled", "content": "A"},
@@ -266,6 +291,7 @@ class TestTrackAnalytics:
     @pytest.mark.asyncio
     async def test_action_posts(self, cc_env):
         from vera.brain.agents.content_creator import TrackAnalyticsTool
+
         posts = [{"id": "1", "platform": "twitter"}]
         (cc_env / "scheduled_posts.json").write_text(json.dumps(posts))
         tool = TrackAnalyticsTool()
@@ -276,6 +302,7 @@ class TestTrackAnalytics:
     @pytest.mark.asyncio
     async def test_action_scripts(self, cc_env):
         from vera.brain.agents.content_creator import TrackAnalyticsTool
+
         scripts = [{"topic": "AI"}, {"topic": "ML"}]
         (cc_env / "content_scripts.json").write_text(json.dumps(scripts))
         tool = TrackAnalyticsTool()
@@ -285,6 +312,7 @@ class TestTrackAnalytics:
     @pytest.mark.asyncio
     async def test_action_videos(self, cc_env):
         from vera.brain.agents.content_creator import TrackAnalyticsTool
+
         videos = [{"prompt": "demo"}]
         (cc_env / "video_jobs.json").write_text(json.dumps(videos))
         tool = TrackAnalyticsTool()
@@ -294,24 +322,29 @@ class TestTrackAnalytics:
 
 # ── ContentCreatorAgent ─────────────────────────────────────────
 
+
 class TestContentCreatorAgent:
     def test_agent_has_five_tools(self):
         from vera.brain.agents.content_creator import ContentCreatorAgent
+
         agent = ContentCreatorAgent()
         assert len(agent.tools) == 5
 
     def test_agent_name(self):
         from vera.brain.agents.content_creator import ContentCreatorAgent
+
         agent = ContentCreatorAgent()
         assert agent.name == "content_creator"
 
     def test_agent_has_offline_responses(self):
         from vera.brain.agents.content_creator import ContentCreatorAgent
+
         agent = ContentCreatorAgent()
         assert len(agent.offline_responses) > 0
 
     def test_agent_tool_names(self):
         from vera.brain.agents.content_creator import ContentCreatorAgent
+
         agent = ContentCreatorAgent()
         tool_names = [t.name for t in agent.tools]
         assert "generate_script" in tool_names
@@ -323,20 +356,24 @@ class TestContentCreatorAgent:
 
 # ── Helper functions ────────────────────────────────────────────
 
+
 class TestCCHelpers:
     def test_load_json_nonexistent_returns_empty_list(self, cc_env):
         from vera.brain.agents.content_creator import _load_json
+
         result = _load_json("nonexistent.json")
         assert result == []
 
     def test_load_json_corrupt_returns_empty_list(self, cc_env):
         from vera.brain.agents.content_creator import _load_json
+
         (cc_env / "bad.json").write_text("{corrupt")
         result = _load_json("bad.json")
         assert result == []
 
     def test_save_and_load_roundtrip(self, cc_env):
         from vera.brain.agents.content_creator import _load_json, _save_json
+
         data = [{"key": "value"}]
         _save_json("test.json", data)
         loaded = _load_json("test.json")

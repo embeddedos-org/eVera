@@ -76,6 +76,7 @@ class MockBrain:
 
     async def process(self, transcript, session_id=None):
         from types import SimpleNamespace
+
         return SimpleNamespace(
             response=f"Mock response to: {transcript}",
             agent="companion",
@@ -88,6 +89,7 @@ class MockBrain:
 
     async def confirm_action(self, session_id):
         from types import SimpleNamespace
+
         return SimpleNamespace(
             response="No pending action",
             agent="system",
@@ -129,6 +131,7 @@ mock_registry = {
 with patch("vera.brain.agents.AGENT_REGISTRY", mock_registry):
     with patch("vera.core.VeraBrain", MockBrain):
         from vera.app import create_app
+
         app = create_app(brain=MockBrain())
 
 client = TestClient(app)
@@ -138,6 +141,7 @@ client = TestClient(app)
 PASS = 0
 FAIL = 0
 ERRORS = []
+
 
 def test(name, response, expected_status=200, check_body=None):
     global PASS, FAIL
@@ -322,7 +326,7 @@ total = PASS + FAIL
 print(f"\n  Total API tests: {total}")
 print(f"  Passed: {PASS}")
 print(f"  Failed: {FAIL}")
-print(f"  Pass rate: {PASS/total*100:.1f}%\n")
+print(f"  Pass rate: {PASS / total * 100:.1f}%\n")
 
 if ERRORS:
     print("  FAILURES:")

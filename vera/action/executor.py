@@ -107,7 +107,9 @@ class ToolExecutor:
 
         try:
             proc = await asyncio.create_subprocess_exec(
-                "python", "-c", script,
+                "python",
+                "-c",
+                script,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )

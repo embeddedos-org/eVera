@@ -14,6 +14,7 @@ class TestProviderStream:
     async def test_stream_raises_value_error_for_reflex_tier(self):
         with patch("vera.providers.manager.litellm"):
             from vera.providers.manager import ProviderManager
+
             pm = ProviderManager()
             with pytest.raises(ValueError, match="REFLEX"):
                 async for _ in pm.stream(
@@ -26,6 +27,7 @@ class TestProviderStream:
     async def test_stream_raises_runtime_error_no_models(self):
         with patch("vera.providers.manager.litellm"):
             from vera.providers.manager import ProviderManager
+
             pm = ProviderManager()
             pm._models = {tier: [] for tier in ModelTier}
             with pytest.raises(RuntimeError, match="No models available"):
@@ -52,6 +54,7 @@ class TestProviderStream:
         with patch("vera.providers.manager.litellm") as mock_litellm:
             mock_litellm.acompletion = AsyncMock(return_value=mock_async_iter())
             from vera.providers.manager import ProviderManager
+
             pm = ProviderManager()
 
             collected = []
@@ -89,6 +92,7 @@ class TestProviderStream:
         with patch("vera.providers.manager.litellm") as mock_litellm:
             mock_litellm.acompletion = AsyncMock(return_value=mock_iter())
             from vera.providers.manager import ProviderManager
+
             pm = ProviderManager()
 
             collected = []
@@ -105,6 +109,7 @@ class TestGetUsage:
     def test_get_usage_returns_tier_keyed_dict(self):
         with patch("vera.providers.manager.litellm"):
             from vera.providers.manager import ProviderManager
+
             pm = ProviderManager()
             usage = pm.get_usage()
             assert "REFLEX" in usage

@@ -33,45 +33,101 @@ SYSTEM = platform.system()  # "Windows", "Linux", "Darwin"
 # --- Cross-platform app maps ---
 
 APP_MAP_WINDOWS = {
-    "word": "winword", "ms word": "winword", "microsoft word": "winword",
-    "excel": "excel", "ms excel": "excel",
-    "powerpoint": "powerpnt", "ms powerpoint": "powerpnt",
-    "notepad": "notepad", "calculator": "calc", "calc": "calc",
-    "paint": "mspaint", "chrome": "chrome", "google chrome": "chrome",
-    "firefox": "firefox", "edge": "msedge", "microsoft edge": "msedge",
-    "explorer": "explorer", "file explorer": "explorer",
-    "outlook": "outlook", "teams": "msteams", "microsoft teams": "msteams",
-    "code": "code", "vscode": "code", "vs code": "code",
-    "terminal": "wt", "windows terminal": "wt", "cmd": "cmd",
-    "command prompt": "cmd", "powershell": "powershell",
-    "spotify": "spotify", "discord": "discord", "slack": "slack", "zoom": "zoom",
-    "task manager": "taskmgr", "settings": "ms-settings:",
-    "control panel": "control", "snipping tool": "snippingtool",
+    "word": "winword",
+    "ms word": "winword",
+    "microsoft word": "winword",
+    "excel": "excel",
+    "ms excel": "excel",
+    "powerpoint": "powerpnt",
+    "ms powerpoint": "powerpnt",
+    "notepad": "notepad",
+    "calculator": "calc",
+    "calc": "calc",
+    "paint": "mspaint",
+    "chrome": "chrome",
+    "google chrome": "chrome",
+    "firefox": "firefox",
+    "edge": "msedge",
+    "microsoft edge": "msedge",
+    "explorer": "explorer",
+    "file explorer": "explorer",
+    "outlook": "outlook",
+    "teams": "msteams",
+    "microsoft teams": "msteams",
+    "code": "code",
+    "vscode": "code",
+    "vs code": "code",
+    "terminal": "wt",
+    "windows terminal": "wt",
+    "cmd": "cmd",
+    "command prompt": "cmd",
+    "powershell": "powershell",
+    "spotify": "spotify",
+    "discord": "discord",
+    "slack": "slack",
+    "zoom": "zoom",
+    "task manager": "taskmgr",
+    "settings": "ms-settings:",
+    "control panel": "control",
+    "snipping tool": "snippingtool",
 }
 
 APP_MAP_LINUX = {
-    "files": "nautilus", "file manager": "nautilus",
-    "terminal": "gnome-terminal", "code": "code", "vscode": "code", "vs code": "code",
-    "chrome": "google-chrome", "google chrome": "google-chrome",
-    "firefox": "firefox", "calculator": "gnome-calculator", "calc": "gnome-calculator",
-    "settings": "gnome-control-center", "text editor": "gedit", "notepad": "gedit",
-    "spotify": "spotify", "discord": "discord", "slack": "slack", "zoom": "zoom",
-    "libreoffice": "libreoffice", "writer": "libreoffice --writer",
+    "files": "nautilus",
+    "file manager": "nautilus",
+    "terminal": "gnome-terminal",
+    "code": "code",
+    "vscode": "code",
+    "vs code": "code",
+    "chrome": "google-chrome",
+    "google chrome": "google-chrome",
+    "firefox": "firefox",
+    "calculator": "gnome-calculator",
+    "calc": "gnome-calculator",
+    "settings": "gnome-control-center",
+    "text editor": "gedit",
+    "notepad": "gedit",
+    "spotify": "spotify",
+    "discord": "discord",
+    "slack": "slack",
+    "zoom": "zoom",
+    "libreoffice": "libreoffice",
+    "writer": "libreoffice --writer",
     "spreadsheet": "libreoffice --calc",
 }
 
 APP_MAP_MACOS = {
-    "finder": "Finder", "terminal": "Terminal", "safari": "Safari",
-    "chrome": "Google Chrome", "google chrome": "Google Chrome",
-    "firefox": "Firefox", "code": "Visual Studio Code", "vscode": "Visual Studio Code",
-    "vs code": "Visual Studio Code", "notes": "Notes", "calculator": "Calculator",
-    "calc": "Calculator", "settings": "System Preferences", "preferences": "System Preferences",
-    "mail": "Mail", "calendar": "Calendar", "music": "Music", "spotify": "Spotify",
-    "discord": "Discord", "slack": "Slack", "zoom": "zoom.us",
-    "word": "Microsoft Word", "excel": "Microsoft Excel", "powerpoint": "Microsoft PowerPoint",
-    "teams": "Microsoft Teams", "outlook": "Microsoft Outlook",
-    "pages": "Pages", "numbers": "Numbers", "keynote": "Keynote",
-    "preview": "Preview", "photos": "Photos",
+    "finder": "Finder",
+    "terminal": "Terminal",
+    "safari": "Safari",
+    "chrome": "Google Chrome",
+    "google chrome": "Google Chrome",
+    "firefox": "Firefox",
+    "code": "Visual Studio Code",
+    "vscode": "Visual Studio Code",
+    "vs code": "Visual Studio Code",
+    "notes": "Notes",
+    "calculator": "Calculator",
+    "calc": "Calculator",
+    "settings": "System Preferences",
+    "preferences": "System Preferences",
+    "mail": "Mail",
+    "calendar": "Calendar",
+    "music": "Music",
+    "spotify": "Spotify",
+    "discord": "Discord",
+    "slack": "Slack",
+    "zoom": "zoom.us",
+    "word": "Microsoft Word",
+    "excel": "Microsoft Excel",
+    "powerpoint": "Microsoft PowerPoint",
+    "teams": "Microsoft Teams",
+    "outlook": "Microsoft Outlook",
+    "pages": "Pages",
+    "numbers": "Numbers",
+    "keynote": "Keynote",
+    "preview": "Preview",
+    "photos": "Photos",
 }
 
 APP_MAP = {
@@ -82,6 +138,7 @@ APP_MAP = {
 
 
 # --- Concrete tool implementations ---
+
 
 class OpenAppTool(Tool):
     """Open an application by name."""
@@ -100,7 +157,8 @@ class OpenAppTool(Tool):
 
         # Sanitize: only allow alphanumeric, spaces, and hyphens
         import re as _re
-        if not _re.match(r'^[a-z0-9 \-]+$', app_name):
+
+        if not _re.match(r"^[a-z0-9 \-]+$", app_name):
             return {"status": "error", "message": "Invalid app name characters"}
 
         exe = APP_MAP.get(app_name)
@@ -156,23 +214,54 @@ class ExecuteScriptTool(Tool):
 
         # Safety: comprehensive dangerous pattern blocking
         dangerous_patterns = [
-            "rm -rf", "rm -fr", "rmdir /s", "del /s", "del /f", "del /q",
-            "format c:", "format d:", "mkfs", "dd if=", ":()", "fork bomb",
-            "> /dev/sda", "shred", "wipefs",
-            "curl|bash", "curl|sh", "wget|bash", "wget|sh",
-            "|bash", "|sh", "|powershell",
-            "base64 -d|", "base64 --decode|",
-            "nc -e", "ncat -e", "netcat",
-            "chmod 777 /", "chown root",
-            "shutdown", "reboot", "halt", "init 0", "init 6",
-            "reg delete", "reg add",
-            "bcdedit", "bootrec",
-            "Remove-Item C:\\", "Remove-Item -Recurse -Force C:\\",
+            "rm -rf",
+            "rm -fr",
+            "rmdir /s",
+            "del /s",
+            "del /f",
+            "del /q",
+            "format c:",
+            "format d:",
+            "mkfs",
+            "dd if=",
+            ":()",
+            "fork bomb",
+            "> /dev/sda",
+            "shred",
+            "wipefs",
+            "curl|bash",
+            "curl|sh",
+            "wget|bash",
+            "wget|sh",
+            "|bash",
+            "|sh",
+            "|powershell",
+            "base64 -d|",
+            "base64 --decode|",
+            "nc -e",
+            "ncat -e",
+            "netcat",
+            "chmod 777 /",
+            "chown root",
+            "shutdown",
+            "reboot",
+            "halt",
+            "init 0",
+            "init 6",
+            "reg delete",
+            "reg add",
+            "bcdedit",
+            "bootrec",
+            "Remove-Item C:\\",
+            "Remove-Item -Recurse -Force C:\\",
         ]
         lower_cmd = command.lower().replace(" ", "")
         for d in dangerous_patterns:
             if d.replace(" ", "") in lower_cmd:
-                return {"status": "denied", "message": "Blocked potentially dangerous command pattern. Ask the user to run it manually."}
+                return {
+                    "status": "denied",
+                    "message": "Blocked potentially dangerous command pattern. Ask the user to run it manually.",
+                }
 
         # Block shell metacharacter injection for non-shell languages
         if language in ("python", "powershell"):
@@ -188,12 +277,16 @@ class ExecuteScriptTool(Tool):
             if language == "python":
                 result = subprocess.run(
                     ["python", "-c", command],
-                    capture_output=True, text=True, timeout=30,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
                 )
             elif language == "powershell":
                 result = subprocess.run(
                     ["powershell", "-NoProfile", "-Command", command],
-                    capture_output=True, text=True, timeout=30,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
                 )
             else:
                 # Use shlex.split to avoid shell=True where possible
@@ -201,13 +294,18 @@ class ExecuteScriptTool(Tool):
                     cmd_parts = shlex.split(command)
                     result = subprocess.run(
                         cmd_parts,
-                        capture_output=True, text=True, timeout=30,
+                        capture_output=True,
+                        text=True,
+                        timeout=30,
                     )
                 except ValueError:
                     # Complex commands that shlex can't parse — use shell with warning
                     result = subprocess.run(
-                        command, shell=True,
-                        capture_output=True, text=True, timeout=30,
+                        command,
+                        shell=True,
+                        capture_output=True,
+                        text=True,
+                        timeout=30,
                     )
 
             output = result.stdout[:2000] if result.stdout else ""
@@ -225,11 +323,16 @@ class ExecuteScriptTool(Tool):
             return {"status": "error", "message": str(e)}
 
 
-
 # --- Hard-blocked admin commands (never allowed even with admin_enabled) ---
 ADMIN_HARD_BLOCK = [
-    "rm -rf /", "rm -rf /*", "mkfs", "dd if=/dev/zero",
-    ":(){ :|:& };:", "format c:", "> /dev/sda", "shred /dev",
+    "rm -rf /",
+    "rm -rf /*",
+    "mkfs",
+    "dd if=/dev/zero",
+    ":(){ :|:& };:",
+    "format c:",
+    "> /dev/sda",
+    "shred /dev",
 ]
 
 
@@ -283,13 +386,17 @@ class ElevatedScriptTool(Tool):
             if SYSTEM in ("Linux", "Darwin"):
                 result = subprocess.run(
                     ["sudo", "-S"] + command.split(),
-                    capture_output=True, text=True, timeout=60,
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
                 )
             else:
                 ps_cmd = f'Start-Process -FilePath "cmd.exe" -ArgumentList "/c {command}" -Verb RunAs -Wait -PassThru'
                 result = subprocess.run(
                     ["powershell", "-NoProfile", "-Command", ps_cmd],
-                    capture_output=True, text=True, timeout=60,
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
                 )
 
             # Audit log
@@ -318,6 +425,7 @@ class ElevatedScriptTool(Tool):
 
 # --- GUI Tools (tkinter) ---
 
+
 class ShowMessageBoxTool(Tool):
     """Show an info/warning/error message dialog."""
 
@@ -334,12 +442,14 @@ class ShowMessageBoxTool(Tool):
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         from vera.utils.gui_runner import run_in_gui_thread
+
         title = kwargs.get("title", "Vera")
         message = kwargs.get("message", "")
         level = kwargs.get("level", "info").lower()
 
         def _show():
             import tkinter.messagebox as mb
+
             if level == "warning":
                 mb.showwarning(title, message)
             elif level == "error":
@@ -368,12 +478,14 @@ class ShowInputDialogTool(Tool):
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         from vera.utils.gui_runner import run_in_gui_thread
+
         title = kwargs.get("title", "Input")
         prompt = kwargs.get("prompt", "Enter value:")
         input_type = kwargs.get("input_type", "string").lower()
 
         def _ask():
             import tkinter.simpledialog as sd
+
             if input_type == "integer":
                 return sd.askinteger(title, prompt)
             elif input_type == "float":
@@ -402,6 +514,7 @@ class ShowFileChooserTool(Tool):
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         from vera.utils.gui_runner import run_in_gui_thread
+
         mode = kwargs.get("mode", "open").lower()
         title = kwargs.get("title", "Choose file")
         filetypes_str = kwargs.get("filetypes", "")
@@ -413,6 +526,7 @@ class ShowFileChooserTool(Tool):
 
         def _choose():
             import tkinter.filedialog as fd
+
             if mode == "save":
                 return fd.asksaveasfilename(title=title, filetypes=ftypes)
             elif mode == "directory":
@@ -441,6 +555,7 @@ class ShowProgressBarTool(Tool):
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         from vera.utils.gui_runner import run_in_gui_thread
+
         title = kwargs.get("title", "Progress")
         message = kwargs.get("message", "Working...")
         duration = kwargs.get("duration_s", 10)
@@ -448,6 +563,7 @@ class ShowProgressBarTool(Tool):
         def _progress():
             import tkinter as tk
             from tkinter import ttk
+
             root = tk.Tk()
             root.title(title)
             root.geometry("400x120")
@@ -473,7 +589,10 @@ class ShowFormTool(Tool):
             description="Show a native form dialog with dynamic fields. Returns collected values.",
             parameters={
                 "title": {"type": "str", "description": "Form window title"},
-                "fields": {"type": "str", "description": 'JSON array of field specs: [{"label":"Name","type":"text"},{"label":"Age","type":"number"}]'},
+                "fields": {
+                    "type": "str",
+                    "description": 'JSON array of field specs: [{"label":"Name","type":"text"},{"label":"Age","type":"number"}]',
+                },
             },
         )
 
@@ -481,6 +600,7 @@ class ShowFormTool(Tool):
         import json as _json
 
         from vera.utils.gui_runner import run_in_gui_thread
+
         title = kwargs.get("title", "Form")
         fields_raw = kwargs.get("fields", "[]")
         try:
@@ -490,6 +610,7 @@ class ShowFormTool(Tool):
 
         def _form():
             import tkinter as tk
+
             result = {}
             root = tk.Tk()
             root.title(title)
@@ -546,7 +667,14 @@ class ManageFilesTool(Tool):
                 if not path.exists():
                     return {"status": "error", "message": f"Path not found: {path}"}
                 if path.is_dir():
-                    items = [{"name": p.name, "type": "dir" if p.is_dir() else "file", "size": p.stat().st_size if p.is_file() else 0} for p in sorted(path.iterdir())[:50]]
+                    items = [
+                        {
+                            "name": p.name,
+                            "type": "dir" if p.is_dir() else "file",
+                            "size": p.stat().st_size if p.is_file() else 0,
+                        }
+                        for p in sorted(path.iterdir())[:50]
+                    ]
                     return {"status": "success", "path": str(path), "items": items, "count": len(items)}
                 return {"status": "success", "path": str(path), "type": "file", "size": path.stat().st_size}
 
@@ -555,9 +683,13 @@ class ManageFilesTool(Tool):
                     return {"status": "error", "message": f"Path not found: {path}"}
                 stat = path.stat()
                 return {
-                    "status": "success", "path": str(path),
-                    "exists": True, "is_file": path.is_file(), "is_dir": path.is_dir(),
-                    "size": stat.st_size, "name": path.name,
+                    "status": "success",
+                    "path": str(path),
+                    "exists": True,
+                    "is_file": path.is_file(),
+                    "is_dir": path.is_dir(),
+                    "size": stat.st_size,
+                    "name": path.name,
                 }
 
             elif action == "mkdir":
@@ -591,7 +723,10 @@ class ManageFilesTool(Tool):
                 return {"status": "success", "deleted": str(path)}
 
             else:
-                return {"status": "error", "message": f"Unknown action: {action}. Use: copy, move, delete, list, mkdir, info"}
+                return {
+                    "status": "error",
+                    "message": f"Unknown action: {action}. Use: copy, move, delete, list, mkdir, info",
+                }
 
         except PermissionError:
             return {"status": "error", "message": f"Permission denied: {path}"}
@@ -650,7 +785,8 @@ class TypeTextTool(Tool):
             if SYSTEM == "Windows":
                 # Use PowerShell with proper escaping — write text to temp file to avoid injection
                 import tempfile
-                with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8') as f:
+
+                with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8") as f:
                     f.write(text)
                     tmp_path = f.name
                 ps_cmd = (
@@ -662,8 +798,10 @@ class TypeTextTool(Tool):
                 subprocess.run(["powershell", "-NoProfile", "-Command", ps_cmd], timeout=10)
                 return {"status": "success", "typed": text[:50]}
             elif SYSTEM == "Darwin":
-                subprocess.run(["osascript", "-e",
-                    f'tell application "System Events" to keystroke "{text.replace(chr(34), "")}"'], timeout=10)
+                subprocess.run(
+                    ["osascript", "-e", f'tell application "System Events" to keystroke "{text.replace(chr(34), "")}"'],
+                    timeout=10,
+                )
                 return {"status": "success", "typed": text[:50]}
             else:
                 if shutil.which("xdotool"):
@@ -678,13 +816,19 @@ class TypeTextTool(Tool):
 # NEW — Mouse & GUI Automation Tools
 # ============================================================
 
+
 class MouseClickTool(Tool):
     def __init__(self) -> None:
-        super().__init__(name="mouse_click", description="Click the mouse at screen coordinates (x, y)", parameters={
-            "x": {"type": "int", "description": "X coordinate"}, "y": {"type": "int", "description": "Y coordinate"},
-            "button": {"type": "str", "description": "Button: left, right, middle (default: left)"},
-            "clicks": {"type": "int", "description": "Number of clicks (1=single, 2=double)"},
-        })
+        super().__init__(
+            name="mouse_click",
+            description="Click the mouse at screen coordinates (x, y)",
+            parameters={
+                "x": {"type": "int", "description": "X coordinate"},
+                "y": {"type": "int", "description": "Y coordinate"},
+                "button": {"type": "str", "description": "Button: left, right, middle (default: left)"},
+                "clicks": {"type": "int", "description": "Number of clicks (1=single, 2=double)"},
+            },
+        )
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         x, y = int(kwargs.get("x", 0)), int(kwargs.get("y", 0))
@@ -692,6 +836,7 @@ class MouseClickTool(Tool):
         clicks = int(kwargs.get("clicks", 1))
         try:
             import pyautogui
+
             pyautogui.click(x=x, y=y, button=button, clicks=clicks)
             return {"status": "success", "clicked": {"x": x, "y": y, "button": button, "clicks": clicks}}
         except Exception as e:
@@ -700,15 +845,23 @@ class MouseClickTool(Tool):
 
 class MouseMoveTool(Tool):
     def __init__(self) -> None:
-        super().__init__(name="mouse_move", description="Move mouse cursor to screen coordinates", parameters={
-            "x": {"type": "int", "description": "X coordinate"}, "y": {"type": "int", "description": "Y coordinate"},
-            "duration": {"type": "float", "description": "Movement duration in seconds (default: 0.25)"},
-        })
+        super().__init__(
+            name="mouse_move",
+            description="Move mouse cursor to screen coordinates",
+            parameters={
+                "x": {"type": "int", "description": "X coordinate"},
+                "y": {"type": "int", "description": "Y coordinate"},
+                "duration": {"type": "float", "description": "Movement duration in seconds (default: 0.25)"},
+            },
+        )
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         try:
             import pyautogui
-            pyautogui.moveTo(x=int(kwargs.get("x", 0)), y=int(kwargs.get("y", 0)), duration=float(kwargs.get("duration", 0.25)))
+
+            pyautogui.moveTo(
+                x=int(kwargs.get("x", 0)), y=int(kwargs.get("y", 0)), duration=float(kwargs.get("duration", 0.25))
+            )
             return {"status": "success", "moved_to": {"x": kwargs.get("x"), "y": kwargs.get("y")}}
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -716,20 +869,29 @@ class MouseMoveTool(Tool):
 
 class MouseDragTool(Tool):
     def __init__(self) -> None:
-        super().__init__(name="mouse_drag", description="Click and drag from (x1,y1) to (x2,y2)", parameters={
-            "x1": {"type": "int", "description": "Start X"}, "y1": {"type": "int", "description": "Start Y"},
-            "x2": {"type": "int", "description": "End X"}, "y2": {"type": "int", "description": "End Y"},
-            "button": {"type": "str", "description": "Mouse button (default: left)"},
-            "duration": {"type": "float", "description": "Drag duration in seconds (default: 0.5)"},
-        })
+        super().__init__(
+            name="mouse_drag",
+            description="Click and drag from (x1,y1) to (x2,y2)",
+            parameters={
+                "x1": {"type": "int", "description": "Start X"},
+                "y1": {"type": "int", "description": "Start Y"},
+                "x2": {"type": "int", "description": "End X"},
+                "y2": {"type": "int", "description": "End Y"},
+                "button": {"type": "str", "description": "Mouse button (default: left)"},
+                "duration": {"type": "float", "description": "Drag duration in seconds (default: 0.5)"},
+            },
+        )
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         x1, y1 = int(kwargs.get("x1", 0)), int(kwargs.get("y1", 0))
         x2, y2 = int(kwargs.get("x2", 0)), int(kwargs.get("y2", 0))
         try:
             import pyautogui
+
             pyautogui.moveTo(x1, y1)
-            pyautogui.drag(x2 - x1, y2 - y1, duration=float(kwargs.get("duration", 0.5)), button=kwargs.get("button", "left"))
+            pyautogui.drag(
+                x2 - x1, y2 - y1, duration=float(kwargs.get("duration", 0.5)), button=kwargs.get("button", "left")
+            )
             return {"status": "success", "dragged": {"from": [x1, y1], "to": [x2, y2]}}
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -737,15 +899,21 @@ class MouseDragTool(Tool):
 
 class ScrollTool(Tool):
     def __init__(self) -> None:
-        super().__init__(name="scroll", description="Scroll mouse wheel up/down", parameters={
-            "amount": {"type": "int", "description": "Scroll amount (positive=up, negative=down)"},
-            "x": {"type": "int", "description": "Optional X coordinate"}, "y": {"type": "int", "description": "Optional Y coordinate"},
-        })
+        super().__init__(
+            name="scroll",
+            description="Scroll mouse wheel up/down",
+            parameters={
+                "amount": {"type": "int", "description": "Scroll amount (positive=up, negative=down)"},
+                "x": {"type": "int", "description": "Optional X coordinate"},
+                "y": {"type": "int", "description": "Optional Y coordinate"},
+            },
+        )
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         amount = int(kwargs.get("amount", 3))
         try:
             import pyautogui
+
             x, y = kwargs.get("x"), kwargs.get("y")
             if x is not None and y is not None:
                 pyautogui.scroll(amount, x=int(x), y=int(y))
@@ -758,21 +926,41 @@ class ScrollTool(Tool):
 
 class HotkeyTool(Tool):
     def __init__(self) -> None:
-        super().__init__(name="press_hotkey", description="Press a keyboard shortcut (e.g. Ctrl+C, Alt+Tab)", parameters={
-            "keys": {"type": "str", "description": "Key combination separated by + (e.g. 'ctrl+c', 'alt+tab')"},
-        })
+        super().__init__(
+            name="press_hotkey",
+            description="Press a keyboard shortcut (e.g. Ctrl+C, Alt+Tab)",
+            parameters={
+                "keys": {"type": "str", "description": "Key combination separated by + (e.g. 'ctrl+c', 'alt+tab')"},
+            },
+        )
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         keys = kwargs.get("keys", "")
         if not keys:
             return {"status": "error", "message": "No keys provided"}
-        key_map = {"ctrl": "ctrl", "control": "ctrl", "alt": "alt", "option": "alt", "shift": "shift",
-                   "win": "win", "windows": "win", "cmd": "command", "command": "command",
-                   "tab": "tab", "enter": "enter", "return": "enter", "esc": "escape",
-                   "space": "space", "delete": "delete", "del": "delete", "backspace": "backspace"}
+        key_map = {
+            "ctrl": "ctrl",
+            "control": "ctrl",
+            "alt": "alt",
+            "option": "alt",
+            "shift": "shift",
+            "win": "win",
+            "windows": "win",
+            "cmd": "command",
+            "command": "command",
+            "tab": "tab",
+            "enter": "enter",
+            "return": "enter",
+            "esc": "escape",
+            "space": "space",
+            "delete": "delete",
+            "del": "delete",
+            "backspace": "backspace",
+        }
         mapped = [key_map.get(k.strip().lower(), k.strip().lower()) for k in keys.split("+")]
         try:
             import pyautogui
+
             pyautogui.hotkey(*mapped)
             return {"status": "success", "pressed": keys}
         except Exception as e:
@@ -781,10 +969,14 @@ class HotkeyTool(Tool):
 
 class WindowManageTool(Tool):
     def __init__(self) -> None:
-        super().__init__(name="manage_window", description="Manage windows: list, focus, minimize, maximize, close", parameters={
-            "action": {"type": "str", "description": "Action: list, focus, minimize, maximize, close"},
-            "title": {"type": "str", "description": "Window title (partial match)"},
-        })
+        super().__init__(
+            name="manage_window",
+            description="Manage windows: list, focus, minimize, maximize, close",
+            parameters={
+                "action": {"type": "str", "description": "Action: list, focus, minimize, maximize, close"},
+                "title": {"type": "str", "description": "Window title (partial match)"},
+            },
+        )
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         action = kwargs.get("action", "list").lower()
@@ -792,6 +984,7 @@ class WindowManageTool(Tool):
         try:
             if SYSTEM == "Windows":
                 import pygetwindow as gw
+
                 if action == "list":
                     windows = [{"title": w.title} for w in gw.getAllWindows() if w.title.strip()]
                     return {"status": "success", "windows": windows[:30]}
@@ -812,11 +1005,23 @@ class WindowManageTool(Tool):
                 return {"status": "success", "action": action, "window": win.title}
             elif SYSTEM == "Darwin":
                 if action == "list":
-                    result = subprocess.run(["osascript", "-e", 'tell application "System Events" to get name of every process whose visible is true'], capture_output=True, text=True, timeout=10)
+                    result = subprocess.run(
+                        [
+                            "osascript",
+                            "-e",
+                            'tell application "System Events" to get name of every process whose visible is true',
+                        ],
+                        capture_output=True,
+                        text=True,
+                        timeout=10,
+                    )
                     return {"status": "success", "windows": [a.strip() for a in result.stdout.split(",")][:30]}
                 if not title:
                     return {"status": "error", "message": "Window title required"}
-                scripts = {"focus": f'tell application "{title}" to activate', "close": f'tell application "{title}" to close first window'}
+                scripts = {
+                    "focus": f'tell application "{title}" to activate',
+                    "close": f'tell application "{title}" to close first window',
+                }
                 if action in scripts:
                     subprocess.run(["osascript", "-e", scripts[action]], timeout=10)
                 return {"status": "success", "action": action, "window": title}
@@ -839,18 +1044,24 @@ class WindowManageTool(Tool):
 # NEW — System Admin Tools
 # ============================================================
 
+
 class ProcessManagerTool(Tool):
     def __init__(self) -> None:
-        super().__init__(name="manage_process", description="List processes, kill by name/PID, get process info", parameters={
-            "action": {"type": "str", "description": "Action: list, info, kill"},
-            "name": {"type": "str", "description": "Process name filter or target"},
-            "pid": {"type": "int", "description": "Process ID"},
-        })
+        super().__init__(
+            name="manage_process",
+            description="List processes, kill by name/PID, get process info",
+            parameters={
+                "action": {"type": "str", "description": "Action: list, info, kill"},
+                "name": {"type": "str", "description": "Process name filter or target"},
+                "pid": {"type": "int", "description": "Process ID"},
+            },
+        )
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         action = kwargs.get("action", "list").lower()
         try:
             import psutil
+
             if action == "list":
                 name_filter = kwargs.get("name", "").lower()
                 procs = []
@@ -859,7 +1070,14 @@ class ProcessManagerTool(Tool):
                         info = p.info
                         if name_filter and name_filter not in info["name"].lower():
                             continue
-                        procs.append({"pid": info["pid"], "name": info["name"], "cpu": round(info.get("cpu_percent", 0) or 0, 1), "mem": round(info.get("memory_percent", 0) or 0, 1)})
+                        procs.append(
+                            {
+                                "pid": info["pid"],
+                                "name": info["name"],
+                                "cpu": round(info.get("cpu_percent", 0) or 0, 1),
+                                "mem": round(info.get("memory_percent", 0) or 0, 1),
+                            }
+                        )
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
                         pass
                 procs.sort(key=lambda p: p.get("cpu", 0), reverse=True)
@@ -869,7 +1087,14 @@ class ProcessManagerTool(Tool):
                 if not pid:
                     return {"status": "error", "message": "PID required"}
                 p = psutil.Process(pid)
-                return {"status": "success", "pid": pid, "name": p.name(), "cpu": p.cpu_percent(), "mem_mb": round(p.memory_info().rss / 1024**2, 1), "proc_status": p.status()}
+                return {
+                    "status": "success",
+                    "pid": pid,
+                    "name": p.name(),
+                    "cpu": p.cpu_percent(),
+                    "mem_mb": round(p.memory_info().rss / 1024**2, 1),
+                    "proc_status": p.status(),
+                }
             elif action == "kill":
                 pid, name = kwargs.get("pid"), kwargs.get("name", "")
                 killed = []
@@ -894,28 +1119,56 @@ class ProcessManagerTool(Tool):
 
 class SystemInfoTool(Tool):
     def __init__(self) -> None:
-        super().__init__(name="system_info", description="Get CPU, memory, disk, battery, OS details", parameters={
-            "category": {"type": "str", "description": "Category: all, cpu, memory, disk, battery, os (default: all)"},
-        })
+        super().__init__(
+            name="system_info",
+            description="Get CPU, memory, disk, battery, OS details",
+            parameters={
+                "category": {
+                    "type": "str",
+                    "description": "Category: all, cpu, memory, disk, battery, os (default: all)",
+                },
+            },
+        )
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         category = kwargs.get("category", "all").lower()
         try:
             import psutil
+
             info: dict[str, Any] = {}
             if category in ("all", "os"):
-                info["os"] = {"system": SYSTEM, "release": platform.release(), "machine": platform.machine(), "hostname": platform.node()}
+                info["os"] = {
+                    "system": SYSTEM,
+                    "release": platform.release(),
+                    "machine": platform.machine(),
+                    "hostname": platform.node(),
+                }
             if category in ("all", "cpu"):
-                info["cpu"] = {"percent": psutil.cpu_percent(interval=0.5), "cores": psutil.cpu_count(), "physical": psutil.cpu_count(logical=False)}
+                info["cpu"] = {
+                    "percent": psutil.cpu_percent(interval=0.5),
+                    "cores": psutil.cpu_count(),
+                    "physical": psutil.cpu_count(logical=False),
+                }
             if category in ("all", "memory"):
                 m = psutil.virtual_memory()
-                info["memory"] = {"total_gb": round(m.total / 1024**3, 1), "used_gb": round(m.used / 1024**3, 1), "percent": m.percent}
+                info["memory"] = {
+                    "total_gb": round(m.total / 1024**3, 1),
+                    "used_gb": round(m.used / 1024**3, 1),
+                    "percent": m.percent,
+                }
             if category in ("all", "disk"):
                 disks = []
                 for part in psutil.disk_partitions():
                     try:
                         u = psutil.disk_usage(part.mountpoint)
-                        disks.append({"device": part.device, "total_gb": round(u.total / 1024**3, 1), "free_gb": round(u.free / 1024**3, 1), "percent": u.percent})
+                        disks.append(
+                            {
+                                "device": part.device,
+                                "total_gb": round(u.total / 1024**3, 1),
+                                "free_gb": round(u.free / 1024**3, 1),
+                                "percent": u.percent,
+                            }
+                        )
                     except (PermissionError, OSError):
                         pass
                 info["disk"] = disks
@@ -931,10 +1184,14 @@ class SystemInfoTool(Tool):
 
 class ServiceManagerTool(Tool):
     def __init__(self) -> None:
-        super().__init__(name="manage_service", description="List/start/stop/restart system services", parameters={
-            "action": {"type": "str", "description": "Action: list, start, stop, restart, status"},
-            "name": {"type": "str", "description": "Service name"},
-        })
+        super().__init__(
+            name="manage_service",
+            description="List/start/stop/restart system services",
+            parameters={
+                "action": {"type": "str", "description": "Action: list, start, stop, restart, status"},
+                "name": {"type": "str", "description": "Service name"},
+            },
+        )
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         action, name = kwargs.get("action", "list").lower(), kwargs.get("name", "")
@@ -949,6 +1206,7 @@ class ServiceManagerTool(Tool):
                 if action == "restart":
                     subprocess.run(["sc", "stop", name], capture_output=True, timeout=15)
                     import time
+
                     time.sleep(2)
                     r = subprocess.run(["sc", "start", name], capture_output=True, text=True, timeout=15)
                 else:
@@ -959,11 +1217,21 @@ class ServiceManagerTool(Tool):
                 return {"status": "success", "action": action, "service": name, "output": r.stdout[:500]}
             elif SYSTEM == "Linux":
                 if action == "list":
-                    r = subprocess.run(["systemctl", "list-units", "--type=service", "--no-pager", "-q"], capture_output=True, text=True, timeout=15)
+                    r = subprocess.run(
+                        ["systemctl", "list-units", "--type=service", "--no-pager", "-q"],
+                        capture_output=True,
+                        text=True,
+                        timeout=15,
+                    )
                     return {"status": "success", "output": r.stdout[:2000]}
                 if not name:
                     return {"status": "error", "message": "Service name required"}
-                cmds = {"start": ["sudo", "systemctl", "start", name], "stop": ["sudo", "systemctl", "stop", name], "restart": ["sudo", "systemctl", "restart", name], "status": ["systemctl", "status", name]}
+                cmds = {
+                    "start": ["sudo", "systemctl", "start", name],
+                    "stop": ["sudo", "systemctl", "stop", name],
+                    "restart": ["sudo", "systemctl", "restart", name],
+                    "status": ["systemctl", "status", name],
+                }
                 cmd = cmds.get(action)
                 if not cmd:
                     return {"status": "error", "message": f"Unknown action: {action}"}
@@ -975,10 +1243,15 @@ class ServiceManagerTool(Tool):
                     return {"status": "success", "output": r.stdout[:2000]}
                 if not name:
                     return {"status": "error", "message": "Service name required"}
-                cmds = {"start": ["launchctl", "start", name], "stop": ["launchctl", "stop", name], "status": ["launchctl", "list", name]}
+                cmds = {
+                    "start": ["launchctl", "start", name],
+                    "stop": ["launchctl", "stop", name],
+                    "status": ["launchctl", "list", name],
+                }
                 if action == "restart":
                     subprocess.run(["launchctl", "stop", name], capture_output=True, timeout=15)
                     import time
+
                     time.sleep(1)
                     r = subprocess.run(["launchctl", "start", name], capture_output=True, text=True, timeout=15)
                 else:
@@ -993,15 +1266,20 @@ class ServiceManagerTool(Tool):
 
 class NetworkInfoTool(Tool):
     def __init__(self) -> None:
-        super().__init__(name="network_info", description="Get IP, DNS, connections, ping", parameters={
-            "action": {"type": "str", "description": "Action: info, connections, ping"},
-            "host": {"type": "str", "description": "Host to ping"},
-        })
+        super().__init__(
+            name="network_info",
+            description="Get IP, DNS, connections, ping",
+            parameters={
+                "action": {"type": "str", "description": "Action: info, connections, ping"},
+                "host": {"type": "str", "description": "Host to ping"},
+            },
+        )
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         action = kwargs.get("action", "info").lower()
         try:
             import psutil
+
             if action == "info":
                 addrs = {}
                 for iface, snics in psutil.net_if_addrs().items():
@@ -1009,9 +1287,21 @@ class NetworkInfoTool(Tool):
                         if snic.family.name == "AF_INET":
                             addrs[iface] = snic.address
                 c = psutil.net_io_counters()
-                return {"status": "success", "interfaces": addrs, "sent_mb": round(c.bytes_sent / 1024**2, 1), "recv_mb": round(c.bytes_recv / 1024**2, 1)}
+                return {
+                    "status": "success",
+                    "interfaces": addrs,
+                    "sent_mb": round(c.bytes_sent / 1024**2, 1),
+                    "recv_mb": round(c.bytes_recv / 1024**2, 1),
+                }
             elif action == "connections":
-                conns = [{"local": f"{c.laddr.ip}:{c.laddr.port}" if c.laddr else "", "remote": f"{c.raddr.ip}:{c.raddr.port}" if c.raddr else "", "status": c.status} for c in psutil.net_connections(kind="inet")[:20]]
+                conns = [
+                    {
+                        "local": f"{c.laddr.ip}:{c.laddr.port}" if c.laddr else "",
+                        "remote": f"{c.raddr.ip}:{c.raddr.port}" if c.raddr else "",
+                        "status": c.status,
+                    }
+                    for c in psutil.net_connections(kind="inet")[:20]
+                ]
                 return {"status": "success", "connections": conns}
             elif action == "ping":
                 host = kwargs.get("host", "8.8.8.8")
@@ -1027,15 +1317,20 @@ class NetworkInfoTool(Tool):
 
 class ClipboardTool(Tool):
     def __init__(self) -> None:
-        super().__init__(name="clipboard", description="Read or write system clipboard", parameters={
-            "action": {"type": "str", "description": "Action: read, write"},
-            "text": {"type": "str", "description": "Text to write (for write action)"},
-        })
+        super().__init__(
+            name="clipboard",
+            description="Read or write system clipboard",
+            parameters={
+                "action": {"type": "str", "description": "Action: read, write"},
+                "text": {"type": "str", "description": "Text to write (for write action)"},
+            },
+        )
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         action = kwargs.get("action", "read").lower()
         try:
             import pyperclip
+
             if action == "read":
                 return {"status": "success", "content": pyperclip.paste()[:2000]}
             elif action == "write":
@@ -1053,10 +1348,14 @@ class ClipboardTool(Tool):
 
 class NotificationTool(Tool):
     def __init__(self) -> None:
-        super().__init__(name="send_notification", description="Send OS-level desktop notification", parameters={
-            "title": {"type": "str", "description": "Notification title"},
-            "message": {"type": "str", "description": "Notification body"},
-        })
+        super().__init__(
+            name="send_notification",
+            description="Send OS-level desktop notification",
+            parameters={
+                "title": {"type": "str", "description": "Notification title"},
+                "message": {"type": "str", "description": "Notification body"},
+            },
+        )
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         title = kwargs.get("title", "Vera")
@@ -1068,7 +1367,9 @@ class NotificationTool(Tool):
                 ps = f'Add-Type -AssemblyName System.Windows.Forms; $n = New-Object System.Windows.Forms.NotifyIcon; $n.Icon = [System.Drawing.SystemIcons]::Information; $n.Visible = $true; $n.ShowBalloonTip(5000, "{title}", "{message}", [System.Windows.Forms.ToolTipIcon]::Info)'
                 subprocess.run(["powershell", "-NoProfile", "-Command", ps], timeout=10)
             elif SYSTEM == "Darwin":
-                subprocess.run(["osascript", "-e", f'display notification "{message}" with title "{title}"'], timeout=10)
+                subprocess.run(
+                    ["osascript", "-e", f'display notification "{message}" with title "{title}"'], timeout=10
+                )
             else:
                 subprocess.run(["notify-send", title, message], timeout=10)
             return {"status": "success", "sent": {"title": title, "message": message[:100]}}
@@ -1168,7 +1469,7 @@ class OperatorAgent(BaseAgent):
         policy = PolicyService()
 
         # Direct app opening — no LLM needed
-        if intent == "open_app" or re.search(r'\b(?:open|launch|start)\b', transcript):
+        if intent == "open_app" or re.search(r"\b(?:open|launch|start)\b", transcript):
             app_name = self._extract_app_name(transcript)
             if app_name:
                 decision = policy.check(self.name, "open_application")
@@ -1178,8 +1479,7 @@ class OperatorAgent(BaseAgent):
                     return state
                 if decision.action == PolicyAction.CONFIRM and not state.get("safety_approved"):
                     state["agent_response"] = (
-                        f"Hey{name_part}! I'd like to open {app_name} for you. "
-                        "Should I go ahead? 🤔 (yes/no)"
+                        f"Hey{name_part}! I'd like to open {app_name} for you. Should I go ahead? 🤔 (yes/no)"
                     )
                     state["mood"] = "thinking"
                     state["needs_confirmation"] = True
@@ -1191,7 +1491,9 @@ class OperatorAgent(BaseAgent):
                     state["agent_response"] = f"Done{name_part}! ✅ Opening {app_name} for you! 🚀"
                     state["mood"] = "happy"
                 else:
-                    state["agent_response"] = f"Hmm{name_part}, couldn't open {app_name} — {result.get('message', 'unknown error')} 😕"
+                    state["agent_response"] = (
+                        f"Hmm{name_part}, couldn't open {app_name} — {result.get('message', 'unknown error')} 😕"
+                    )
                     state["mood"] = "error"
                 state["metadata"] = state.get("metadata", {})
                 state["metadata"]["tier_used"] = ModelTier.REFLEX
@@ -1232,8 +1534,7 @@ class OperatorAgent(BaseAgent):
 
         # Fallback: remove trigger words and use what's left
         cleaned = re.sub(
-            r'\b(?:open|launch|start|run|please|can\s+you|could\s+you|the|a|an|for\s+me)\b',
-            '', lower, flags=re.I
+            r"\b(?:open|launch|start|run|please|can\s+you|could\s+you|the|a|an|for\s+me)\b", "", lower, flags=re.I
         ).strip()
-        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+        cleaned = re.sub(r"\s+", " ", cleaned).strip()
         return cleaned if cleaned else None

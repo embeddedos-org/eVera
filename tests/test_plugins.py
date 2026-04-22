@@ -14,6 +14,7 @@ def plugin_dir(tmp_path):
 
 def test_discover_empty(plugin_dir):
     from vera.brain.plugins import PluginManager
+
     pm = PluginManager(plugins_dir=plugin_dir)
     result = pm.discover()
     assert isinstance(result, list)
@@ -22,7 +23,7 @@ def test_discover_empty(plugin_dir):
 def test_load_plugin(plugin_dir):
     # Create a test plugin
     plugin_file = plugin_dir / "test_plugin.py"
-    plugin_file.write_text('''
+    plugin_file.write_text("""
 from vera.brain.agents.base import BaseAgent, Tool
 from vera.providers.models import ModelTier
 
@@ -42,9 +43,10 @@ class TestPluginAgent(BaseAgent):
 
 PLUGIN_AGENTS = [TestPluginAgent]
 PLUGIN_INTENTS = {"test_intent": "test_plugin"}
-''')
+""")
 
     from vera.brain.plugins import PluginManager
+
     pm = PluginManager(plugins_dir=plugin_dir)
     agents = pm.load_all()
 
@@ -58,6 +60,7 @@ def test_skip_underscore_files(plugin_dir):
     (plugin_dir / "__init__.py").write_text("")
 
     from vera.brain.plugins import PluginManager
+
     pm = PluginManager(plugins_dir=plugin_dir)
     result = pm.discover()
     assert len(result) == 0
@@ -66,6 +69,7 @@ def test_skip_underscore_files(plugin_dir):
 def test_example_plugin_created(tmp_path):
     empty_dir = tmp_path / "new_plugins"
     from vera.brain.plugins import PluginManager
+
     pm = PluginManager(plugins_dir=empty_dir)
     pm.discover()
     assert (empty_dir / "_example_plugin.py").exists()

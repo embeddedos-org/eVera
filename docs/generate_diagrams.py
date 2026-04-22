@@ -52,9 +52,7 @@ def main() -> None:
         slug = slugify(title)
         out_path = IMAGES_DIR / f"{slug}.png"
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".mmd", delete=False, encoding="utf-8"
-        ) as tmp:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".mmd", delete=False, encoding="utf-8") as tmp:
             tmp.write(mermaid_src.strip())
             tmp_path = tmp.name
 
@@ -70,9 +68,7 @@ def main() -> None:
             else:
                 print(f"  ❌ {title} — mmdc error: {result.stderr[:200]}")
         except FileNotFoundError:
-            print(
-                "  ❌ mmdc not found. Install with: npm install -g @mermaid-js/mermaid-cli"
-            )
+            print("  ❌ mmdc not found. Install with: npm install -g @mermaid-js/mermaid-cli")
             sys.exit(1)
         except subprocess.TimeoutExpired:
             print(f"  ❌ {title} — timed out")

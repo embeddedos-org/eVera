@@ -48,7 +48,7 @@ def read_env_value(key: str, env_path: str = ".env") -> str | None:
     if not path.exists():
         return None
 
-    pattern = re.compile(rf'^{re.escape(key)}\s*=\s*(.*)$')
+    pattern = re.compile(rf"^{re.escape(key)}\s*=\s*(.*)$")
     for line in path.read_text(encoding="utf-8").splitlines():
         stripped = line.strip()
         if stripped.startswith("#"):

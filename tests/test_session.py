@@ -88,26 +88,32 @@ class TestTimeout:
 class TestGoodbye:
     """Test goodbye phrase detection."""
 
-    @pytest.mark.parametrize("phrase", [
-        "goodbye",
-        "Goodbye!",
-        "thanks vera",
-        "Thanks Vera!",
-        "that's all",
-        "thats all",
-        "never mind",
-        "stop listening",
-        "go to sleep",
-    ])
+    @pytest.mark.parametrize(
+        "phrase",
+        [
+            "goodbye",
+            "Goodbye!",
+            "thanks vera",
+            "Thanks Vera!",
+            "that's all",
+            "thats all",
+            "never mind",
+            "stop listening",
+            "go to sleep",
+        ],
+    )
     def test_goodbye_detected(self, phrase):
         assert VoiceSession.is_goodbye(phrase) is True
 
-    @pytest.mark.parametrize("phrase", [
-        "what's the weather",
-        "tell me a joke",
-        "hello",
-        "set a timer",
-    ])
+    @pytest.mark.parametrize(
+        "phrase",
+        [
+            "what's the weather",
+            "tell me a joke",
+            "hello",
+            "set a timer",
+        ],
+    )
     def test_not_goodbye(self, phrase):
         assert VoiceSession.is_goodbye(phrase) is False
 

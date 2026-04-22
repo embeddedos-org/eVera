@@ -17,7 +17,9 @@ def _run_git(args: list[str], cwd: str | None = None) -> dict[str, Any]:
     try:
         result = subprocess.run(
             ["git", *args],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
             cwd=cwd or ".",
         )
         return {
@@ -209,15 +211,18 @@ class CodeReviewTool(Tool):
             provider = ProviderManager()
             result = await provider.complete(
                 messages=[
-                    {"role": "system", "content": (
-                        "You are an expert code reviewer. Review the following diff and provide:\n"
-                        "1. Summary of changes\n"
-                        "2. Potential bugs or issues\n"
-                        "3. Security concerns\n"
-                        "4. Style/quality suggestions\n"
-                        "5. Overall assessment (approve/request changes)\n"
-                        "Be concise but thorough."
-                    )},
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are an expert code reviewer. Review the following diff and provide:\n"
+                            "1. Summary of changes\n"
+                            "2. Potential bugs or issues\n"
+                            "3. Security concerns\n"
+                            "4. Style/quality suggestions\n"
+                            "5. Overall assessment (approve/request changes)\n"
+                            "Be concise but thorough."
+                        ),
+                    },
                     {"role": "user", "content": f"Review this diff:\n\n```diff\n{diff_text}\n```"},
                 ],
                 tier=ModelTier.SPECIALIST,
@@ -274,7 +279,11 @@ class GitCreatePRTool(Tool):
 
         try:
             result = subprocess.run(
-                gh_args, capture_output=True, text=True, timeout=30, cwd=repo or ".",
+                gh_args,
+                capture_output=True,
+                text=True,
+                timeout=30,
+                cwd=repo or ".",
             )
             if result.returncode == 0:
                 pr_url = result.stdout.strip()
@@ -288,7 +297,10 @@ class GitCreatePRTool(Tool):
         # Fallback: GitHub REST API
         token = os.getenv("GITHUB_TOKEN", "")
         if not token:
-            return {"status": "error", "message": "gh CLI not available and GITHUB_TOKEN not set. Install gh CLI or set GITHUB_TOKEN."}
+            return {
+                "status": "error",
+                "message": "gh CLI not available and GITHUB_TOKEN not set. Install gh CLI or set GITHUB_TOKEN.",
+            }
 
         # Extract owner/repo from git remote
         remote_result = _run_git(["remote", "get-url", "origin"], cwd=repo)
@@ -298,6 +310,7 @@ class GitCreatePRTool(Tool):
         remote_url = remote_result["output"].strip()
         # Parse owner/repo from HTTPS or SSH URL
         import re as re_mod
+
         match = re_mod.search(r"[:/]([^/]+)/([^/.]+?)(?:\.git)?$", remote_url)
         if not match:
             return {"status": "error", "message": f"Could not parse owner/repo from: {remote_url}"}
@@ -315,6 +328,7 @@ class GitCreatePRTool(Tool):
 
         try:
             import httpx
+
             async with httpx.AsyncClient(timeout=30) as client:
                 resp = await client.post(
                     f"https://api.github.com/repos/{owner}/{repo_name}/pulls",
@@ -323,7 +337,12 @@ class GitCreatePRTool(Tool):
                 )
                 if resp.status_code in (200, 201):
                     data = resp.json()
-                    return {"status": "success", "method": "github_api", "pr_url": data.get("html_url", ""), "pr_number": data.get("number")}
+                    return {
+                        "status": "success",
+                        "method": "github_api",
+                        "pr_url": data.get("html_url", ""),
+                        "pr_number": data.get("number"),
+                    }
                 return {"status": "error", "message": f"GitHub API error {resp.status_code}: {resp.text[:300]}"}
         except Exception as e:
             return {"status": "error", "message": f"GitHub API request failed: {e}"}

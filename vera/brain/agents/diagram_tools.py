@@ -25,6 +25,7 @@ def _safe_walk(project_path: str, max_files: int = 200) -> list[str]:
     """Collect Python files from a project directory, respecting .gitignore patterns."""
     try:
         from vera.brain.agents.codebase_indexer import _load_gitignore, _should_ignore
+
         gitignore = _load_gitignore(project_path)
     except ImportError:
         gitignore = []
@@ -32,10 +33,25 @@ def _safe_walk(project_path: str, max_files: int = 200) -> list[str]:
     py_files = []
     for root, dirs, files in os.walk(project_path):
         # Skip hidden and common non-source dirs
-        dirs[:] = [d for d in dirs if not d.startswith(".") and d not in {
-            "__pycache__", "node_modules", ".git", "venv", "env", ".venv",
-            "dist", "build", ".tox", ".mypy_cache", ".pytest_cache",
-        }]
+        dirs[:] = [
+            d
+            for d in dirs
+            if not d.startswith(".")
+            and d
+            not in {
+                "__pycache__",
+                "node_modules",
+                ".git",
+                "venv",
+                "env",
+                ".venv",
+                "dist",
+                "build",
+                ".tox",
+                ".mypy_cache",
+                ".pytest_cache",
+            }
+        ]
         rel_root = os.path.relpath(root, project_path)
 
         try:
@@ -133,7 +149,7 @@ class GenerateCallGraphTool(Tool):
                 counter[0] += 1
                 node_ids[name] = f"N{counter[0]}"
                 short = name.split(".")[-1]
-                lines.append(f"    {node_ids[name]}[\"{short}\"]")
+                lines.append(f'    {node_ids[name]}["{short}"]')
             return node_ids[name]
 
         # Build edges with depth limit
@@ -231,11 +247,13 @@ class GenerateClassDiagramTool(Tool):
                                 if isinstance(target, ast.Name):
                                     attributes.append(f"+{target.id}")
 
-                    classes.append({
-                        "name": node.name,
-                        "methods": methods[:10],
-                        "attributes": attributes[:5],
-                    })
+                    classes.append(
+                        {
+                            "name": node.name,
+                            "methods": methods[:10],
+                            "attributes": attributes[:5],
+                        }
+                    )
 
                     # Track inheritance
                     for base in node.bases:
@@ -320,20 +338,20 @@ class GenerateFlowchartTool(Tool):
                 if isinstance(stmt, ast.If):
                     cond_id = next_id()
                     test_str = _unparse_safe(stmt.test)[:40]
-                    lines.append(f"    {cond_id}{{\"{test_str}\"}}")
+                    lines.append(f'    {cond_id}{{"{test_str}"}}')
                     if prev_id:
                         lines.append(f"    {prev_id} --> {cond_id}")
 
                     # True branch
                     true_id = next_id()
-                    lines.append(f"    {true_id}[\"True branch\"]")
+                    lines.append(f'    {true_id}["True branch"]')
                     lines.append(f"    {cond_id} -->|Yes| {true_id}")
                     end_true = process_body(stmt.body, true_id)
 
                     # False branch
                     if stmt.orelse:
                         false_id = next_id()
-                        lines.append(f"    {false_id}[\"False branch\"]")
+                        lines.append(f'    {false_id}["False branch"]')
                         lines.append(f"    {cond_id} -->|No| {false_id}")
                         end_false = process_body(stmt.orelse, false_id)
                     else:
@@ -341,7 +359,7 @@ class GenerateFlowchartTool(Tool):
 
                     # Merge
                     merge_id = next_id()
-                    lines.append(f"    {merge_id}((\"merge\"))")
+                    lines.append(f'    {merge_id}(("merge"))')
                     if end_true:
                         lines.append(f"    {end_true} --> {merge_id}")
                     if end_false and end_false != cond_id:
@@ -359,36 +377,33 @@ class GenerateFlowchartTool(Tool):
                         label = f"for {target_str} in {iter_str}"
                     else:
                         label = f"while {_unparse_safe(stmt.test)[:30]}"
-                    lines.append(f"    {loop_id}{{\"{label}\"}}")
+                    lines.append(f'    {loop_id}{{"{label}"}}')
                     if prev_id:
                         lines.append(f"    {prev_id} --> {loop_id}")
 
                     body_id = next_id()
-                    lines.append(f"    {body_id}[\"loop body\"]")
+                    lines.append(f'    {body_id}["loop body"]')
                     lines.append(f"    {loop_id} -->|iterate| {body_id}")
                     end_body = process_body(stmt.body, body_id)
                     if end_body:
                         lines.append(f"    {end_body} --> {loop_id}")
 
                     exit_id = next_id()
-                    lines.append(f"    {exit_id}((\"end loop\"))")
+                    lines.append(f'    {exit_id}(("end loop"))')
                     lines.append(f"    {loop_id} -->|done| {exit_id}")
                     prev_id = exit_id
 
                 elif isinstance(stmt, ast.Try):
                     try_id = next_id()
-                    lines.append(f"    {try_id}[\"try\"]")
+                    lines.append(f'    {try_id}["try"]')
                     if prev_id:
                         lines.append(f"    {prev_id} --> {try_id}")
                     end_try = process_body(stmt.body, try_id)
 
                     if stmt.handlers:
                         except_id = next_id()
-                        handler_types = ", ".join(
-                            _get_name(h.type) if h.type else "Exception"
-                            for h in stmt.handlers
-                        )
-                        lines.append(f"    {except_id}[\"except {handler_types}\"]")
+                        handler_types = ", ".join(_get_name(h.type) if h.type else "Exception" for h in stmt.handlers)
+                        lines.append(f'    {except_id}["except {handler_types}"]')
                         lines.append(f"    {try_id} -.->|error| {except_id}")
 
                     prev_id = end_try or try_id
@@ -396,7 +411,7 @@ class GenerateFlowchartTool(Tool):
                 elif isinstance(stmt, ast.Return):
                     ret_id = next_id()
                     val_str = _unparse_safe(stmt.value)[:30] if stmt.value else ""
-                    lines.append(f"    {ret_id}([\"return {val_str}\"])")
+                    lines.append(f'    {ret_id}(["return {val_str}"])')
                     if prev_id:
                         lines.append(f"    {prev_id} --> {ret_id}")
                     prev_id = ret_id
@@ -404,7 +419,7 @@ class GenerateFlowchartTool(Tool):
                 elif isinstance(stmt, ast.Assign):
                     assign_id = next_id()
                     targets_str = ", ".join(_unparse_safe(t)[:20] for t in stmt.targets)
-                    lines.append(f"    {assign_id}[\"{targets_str} = ...\"]")
+                    lines.append(f'    {assign_id}["{targets_str} = ..."]')
                     if prev_id:
                         lines.append(f"    {prev_id} --> {assign_id}")
                     prev_id = assign_id
@@ -412,7 +427,7 @@ class GenerateFlowchartTool(Tool):
                 elif isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call):
                     call_id = next_id()
                     call_str = _unparse_safe(stmt.value)[:40]
-                    lines.append(f"    {call_id}[\"{call_str}\"]")
+                    lines.append(f'    {call_id}["{call_str}"]')
                     if prev_id:
                         lines.append(f"    {prev_id} --> {call_id}")
                     prev_id = call_id
@@ -421,7 +436,7 @@ class GenerateFlowchartTool(Tool):
                     # Generic statement
                     gen_id = next_id()
                     stmt_type = type(stmt).__name__
-                    lines.append(f"    {gen_id}[\"{stmt_type}\"]")
+                    lines.append(f'    {gen_id}["{stmt_type}"]')
                     if prev_id:
                         lines.append(f"    {prev_id} --> {gen_id}")
                     prev_id = gen_id
@@ -429,7 +444,7 @@ class GenerateFlowchartTool(Tool):
             return prev_id
 
         start_id = next_id()
-        lines.append(f"    {start_id}([\"START: {function_name}()\"])")
+        lines.append(f'    {start_id}(["START: {function_name}()"])')
         process_body(target_func.body, start_id)
 
         mermaid = "\n".join(lines)
@@ -468,6 +483,7 @@ class ExportDiagramTool(Tool):
 
         # Ensure output directory exists
         from config import settings
+
         output_dir = Path(settings.data_dir) / "diagrams"
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -518,6 +534,7 @@ class ExportDiagramTool(Tool):
 
 
 # --- AST helpers ---
+
 
 def _get_call_name(node: ast.Call) -> str | None:
     """Extract the function name from a Call node."""
