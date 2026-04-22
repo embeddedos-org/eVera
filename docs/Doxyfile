@@ -1,11 +1,11 @@
-# Doxyfile — eVoca API Documentation Configuration
+# Doxyfile — eVera API Documentation Configuration
 # Generated for Doxygen 1.9+
 # Run: cd docs && doxygen Doxyfile
 
 #---------------------------------------------------------------------------
 # Project related configuration options
 #---------------------------------------------------------------------------
-PROJECT_NAME           = "eVoca"
+PROJECT_NAME           = "eVera"
 PROJECT_NUMBER         = "0.5.1"
 PROJECT_BRIEF          = "Voice-first multi-agent AI assistant that controls everything"
 PROJECT_LOGO           =
@@ -27,7 +27,7 @@ EXTRACT_ANON_NSPACES   = NO
 # Input source files
 #---------------------------------------------------------------------------
 INPUT                  = doxygen_main_page.md \
-                         ../voca \
+                         ../vera \
                          ../main.py \
                          ../config.py \
                          ../plugins

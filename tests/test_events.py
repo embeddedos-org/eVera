@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from voca.events.bus import EventBus, EventType
+from vera.events.bus import EventBus, EventType
 
 
 @pytest.mark.asyncio

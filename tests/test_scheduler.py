@@ -10,9 +10,9 @@ import pytest
 
 @pytest.fixture
 def scheduler(tmp_path):
-    import voca.scheduler as sched_mod
+    import vera.scheduler as sched_mod
     sched_mod.DATA_DIR = tmp_path
-    from voca.scheduler import ProactiveScheduler
+    from vera.scheduler import ProactiveScheduler
     s = ProactiveScheduler()
     return s, tmp_path
 

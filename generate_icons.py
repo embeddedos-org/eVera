@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate placeholder icons for Voca PWA and Electron."""
+"""Generate placeholder icons for Vera PWA and Electron."""
 
 import struct
 import zlib
@@ -52,13 +52,13 @@ def main():
     root = Path(__file__).parent
 
     sizes = {
-        root / "voca" / "static" / "icon-192.png": 192,
-        root / "voca" / "static" / "icon-512.png": 512,
+        root / "vera" / "static" / "icon-192.png": 192,
+        root / "vera" / "static" / "icon-512.png": 512,
         root / "electron" / "icon.png": 256,
         root / "electron" / "tray-icon.png": 32,
     }
 
-    # Voca brand color: blue (#3b82f6)
+    # Vera brand color: blue (#3b82f6)
     for path, size in sizes.items():
         path.parent.mkdir(parents=True, exist_ok=True)
         data = create_png(size, size, 59, 130, 246)

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from voca.safety.policy import PolicyAction, PolicyService
-from voca.safety.privacy import PrivacyGuard
+from vera.safety.policy import PolicyAction, PolicyService
+from vera.safety.privacy import PrivacyGuard
 
 
 def test_allow_action(policy_service: PolicyService):

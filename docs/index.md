@@ -1,6 +1,6 @@
-# 📚 eVoca Documentation
+# 📚 eVera Documentation
 
-Welcome to the eVoca documentation. eVoca is a voice-first multi-agent AI assistant that controls your entire digital life.
+Welcome to the eVera documentation. eVera is a voice-first multi-agent AI assistant that controls your entire digital life.
 
 ---
 

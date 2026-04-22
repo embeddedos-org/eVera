@@ -4,7 +4,7 @@ from __future__ import annotations
 
 
 def test_agent_registry_has_all_agents():
-    from voca.brain.agents import AGENT_REGISTRY
+    from vera.brain.agents import AGENT_REGISTRY
     expected = [
         "companion", "operator", "researcher", "writer",
         "life_manager", "home_controller", "income", "coder", "browser", "git",
@@ -14,36 +14,36 @@ def test_agent_registry_has_all_agents():
 
 
 def test_agent_registry_count():
-    from voca.brain.agents import AGENT_REGISTRY
+    from vera.brain.agents import AGENT_REGISTRY
     assert len(AGENT_REGISTRY) >= 10
 
 
 def test_all_agents_have_tools():
-    from voca.brain.agents import AGENT_REGISTRY
+    from vera.brain.agents import AGENT_REGISTRY
     for name, agent in AGENT_REGISTRY.items():
         assert len(agent.tools) > 0, f"Agent '{name}' has no tools"
 
 
 def test_all_agents_have_name():
-    from voca.brain.agents import AGENT_REGISTRY
+    from vera.brain.agents import AGENT_REGISTRY
     for name, agent in AGENT_REGISTRY.items():
         assert agent.name == name, f"Agent name mismatch: {agent.name} != {name}"
 
 
 def test_all_agents_have_description():
-    from voca.brain.agents import AGENT_REGISTRY
+    from vera.brain.agents import AGENT_REGISTRY
     for name, agent in AGENT_REGISTRY.items():
         assert agent.description, f"Agent '{name}' has no description"
 
 
 def test_all_agents_have_system_prompt():
-    from voca.brain.agents import AGENT_REGISTRY
+    from vera.brain.agents import AGENT_REGISTRY
     for name, agent in AGENT_REGISTRY.items():
         assert agent.system_prompt, f"Agent '{name}' has no system prompt"
 
 
 def test_all_tools_have_openai_schema():
-    from voca.brain.agents import AGENT_REGISTRY
+    from vera.brain.agents import AGENT_REGISTRY
     for name, agent in AGENT_REGISTRY.items():
         for tool in agent.tools:
             schema = tool.to_openai_schema()
@@ -54,43 +54,43 @@ def test_all_tools_have_openai_schema():
 
 
 def test_companion_has_offline_responses():
-    from voca.brain.agents import AGENT_REGISTRY
+    from vera.brain.agents import AGENT_REGISTRY
     companion = AGENT_REGISTRY["companion"]
     assert len(companion.offline_responses) > 0
 
 
 def test_operator_tool_count():
-    from voca.brain.agents import AGENT_REGISTRY
+    from vera.brain.agents import AGENT_REGISTRY
     operator = AGENT_REGISTRY["operator"]
     assert len(operator.tools) >= 8
 
 
 def test_browser_tool_count():
-    from voca.brain.agents import AGENT_REGISTRY
+    from vera.brain.agents import AGENT_REGISTRY
     browser = AGENT_REGISTRY["browser"]
     assert len(browser.tools) >= 11
 
 
 def test_income_tool_count():
-    from voca.brain.agents import AGENT_REGISTRY
+    from vera.brain.agents import AGENT_REGISTRY
     income = AGENT_REGISTRY["income"]
     assert len(income.tools) >= 14
 
 
 def test_coder_tool_count():
-    from voca.brain.agents import AGENT_REGISTRY
+    from vera.brain.agents import AGENT_REGISTRY
     coder = AGENT_REGISTRY["coder"]
     assert len(coder.tools) >= 5
 
 
 def test_total_tool_count():
-    from voca.brain.agents import AGENT_REGISTRY
+    from vera.brain.agents import AGENT_REGISTRY
     total = sum(len(agent.tools) for agent in AGENT_REGISTRY.values())
     assert total >= 70, f"Expected at least 70 tools, got {total}"
 
 
 def test_git_agent_has_tools():
-    from voca.brain.agents import AGENT_REGISTRY
+    from vera.brain.agents import AGENT_REGISTRY
     git = AGENT_REGISTRY["git"]
     assert len(git.tools) >= 9
     tool_names = [t.name for t in git.tools]
@@ -100,21 +100,21 @@ def test_git_agent_has_tools():
 
 
 def test_content_creator_in_registry():
-    from voca.brain.agents import AGENT_REGISTRY
+    from vera.brain.agents import AGENT_REGISTRY
     assert "content_creator" in AGENT_REGISTRY
     agent = AGENT_REGISTRY["content_creator"]
     assert len(agent.tools) == 5
 
 
 def test_finance_in_registry():
-    from voca.brain.agents import AGENT_REGISTRY
+    from vera.brain.agents import AGENT_REGISTRY
     assert "finance" in AGENT_REGISTRY
     agent = AGENT_REGISTRY["finance"]
     assert len(agent.tools) == 6
 
 
 def test_content_creator_tool_names():
-    from voca.brain.agents import AGENT_REGISTRY
+    from vera.brain.agents import AGENT_REGISTRY
     agent = AGENT_REGISTRY["content_creator"]
     tool_names = [t.name for t in agent.tools]
     assert "generate_script" in tool_names
@@ -125,7 +125,7 @@ def test_content_creator_tool_names():
 
 
 def test_finance_tool_names():
-    from voca.brain.agents import AGENT_REGISTRY
+    from vera.brain.agents import AGENT_REGISTRY
     agent = AGENT_REGISTRY["finance"]
     tool_names = [t.name for t in agent.tools]
     assert "check_balances" in tool_names

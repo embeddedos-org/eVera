@@ -8,7 +8,7 @@ import pytest
 @pytest.mark.asyncio
 @pytest.mark.xfail(reason="Path sandboxing blocks tmp_path in CI")
 async def test_file_read_tool(tmp_path):
-    from voca.brain.agents.coder import ReadFileTool
+    from vera.brain.agents.coder import ReadFileTool
     tool = ReadFileTool()
 
     test_file = tmp_path / "test.txt"
@@ -23,7 +23,7 @@ async def test_file_read_tool(tmp_path):
 @pytest.mark.asyncio
 @pytest.mark.xfail(reason="Path sandboxing blocks tmp_path in CI")
 async def test_file_write_tool(tmp_path):
-    from voca.brain.agents.coder import WriteFileTool
+    from vera.brain.agents.coder import WriteFileTool
     tool = WriteFileTool()
 
     test_file = tmp_path / "output.txt"
@@ -35,20 +35,20 @@ async def test_file_write_tool(tmp_path):
 @pytest.mark.asyncio
 @pytest.mark.xfail(reason="Path sandboxing blocks tmp_path in CI")
 async def test_file_edit_tool(tmp_path):
-    from voca.brain.agents.coder import EditFileTool
+    from vera.brain.agents.coder import EditFileTool
     tool = EditFileTool()
 
     test_file = tmp_path / "edit_me.txt"
     test_file.write_text("Hello World")
 
-    result = await tool.execute(path=str(test_file), old_text="World", new_text="Voca")
+    result = await tool.execute(path=str(test_file), old_text="World", new_text="Vera")
     assert result["status"] == "success"
-    assert test_file.read_text() == "Hello Voca"
+    assert test_file.read_text() == "Hello Vera"
 
 
 @pytest.mark.asyncio
 async def test_file_search_tool(tmp_path):
-    from voca.brain.agents.coder import SearchInFilesTool
+    from vera.brain.agents.coder import SearchInFilesTool
     tool = SearchInFilesTool()
 
     (tmp_path / "a.py").write_text("def hello():\n    pass")
@@ -61,7 +61,7 @@ async def test_file_search_tool(tmp_path):
 
 @pytest.mark.asyncio
 async def test_manage_files_list(tmp_path):
-    from voca.brain.agents.operator import ManageFilesTool
+    from vera.brain.agents.operator import ManageFilesTool
     tool = ManageFilesTool()
 
     (tmp_path / "file1.txt").write_text("a")
@@ -74,7 +74,7 @@ async def test_manage_files_list(tmp_path):
 
 @pytest.mark.asyncio
 async def test_manage_files_mkdir(tmp_path):
-    from voca.brain.agents.operator import ManageFilesTool
+    from vera.brain.agents.operator import ManageFilesTool
     tool = ManageFilesTool()
 
     new_dir = tmp_path / "new_folder"
@@ -85,7 +85,7 @@ async def test_manage_files_mkdir(tmp_path):
 
 @pytest.mark.asyncio
 async def test_command_safety_blocks_dangerous():
-    from voca.brain.agents.operator import ExecuteScriptTool
+    from vera.brain.agents.operator import ExecuteScriptTool
     tool = ExecuteScriptTool()
 
     result = await tool.execute(command="rm -rf /")
@@ -100,7 +100,7 @@ async def test_command_safety_blocks_dangerous():
 
 @pytest.mark.asyncio
 async def test_command_allows_safe_commands():
-    from voca.brain.agents.operator import ExecuteScriptTool
+    from vera.brain.agents.operator import ExecuteScriptTool
     tool = ExecuteScriptTool()
 
     result = await tool.execute(command="echo hello", language="shell")
@@ -110,10 +110,10 @@ async def test_command_allows_safe_commands():
 
 @pytest.mark.asyncio
 async def test_calendar_add_and_check(tmp_path):
-    from voca.brain.agents import life_manager
+    from vera.brain.agents import life_manager
     life_manager.DATA_DIR = tmp_path
 
-    from voca.brain.agents.life_manager import AddEventTool, CheckCalendarTool
+    from vera.brain.agents.life_manager import AddEventTool, CheckCalendarTool
 
     add = AddEventTool()
     result = await add.execute(title="Team meeting", date="2026-04-18", time="14:00")
@@ -128,10 +128,10 @@ async def test_calendar_add_and_check(tmp_path):
 
 @pytest.mark.asyncio
 async def test_todo_add_and_list(tmp_path):
-    from voca.brain.agents import life_manager
+    from vera.brain.agents import life_manager
     life_manager.DATA_DIR = tmp_path
 
-    from voca.brain.agents.life_manager import ListTodosTool
+    from vera.brain.agents.life_manager import ListTodosTool
 
     tool = ListTodosTool()
 
@@ -145,10 +145,10 @@ async def test_todo_add_and_list(tmp_path):
 
 @pytest.mark.asyncio
 async def test_paper_trade(tmp_path):
-    from voca.brain.agents import income
+    from vera.brain.agents import income
     income.DATA_DIR = tmp_path
 
-    from voca.brain.agents.income import PortfolioTool
+    from vera.brain.agents.income import PortfolioTool
 
     # This test would need yfinance, so we test the portfolio directly
     portfolio_tool = PortfolioTool()
@@ -159,10 +159,10 @@ async def test_paper_trade(tmp_path):
 
 @pytest.mark.asyncio
 async def test_home_state_simulation(tmp_path):
-    from voca.brain.agents import home_controller
+    from vera.brain.agents import home_controller
     home_controller.DATA_DIR = tmp_path
 
-    from voca.brain.agents.home_controller import CheckSecurityTool, ControlLightTool
+    from vera.brain.agents.home_controller import CheckSecurityTool, ControlLightTool
 
     light = ControlLightTool()
     result = await light.execute(room="living_room", action="on")

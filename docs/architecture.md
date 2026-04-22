@@ -2,7 +2,7 @@
 
 ## Overview
 
-eVoca is built as a **layered, modular system** with clear separation of concerns:
+eVera is built as a **layered, modular system** with clear separation of concerns:
 
 ```
 Electron Shell → Web UI → FastAPI Backend → LangGraph Pipeline → Agents → LLM Providers
@@ -38,7 +38,7 @@ The Electron shell provides a native desktop experience:
 
 ## Layer 2: Web UI
 
-**Directory:** `voca/static/`
+**Directory:** `vera/static/`
 
 Glassmorphism-themed web UI built with vanilla JavaScript:
 
@@ -55,7 +55,7 @@ Glassmorphism-themed web UI built with vanilla JavaScript:
 
 ## Layer 3: FastAPI Backend
 
-**File:** `voca/app.py`
+**File:** `vera/app.py`
 
 REST + WebSocket + SSE server handling all client interactions:
 
@@ -78,9 +78,9 @@ REST + WebSocket + SSE server handling all client interactions:
 
 ## Layer 4: LangGraph Pipeline
 
-**File:** `voca/brain/graph.py`
+**File:** `vera/brain/graph.py`
 
-The heart of eVoca — a LangGraph `StateGraph` with 7 nodes:
+The heart of eVera — a LangGraph `StateGraph` with 7 nodes:
 
 1. **enrich_memory** — Query memory layers, correct spelling, detect language, extract user name
 2. **classify** — Route to agent via TierRouter (regex → local LLM → cloud LLM → keywords)
@@ -97,7 +97,7 @@ Conditional routing after `safety_check` determines the path based on tier, safe
 
 ## Tier-Based LLM Routing
 
-**File:** `voca/brain/router.py`
+**File:** `vera/brain/router.py`
 
 | Tier | Name | Engine | Cost | Example |
 |------|------|--------|------|---------|
@@ -110,7 +110,7 @@ Conditional routing after `safety_check` determines the path based on tier, safe
 
 ## Agent System
 
-**Directory:** `voca/brain/agents/`
+**Directory:** `vera/brain/agents/`
 
 All agents extend `BaseAgent` and register `Tool` instances:
 
@@ -122,7 +122,7 @@ All agents extend `BaseAgent` and register `Tool` instances:
 
 ## Memory System
 
-**Directory:** `voca/memory/`
+**Directory:** `vera/memory/`
 
 | Layer | Class | Storage | Purpose |
 |-------|-------|---------|---------|
@@ -135,7 +135,7 @@ All agents extend `BaseAgent` and register `Tool` instances:
 
 ## Safety System
 
-**Directory:** `voca/safety/`
+**Directory:** `vera/safety/`
 
 - **PolicyService** (`policy.py`) — Rule-based action approval using `agent.tool` patterns
 - **PrivacyGuard** (`privacy.py`) — PII detection (email, phone, SSN, credit card) and anonymization
@@ -147,7 +147,7 @@ All agents extend `BaseAgent` and register `Tool` instances:
 
 ## Provider System
 
-**Directory:** `voca/providers/`
+**Directory:** `vera/providers/`
 
 - **ProviderManager** (`manager.py`) — Multi-LLM completion with automatic fallback
 - **ModelTier** enum — REFLEX (0), EXECUTOR (1), SPECIALIST (2), STRATEGIST (3)
@@ -157,7 +157,7 @@ All agents extend `BaseAgent` and register `Tool` instances:
 
 ## Event System
 
-**Directory:** `voca/events/`
+**Directory:** `vera/events/`
 
 - **EventBus** (`bus.py`) — Central event dispatcher with SSE streaming
 - **Agent status queue** — Real-time agent working/done events for dashboard visualization
@@ -166,7 +166,7 @@ All agents extend `BaseAgent` and register `Tool` instances:
 
 ## Proactive Scheduler
 
-**File:** `voca/scheduler.py`
+**File:** `vera/scheduler.py`
 
 Background loops running on intervals:
 - Reminder firing (check every 30s)

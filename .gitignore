@@ -6,7 +6,7 @@ __pycache__/
 *.egg
 dist/
 build/
-# Keep voca.spec - needed for PyInstaller builds
+# Keep vera.spec - needed for PyInstaller builds
 
 # Virtual environments
 .venv/

@@ -7,8 +7,8 @@ import pytest
 
 @pytest.fixture
 def rbac_manager(tmp_path):
-    import voca.rbac as rbac_mod
-    from voca.rbac import RBACManager
+    import vera.rbac as rbac_mod
+    from vera.rbac import RBACManager
     rbac_mod.RBAC_DIR = tmp_path / "rbac"
     return RBACManager()
 
@@ -18,7 +18,7 @@ class TestRBAC:
         result = rbac_manager.create_user("alice", "password123", role="admin")
         assert result["status"] == "success"
         assert result["username"] == "alice"
-        assert result["api_key"].startswith("voca_")
+        assert result["api_key"].startswith("vera_")
 
     def test_duplicate_user(self, rbac_manager):
         rbac_manager.create_user("alice", "pass1")

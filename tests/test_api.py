@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from voca.core import VocaResponse
-from voca.providers.models import ModelTier
+from vera.core import VeraResponse
+from vera.providers.models import ModelTier
 
 
 @pytest.fixture
@@ -16,7 +16,7 @@ def mock_brain():
     brain.start = AsyncMock()
     brain.stop = AsyncMock()
     brain.process = AsyncMock(
-        return_value=VocaResponse(
+        return_value=VeraResponse(
             response="Hello! How can I help?",
             agent="companion",
             tier=ModelTier.EXECUTOR,
@@ -24,7 +24,7 @@ def mock_brain():
         )
     )
     brain.confirm_action = AsyncMock(
-        return_value=VocaResponse(response="Confirmed.", agent="system", tier=ModelTier.REFLEX)
+        return_value=VeraResponse(response="Confirmed.", agent="system", tier=ModelTier.REFLEX)
     )
     brain.get_status = MagicMock(return_value={"status": "running"})
     brain.memory_vault = MagicMock()
@@ -35,7 +35,7 @@ def mock_brain():
 
 @pytest.fixture
 def app(mock_brain):
-    from voca.app import create_app
+    from vera.app import create_app
     return create_app(mock_brain)
 
 

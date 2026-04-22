@@ -1,6 +1,6 @@
-"""eVoca API Test Suite — tests every endpoint with mocked backend.
+"""eVera API Test Suite — tests every endpoint with mocked backend.
 
-Mocks VocaBrain and its dependencies so tests run without
+Mocks VeraBrain and its dependencies so tests run without
 litellm, langgraph, numpy, or any LLM provider.
 """
 
@@ -52,7 +52,7 @@ os.chdir(ROOT)
 # Now import the app
 from fastapi.testclient import TestClient
 
-# Mock VocaBrain to avoid all heavy initialization
+# Mock VeraBrain to avoid all heavy initialization
 class MockBrain:
     def __init__(self):
         self.memory_vault = MagicMock()
@@ -125,9 +125,9 @@ mock_registry = {
     "finance": MagicMock(description="Finance tracking", tier=2),
 }
 
-with patch("voca.brain.agents.AGENT_REGISTRY", mock_registry):
-    with patch("voca.core.VocaBrain", MockBrain):
-        from voca.app import create_app
+with patch("vera.brain.agents.AGENT_REGISTRY", mock_registry):
+    with patch("vera.core.VeraBrain", MockBrain):
+        from vera.app import create_app
         app = create_app(brain=MockBrain())
 
 client = TestClient(app)
@@ -165,7 +165,7 @@ def test(name, response, expected_status=200, check_body=None):
 
 # ═══════════════════════════════════════════════════════════
 print("=" * 60)
-print("  eVoca v0.5.1 — API Endpoint Tests")
+print("  eVera v0.5.1 — API Endpoint Tests")
 print("=" * 60)
 
 # ── 1. Health ──
@@ -183,7 +183,7 @@ test("GET /agents", r, 200, lambda d: len(d) >= 10)
 
 # ── 3. Chat ──
 print("\n--- Chat ---")
-r = client.post("/chat", json={"transcript": "Hello Voca"})
+r = client.post("/chat", json={"transcript": "Hello Vera"})
 test("POST /chat", r, 200, lambda d: "response" in d and "agent" in d)
 
 r = client.post("/chat", json={"transcript": "What time is it?", "session_id": "test-123"})
@@ -200,7 +200,7 @@ test("POST /memory/facts", r, 200, lambda d: d.get("key") == "test_key")
 # ── 5. SSE Streams (skip — infinite generators block TestClient) ──
 print("\n--- SSE Streams ---")
 # SSE endpoints are infinite async generators — verified via source inspection
-with open("voca/app.py", encoding="utf-8") as f:
+with open("vera/app.py", encoding="utf-8") as f:
     app_src = f.read()
 PASS += 1; print("  PASS  GET /events/stream — endpoint registered (source verified)")
 PASS += 1; print("  PASS  GET /agents/stream — endpoint registered (source verified)")

@@ -1,6 +1,6 @@
-# eVoca v0.5.0 — Release Notes
+# eVera v0.5.0 — Release Notes
 
-**Product:** eVoca — Voice-First Multi-Agent AI Assistant
+**Product:** eVera — Voice-First Multi-Agent AI Assistant
 **Version:** 0.5.0
 **Release Date:** April 19, 2026
 **Build:** Standalone Desktop App + Source
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-eVoca v0.5.0 is a major release that transforms eVoca from a Python-only server into a **standalone desktop application** for Windows, macOS, and Linux. This release adds 12 new system control tools for full PC automation (mouse, keyboard, window/process management), a glassmorphism UI redesign with live agent visualization, and a cross-platform CI/CD build pipeline.
+eVera v0.5.0 is a major release that transforms eVera from a Python-only server into a **standalone desktop application** for Windows, macOS, and Linux. This release adds 12 new system control tools for full PC automation (mouse, keyboard, window/process management), a glassmorphism UI redesign with live agent visualization, and a cross-platform CI/CD build pipeline.
 
 ---
 
@@ -130,10 +130,10 @@ None. This release is fully backward compatible with v0.4.x configurations.
 
 | Platform | File | Size |
 |----------|------|------|
-| Windows | [Voca-Setup.exe](https://github.com/patchava-sr/eVoca/releases/v0.5.0) | ~120 MB |
-| macOS | [Voca.dmg](https://github.com/patchava-sr/eVoca/releases/v0.5.0) | ~110 MB |
-| Linux | [Voca.AppImage](https://github.com/patchava-sr/eVoca/releases/v0.5.0) | ~130 MB |
-| Source | [Source code (zip)](https://github.com/patchava-sr/eVoca/archive/v0.5.0.zip) | ~2 MB |
+| Windows | [Vera-Setup.exe](https://github.com/patchava-sr/eVera/releases/v0.5.0) | ~120 MB |
+| macOS | [Vera.dmg](https://github.com/patchava-sr/eVera/releases/v0.5.0) | ~110 MB |
+| Linux | [Vera.AppImage](https://github.com/patchava-sr/eVera/releases/v0.5.0) | ~130 MB |
+| Source | [Source code (zip)](https://github.com/patchava-sr/eVera/archive/v0.5.0.zip) | ~2 MB |
 
 ---
 

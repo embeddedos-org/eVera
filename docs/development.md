@@ -14,21 +14,21 @@
 ## Project Structure
 
 ```
-eVoca/
+eVera/
 ├── config.py               # Pydantic Settings (env vars)
 ├── main.py                 # Entry point (server/desktop modes)
 ├── requirements.txt        # Python dependencies
 ├── pyproject.toml          # Project metadata
 ├── build_backend.py        # PyInstaller build script
 ├── verify.py               # Pre-push verification (130+ checks)
-├── voca/
-│   ├── core.py             # VocaBrain singleton orchestrator
+├── vera/
+│   ├── core.py             # VeraBrain singleton orchestrator
 │   ├── app.py              # FastAPI application factory
 │   ├── brain/
 │   │   ├── graph.py        # LangGraph StateGraph pipeline
 │   │   ├── router.py       # Tier-based intent routing
 │   │   ├── supervisor.py   # LLM-based classification
-│   │   ├── state.py        # VocaState TypedDict
+│   │   ├── state.py        # VeraState TypedDict
 │   │   ├── crew.py         # Multi-agent crew collaboration
 │   │   ├── workflow.py     # n8n-style workflow engine
 │   │   ├── language.py     # Language detection + spell correction
@@ -128,7 +128,7 @@ node build.js linux  # Linux
 pytest tests/ -v
 
 # With coverage
-pytest tests/ --cov=voca --cov-report=term-missing
+pytest tests/ --cov=vera --cov-report=term-missing
 
 # Specific test file
 pytest tests/test_agents.py -v
@@ -176,8 +176,8 @@ ruff check . --fix    # Auto-fix issues
 4. The agent is auto-discovered and registered at startup
 
 ```python
-from voca.brain.agents.base import BaseAgent, Tool
-from voca.providers.models import ModelTier
+from vera.brain.agents.base import BaseAgent, Tool
+from vera.providers.models import ModelTier
 
 class MyTool(Tool):
     def __init__(self):

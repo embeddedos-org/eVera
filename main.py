@@ -1,4 +1,4 @@
-"""Voca — entry point for CLI voice loop, server, or both."""
+"""Vera — entry point for CLI voice loop, server, or both."""
 
 from __future__ import annotations
 
@@ -14,53 +14,129 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)-7s] %(name)-25s │ %(message)s",
     datefmt="%H:%M:%S",
 )
-logger = logging.getLogger("voca")
+logger = logging.getLogger("vera")
 
 
 async def voice_loop() -> None:
-    """CLI voice loop: Mic → VAD → STT → Brain → TTS."""
-    from voca.action.tts import TextToSpeech
-    from voca.core import VocaBrain
-    from voca.perception.audio_stream import AudioStream
-    from voca.perception.stt import SpeechToText
-    from voca.perception.vad import VoiceActivityDetector
+    """CLI voice loop: Mic → VAD → STT → Brain → TTS.
 
-    brain = VocaBrain()
+    When wake_word_enabled=True, operates in Siri/Alexa style:
+      LISTENING → (wake word) → chime + greeting → ACTIVE → (timeout/goodbye) → LISTENING
+
+    When wake_word_enabled=False, behaves as before (always active).
+    """
+    from config import settings as _settings
+    from vera.action.chime import play_activation_chime
+    from vera.action.tts import TextToSpeech
+    from vera.core import VeraBrain
+    from vera.events.bus import EventType
+    from vera.perception.audio_stream import AudioStream
+    from vera.perception.session import VoiceSession
+    from vera.perception.stt import SpeechToText
+    from vera.perception.vad import VoiceActivityDetector
+    from vera.perception.wake_word import WakeWordDetector
+
+    brain = VeraBrain()
     await brain.start()
 
     stt = SpeechToText()
     vad = VoiceActivityDetector()
     tts = TextToSpeech(event_bus=brain.event_bus)
     audio = AudioStream()
+    session = VoiceSession(event_bus=brain.event_bus)
+    wake_detector = WakeWordDetector(stt=stt)
 
-    print("🎙️  Voca listening... (Ctrl+C to stop)")
+    wake_enabled = _settings.voice.wake_word_enabled
+    proactive_tts = _settings.voice.proactive_tts_enabled
+
+    # Proactive TTS bridge — speak scheduler notifications aloud
+    if proactive_tts:
+        async def _on_proactive_notification(notification: dict) -> None:
+            if session.is_active:
+                return  # don't interrupt active conversation
+            message = notification.get("message", "")
+            if message:
+                await brain.event_bus.publish(
+                    EventType.PROACTIVE_NOTIFICATION, {"message": message},
+                )
+                print(f"📢 {message}")
+                await tts.speak(message)
+
+        brain.scheduler.add_notification_handler(_on_proactive_notification)
+
+    if wake_enabled:
+        print("🎙️  Vera listening for wake word... (say 'Hey Vera')")
+    else:
+        print("🎙️  Vera listening... (Ctrl+C to stop)")
 
     try:
         await audio.start()
         async for chunk in audio.get_chunks():
+            # --- Barge-in: interrupt TTS if user speaks ---
+            if tts.is_speaking:
+                result = vad.process_chunk(chunk)
+                if result.is_speech_end:
+                    tts.interrupt()
+                continue
+
+            # --- Check session timeout ---
+            if session.is_active and session.is_timed_out():
+                print("💤 Session timed out — going back to sleep")
+                await tts.speak("Going to sleep. Say Hey Vera when you need me!")
+                await session.deactivate()
+                continue
+
             result = vad.process_chunk(chunk)
-            if result.is_speech_end:
-                transcript = stt.transcribe(result.audio_buffer)
-                if transcript.strip():
-                    print(f"\n👤 You: {transcript}")
-                    response = await brain.process(transcript)
-                    print(f"🤖 Voca [{response.agent}]: {response.response}")
-                    await tts.speak(response.response)
+            if not result.is_speech_end:
+                continue
+
+            # --- LISTENING state: check for wake word ---
+            if not session.is_active:
+                if wake_detector.check(result.audio_buffer):
+                    await brain.event_bus.publish(EventType.WAKE_WORD_DETECTED)
+                    await session.activate()
+                    await play_activation_chime()
+                    greeting = "Hey! What can I do for you?"
+                    print(f"🤖 Vera: {greeting}")
+                    await tts.speak(greeting)
+                continue
+
+            # --- ACTIVE state: full STT → Brain → TTS pipeline ---
+            transcript = stt.transcribe(result.audio_buffer)
+            if not transcript.strip():
+                continue
+
+            session.touch()
+            print(f"\n👤 You: {transcript}")
+
+            # Goodbye detection
+            if session.is_goodbye(transcript):
+                farewell = "Goodbye! Just say Hey Vera whenever you need me."
+                print(f"🤖 Vera: {farewell}")
+                await tts.speak(farewell)
+                await session.deactivate()
+                continue
+
+            response = await brain.process(transcript, voice_mode=True)
+            print(f"🤖 Vera [{response.agent}]: {response.response}")
+            await tts.speak(response.response)
     except KeyboardInterrupt:
         pass
     finally:
+        if proactive_tts:
+            brain.scheduler.remove_notification_handler(_on_proactive_notification)
         await audio.stop()
         await brain.stop()
 
 
 async def text_loop() -> None:
     """Text-only mode: stdin → Brain → stdout (no mic/speaker needed)."""
-    from voca.core import VocaBrain
+    from vera.core import VeraBrain
 
-    brain = VocaBrain()
+    brain = VeraBrain()
     await brain.start()
 
-    print("⌨️  Voca text mode — type your message (Ctrl+C to quit)")
+    print("⌨️  Vera text mode — type your message (Ctrl+C to quit)")
     print("─" * 50)
 
     try:
@@ -77,7 +153,7 @@ async def text_loop() -> None:
 
             response = await brain.process(transcript)
             tier_label = f"T{response.tier}"
-            print(f"🤖 Voca [{response.agent}|{tier_label}]: {response.response}")
+            print(f"🤖 Vera [{response.agent}|{tier_label}]: {response.response}")
     except KeyboardInterrupt:
         print("\n👋 Goodbye!")
     finally:
@@ -91,10 +167,10 @@ async def start_server(host: str, port: int) -> None:
 
     import uvicorn
 
-    from voca.app import create_app
-    from voca.core import VocaBrain
+    from vera.app import create_app
+    from vera.core import VeraBrain
 
-    brain = VocaBrain()
+    brain = VeraBrain()
     app = create_app(brain)
 
     # Auto-open browser after server starts
@@ -122,9 +198,9 @@ async def run_both(host: str, port: int) -> None:
 
 async def run_all(host: str, port: int) -> None:
     """Run ALL input modes: voice + server + text CLI simultaneously."""
-    from voca.core import VocaBrain
+    from vera.core import VeraBrain
 
-    brain = VocaBrain()
+    brain = VeraBrain()
     await brain.start()
 
     async def cli_input():
@@ -140,7 +216,7 @@ async def run_all(host: str, port: int) -> None:
                 if transcript.lower() in ("quit", "exit"):
                     break
                 response = await brain.process(transcript)
-                print(f"🤖 Voca [{response.agent}|T{response.tier}]: {response.response}")
+                print(f"🤖 Vera [{response.agent}|T{response.tier}]: {response.response}")
             except (EOFError, KeyboardInterrupt):
                 break
 
@@ -153,7 +229,7 @@ async def run_all(host: str, port: int) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Voca — Voice-first multi-agent AI assistant",
+        description="Vera — Voice-first multi-agent AI assistant",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Modes:
@@ -172,8 +248,17 @@ Modes:
     )
     parser.add_argument("--host", default=settings.server.host, help="Server host")
     parser.add_argument("--port", type=int, default=settings.server.port, help="Server port")
+    parser.add_argument(
+        "--unsafe-paths", action="store_true",
+        help="Allow Coder agent to access blocked paths (dangerous!)",
+    )
 
     args = parser.parse_args()
+
+    # Apply CLI overrides to settings
+    if args.unsafe_paths:
+        settings.safety.coder_unsafe_paths = True
+        logger.warning("⚠️  UNSAFE-PATHS enabled — Coder agent can access blocked paths")
 
     print(r"""
  __     __
@@ -182,7 +267,7 @@ Modes:
    \ V / (_) | (__| (_| |
     \_/ \___/ \___|\__,_|
 
-  Voice-first AI Assistant v0.5.0
+  Voice-first AI Assistant v0.6.0
     """)
 
     max_retries = 10
@@ -206,17 +291,17 @@ Modes:
                 asyncio.run(run_all(args.host, args.port))
                 break
         except KeyboardInterrupt:
-            logger.info("Voca shutting down...")
+            logger.info("Vera shutting down...")
             sys.exit(0)
         except Exception as e:
-            logger.error("Voca crashed (attempt %d/%d): %s", attempt + 1, max_retries, e)
+            logger.error("Vera crashed (attempt %d/%d): %s", attempt + 1, max_retries, e)
             if attempt < max_retries - 1:
                 logger.info("Self-recovery: restarting in %d seconds...", retry_delay)
                 import time
                 time.sleep(retry_delay)
                 retry_delay = min(retry_delay * 2, 60)
             else:
-                logger.critical("Max retries reached. Voca shutting down.")
+                logger.critical("Max retries reached. Vera shutting down.")
                 sys.exit(1)
 
 

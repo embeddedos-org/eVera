@@ -1,8 +1,8 @@
-"""Quick audit of eVoca project completeness."""
+"""Quick audit of eVera project completeness."""
 import ast, os, re
 
 print("=" * 50)
-print("  eVoca v0.5.1 — Project Audit")
+print("  eVera v0.5.1 — Project Audit")
 print("=" * 50)
 
 # 1. Syntax check all Python files
@@ -25,7 +25,7 @@ for e in syntax_fail:
     print(f"  FAIL: {e}")
 
 # 2. Agents
-with open("voca/brain/agents/__init__.py") as f:
+with open("vera/brain/agents/__init__.py") as f:
     content = f.read()
 agents = re.findall(r'"(\w+)":\s*\w+Agent', content)
 print(f"\n[Agents] {len(agents)} registered: {', '.join(agents)}")
@@ -36,7 +36,7 @@ print(f"[Plugins] {len(plugins)}: {', '.join(plugins)}")
 
 # 4. Tool classes
 tool_count = 0
-for root, dirs, files in os.walk("voca/brain/agents"):
+for root, dirs, files in os.walk("vera/brain/agents"):
     for f in files:
         if f.endswith(".py") and f != "__init__.py":
             with open(path, encoding="utf-8") as fh:
@@ -66,19 +66,19 @@ tests = [f for f in os.listdir("tests") if f.startswith("test_")]
 print(f"[Tests] {len(tests)} test files")
 
 # 7. Safety rules
-with open("voca/safety/policy.py", encoding="utf-8") as f:
+with open("vera/safety/policy.py", encoding="utf-8") as f:
     rules = [l for l in f.readlines() if "PolicyAction." in l and ":" in l and "#" not in l.split(":")[0]]
 print(f"[Safety] {len(rules)} policy rules")
 
 # 8. Scheduler loops
-with open("voca/scheduler.py", encoding="utf-8") as f:
+with open("vera/scheduler.py", encoding="utf-8") as f:
     loops = re.findall(r"async def _(\w+)_loop", f.read())
 print(f"[Scheduler] {len(loops)} loops: {', '.join(loops)}")
 
 # 9. Files summary
-py_files = sum(1 for r, d, fs in os.walk("voca") for f in fs if f.endswith(".py"))
+py_files = sum(1 for r, d, fs in os.walk("vera") for f in fs if f.endswith(".py"))
 print(f"\n[Summary]")
-print(f"  Python files in voca/: {py_files}")
+print(f"  Python files in vera/: {py_files}")
 print(f"  Agents: {len(agents)} + {len(plugins)} plugins = {len(agents) + len(plugins)}")
 print(f"  Tools: {tool_count}")
 print(f"  Docs: {len(docs)}")

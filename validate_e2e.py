@@ -1,4 +1,4 @@
-"""eVoca v0.5.1 — End-to-End Validation Suite.
+"""eVera v0.5.1 — End-to-End Validation Suite.
 
 Validates every agent, tool, service, and subsystem without external dependencies.
 Uses mocking for LLM providers, brokers, and external APIs.
@@ -50,7 +50,7 @@ section("1. Syntax & Structure")
 
 # Check all Python files parse
 py_files = []
-for root_dir, dirs, files in os.walk("voca"):
+for root_dir, dirs, files in os.walk("vera"):
     dirs[:] = [d for d in dirs if d != "__pycache__"]
     for f in files:
         if f.endswith(".py"):
@@ -75,22 +75,22 @@ check(f"All {len(py_files)} Python files parse", len(syntax_errors) == 0,
 
 # Check key files exist
 key_files = [
-    "config.py", "main.py", "voca/core.py", "voca/app.py",
-    "voca/brain/graph.py", "voca/brain/router.py", "voca/brain/state.py",
-    "voca/brain/supervisor.py", "voca/brain/crew.py", "voca/brain/workflow.py",
-    "voca/brain/agents/__init__.py", "voca/brain/agents/base.py",
-    "voca/brain/agents/companion.py", "voca/brain/agents/operator.py",
-    "voca/brain/agents/browser.py", "voca/brain/agents/researcher.py",
-    "voca/brain/agents/writer.py", "voca/brain/agents/life_manager.py",
-    "voca/brain/agents/home_controller.py", "voca/brain/agents/income.py",
-    "voca/brain/agents/coder.py", "voca/brain/agents/git_agent.py",
-    "voca/brain/agents/vision.py", "voca/brain/agents/content_creator.py",
-    "voca/brain/agents/finance.py", "voca/brain/agents/email_manager.py",
-    "voca/memory/vault.py", "voca/memory/working.py", "voca/memory/episodic.py",
-    "voca/memory/semantic.py", "voca/memory/secure.py", "voca/memory/persistence.py",
-    "voca/safety/policy.py", "voca/safety/privacy.py",
-    "voca/providers/manager.py", "voca/providers/models.py",
-    "voca/events/bus.py", "voca/scheduler.py", "voca/messaging.py", "voca/rbac.py",
+    "config.py", "main.py", "vera/core.py", "vera/app.py",
+    "vera/brain/graph.py", "vera/brain/router.py", "vera/brain/state.py",
+    "vera/brain/supervisor.py", "vera/brain/crew.py", "vera/brain/workflow.py",
+    "vera/brain/agents/__init__.py", "vera/brain/agents/base.py",
+    "vera/brain/agents/companion.py", "vera/brain/agents/operator.py",
+    "vera/brain/agents/browser.py", "vera/brain/agents/researcher.py",
+    "vera/brain/agents/writer.py", "vera/brain/agents/life_manager.py",
+    "vera/brain/agents/home_controller.py", "vera/brain/agents/income.py",
+    "vera/brain/agents/coder.py", "vera/brain/agents/git_agent.py",
+    "vera/brain/agents/vision.py", "vera/brain/agents/content_creator.py",
+    "vera/brain/agents/finance.py", "vera/brain/agents/email_manager.py",
+    "vera/memory/vault.py", "vera/memory/working.py", "vera/memory/episodic.py",
+    "vera/memory/semantic.py", "vera/memory/secure.py", "vera/memory/persistence.py",
+    "vera/safety/policy.py", "vera/safety/privacy.py",
+    "vera/providers/manager.py", "vera/providers/models.py",
+    "vera/events/bus.py", "vera/scheduler.py", "vera/messaging.py", "vera/rbac.py",
     "plugins/live_trading.py",
 ]
 missing = [f for f in key_files if not os.path.exists(f)]
@@ -120,7 +120,7 @@ check("Data dir is Path", isinstance(s.data_dir, Path))
 section("3. Memory System")
 
 try:
-    from voca.memory.working import WorkingMemory, Turn
+    from vera.memory.working import WorkingMemory, Turn
     wm_available = True
 except ImportError:
     wm_available = False
@@ -142,7 +142,7 @@ if wm_available:
     check("Session removal works", wm.get_context(session_id="s1") == [])
 else:
     # Direct source validation when numpy/faiss not installed
-    with open("voca/memory/working.py", encoding="utf-8") as f:
+    with open("vera/memory/working.py", encoding="utf-8") as f:
         wm_src = f.read()
     check("WorkingMemory has session support", "session_id" in wm_src)
     check("WorkingMemory has _sessions dict", "_sessions" in wm_src)
@@ -154,7 +154,7 @@ else:
 try:
     # Import directly to bypass __init__.py auto-imports
     import importlib.util
-    spec = importlib.util.spec_from_file_location("persistence", "voca/memory/persistence.py")
+    spec = importlib.util.spec_from_file_location("persistence", "vera/memory/persistence.py")
     persistence_mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(persistence_mod)
     ConversationStore = persistence_mod.ConversationStore
@@ -180,7 +180,7 @@ if persistence_available:
     store.close()
     os.unlink(db_path)
 else:
-    with open("voca/memory/persistence.py", encoding="utf-8") as f:
+    with open("vera/memory/persistence.py", encoding="utf-8") as f:
         p_src = f.read()
     check("ConversationStore class exists", "class ConversationStore" in p_src)
     check("Persistence has save_turn", "def save_turn" in p_src)
@@ -192,7 +192,7 @@ else:
 # ═══════════════════════════════════════════════════════════
 section("4. Safety System (policy.py)")
 
-from voca.safety.policy import PolicyService, PolicyAction, PolicyDecision
+from vera.safety.policy import PolicyService, PolicyAction, PolicyDecision
 
 ps = PolicyService()
 check("PolicyService creates", ps is not None)
@@ -251,7 +251,7 @@ check("Unknown = CONFIRM (safe default)", d.action == PolicyAction.CONFIRM)
 # ═══════════════════════════════════════════════════════════
 section("5. Router & Intent Classification")
 
-with open("voca/brain/router.py", encoding="utf-8") as f:
+with open("vera/brain/router.py", encoding="utf-8") as f:
     router_src = f.read()
 
 # Check INTENT_AGENT_MAP has all agents
@@ -285,7 +285,7 @@ section("6. Agent Registry & Tool Counts")
 
 # Count tool classes per agent file
 agent_tools = {}
-for root_dir, dirs, files in os.walk("voca/brain/agents"):
+for root_dir, dirs, files in os.walk("vera/brain/agents"):
     for f in files:
         if f.endswith(".py") and f not in ("__init__.py", "base.py"):
             path = os.path.join(root_dir, f)
@@ -320,7 +320,7 @@ check(f"Total tools >= 99", total_tools >= 99, f"Got {total_tools}")
 # ═══════════════════════════════════════════════════════════
 section("7. Proactive Scheduler")
 
-with open("voca/scheduler.py", encoding="utf-8") as f:
+with open("vera/scheduler.py", encoding="utf-8") as f:
     sched_src = f.read()
 
 expected_loops = ["reminder", "calendar", "stock_alert", "daily_briefing",
@@ -338,7 +338,7 @@ check("Scheduler creates tasks for all loops",
 # ═══════════════════════════════════════════════════════════
 section("8. API Endpoints (app.py)")
 
-with open("voca/app.py", encoding="utf-8") as f:
+with open("vera/app.py", encoding="utf-8") as f:
     app_src = f.read()
 
 endpoints = [
@@ -419,8 +419,8 @@ section("11. CI/CD & Build")
 check("GitHub Actions workflow", os.path.exists(".github/workflows/build.yml"))
 check("Build backend script", os.path.exists("build_backend.py"))
 check("Deploy script", os.path.exists("deploy.py"))
-check("PyInstaller spec", os.path.exists("voca.spec"))
-check("Built installer exists", os.path.exists("electron/dist/Voca-0.5.1-win.zip"))
+check("PyInstaller spec", os.path.exists("vera.spec"))
+check("Built installer exists", os.path.exists("electron/dist/Vera-0.5.1-win.zip"))
 
 # ═══════════════════════════════════════════════════════════
 #  12. SECURITY CHECKS
@@ -428,7 +428,7 @@ check("Built installer exists", os.path.exists("electron/dist/Voca-0.5.1-win.zip
 section("12. Security Checks")
 
 # Check no shell=True in operator
-with open("voca/brain/agents/operator.py", encoding="utf-8") as f:
+with open("vera/brain/agents/operator.py", encoding="utf-8") as f:
     op_src = f.read()
 shell_true_count = op_src.count("shell=True")
 # Only ExecuteScriptTool has a controlled shell=True fallback
@@ -437,7 +437,7 @@ check("Operator: minimal shell=True usage", shell_true_count <= 1,
 
 check("API auth middleware is real middleware", "@app.middleware" in app_src)
 check("WebSocket checks api_key on connect", "4001" in app_src or "api_key" in app_src)
-check("Finance transfer DENIED", 'finance.transfer_money' in open("voca/safety/policy.py", encoding="utf-8").read())
+check("Finance transfer DENIED", 'finance.transfer_money' in open("vera/safety/policy.py", encoding="utf-8").read())
 
 # ═══════════════════════════════════════════════════════════
 #  FINAL REPORT
@@ -456,7 +456,7 @@ if ERRORS:
     print()
 
 if FAIL == 0:
-    print("  *** ALL CHECKS PASSED — eVoca v0.5.1 is VALIDATED ***")
+    print("  *** ALL CHECKS PASSED — eVera v0.5.1 is VALIDATED ***")
 else:
     print(f"  *** {FAIL} CHECK(S) FAILED — review above ***")
 

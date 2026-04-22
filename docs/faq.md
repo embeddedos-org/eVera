@@ -2,16 +2,16 @@
 
 ## General
 
-### Q: What LLM providers does eVoca support?
+### Q: What LLM providers does eVera support?
 **A:** Three providers via litellm:
 - **Ollama** (local, free) — requires Ollama installed locally
 - **OpenAI** (cloud, paid) — GPT-4o, GPT-4o-mini
 - **Google Gemini** (cloud, paid) — Gemini 2.0 Flash
 
-You can configure the fallback order in `.env`. If one provider fails, eVoca automatically tries the next.
+You can configure the fallback order in `.env`. If one provider fails, eVera automatically tries the next.
 
-### Q: Can eVoca work completely offline?
-**A:** Yes! With Ollama running locally, eVoca works without internet. Features that require external APIs (web search, stock prices, browser automation) won't work offline, but conversation, system control, and file management all work.
+### Q: Can eVera work completely offline?
+**A:** Yes! With Ollama running locally, eVera works without internet. Features that require external APIs (web search, stock prices, browser automation) won't work offline, but conversation, system control, and file management all work.
 
 ### Q: What languages does the voice input support?
 **A:** 19 languages including English, Spanish, French, German, Chinese, Japanese, Korean, Hindi, Arabic, and more. Language is auto-detected from the input script.
@@ -31,7 +31,7 @@ You can configure the fallback order in `.env`. If one provider fails, eVoca aut
 **A:** Common issues:
 1. **Wrong Python version** — requires 3.11+. Check with `python --version`
 2. **Missing dependencies** — run `pip install -r requirements.txt`
-3. **Port in use** — change `VOCA_SERVER_PORT` in `.env`
+3. **Port in use** — change `VERA_SERVER_PORT` in `.env`
 4. **Missing `.env`** — copy `.env.example` to `.env`
 
 ### Q: Ollama connection refused
@@ -40,7 +40,7 @@ You can configure the fallback order in `.env`. If one provider fails, eVoca aut
 ollama serve              # Start Ollama
 ollama pull llama3.2      # Download default model
 ```
-Check `VOCA_LLM_OLLAMA_URL` matches your Ollama server address.
+Check `VERA_LLM_OLLAMA_URL` matches your Ollama server address.
 
 ---
 
@@ -55,7 +55,7 @@ Check `VOCA_LLM_OLLAMA_URL` matches your Ollama server address.
 
 ### Q: Speech recognition is inaccurate
 **A:** Try:
-1. Use a larger STT model: `VOCA_VOICE_STT_MODEL=medium`
+1. Use a larger STT model: `VERA_VOICE_STT_MODEL=medium`
 2. Reduce background noise
 3. Speak clearly and at a moderate pace
 4. The spell correction system fixes 50+ common voice errors
@@ -89,7 +89,7 @@ playwright install chromium
 ## Security
 
 ### Q: How do I enable API authentication?
-**A:** Set `VOCA_SERVER_API_KEY=your-secret` in `.env`. All requests must include:
+**A:** Set `VERA_SERVER_API_KEY=your-secret` in `.env`. All requests must include:
 ```
 Authorization: Bearer your-secret
 ```
@@ -100,7 +100,7 @@ Authorization: Bearer your-secret
 - Forces sensitive requests to local processing (Ollama)
 - Never sends encrypted vault contents to any provider
 
-### Q: Can eVoca access all my files?
+### Q: Can eVera access all my files?
 **A:** No. File operations are sandboxed:
 - Allowed: home directory, current working directory
 - Blocked: `.ssh`, `.env`, `.aws`, `.gnupg`, system directories
@@ -125,20 +125,20 @@ All real trades require explicit user confirmation.
 
 ## Troubleshooting
 
-### Error: "No module named 'voca'"
+### Error: "No module named 'vera'"
 Run from the project root directory, or add it to PYTHONPATH:
 ```bash
-cd /path/to/eVoca
+cd /path/to/eVera
 python main.py --mode server
 ```
 
 ### Error: "Port 8000 already in use"
-Change the port: `VOCA_SERVER_PORT=8001` in `.env`
+Change the port: `VERA_SERVER_PORT=8001` in `.env`
 
 ### Error: "FAISS index not found"
 First run creates the index automatically. If corrupted, delete `data/faiss_index` and restart.
 
 ### Slow responses
-1. Use a smaller Ollama model: `VOCA_LLM_OLLAMA_MODEL=llama3.2:1b`
+1. Use a smaller Ollama model: `VERA_LLM_OLLAMA_MODEL=llama3.2:1b`
 2. Switch to cloud provider for faster inference
 3. Check CPU/RAM usage with `system_info` tool

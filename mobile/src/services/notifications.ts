@@ -1,5 +1,5 @@
 /**
- * Push notification service for eVoca mobile.
+ * Push notification service for eVera mobile.
  *
  * Uses Firebase Cloud Messaging (FCM) for Android and APNs for iOS.
  * Handles token registration, incoming notifications, and local notifications.
@@ -20,9 +20,9 @@ class NotificationService {
     // Configure local notification channels (Android)
     PushNotification.createChannel(
       {
-        channelId: 'voca-alerts',
-        channelName: 'Voca Alerts',
-        channelDescription: 'Proactive alerts from Voca (reminders, stock alerts, calendar)',
+        channelId: 'vera-alerts',
+        channelName: 'Vera Alerts',
+        channelDescription: 'Proactive alerts from Vera (reminders, stock alerts, calendar)',
         importance: 4,
         vibrate: true,
       },
@@ -64,7 +64,7 @@ class NotificationService {
     messaging().onMessage(async (remoteMessage) => {
       console.log('[FCM] Foreground message:', remoteMessage);
       this.showLocalNotification(
-        remoteMessage.notification?.title || 'Voca',
+        remoteMessage.notification?.title || 'Vera',
         remoteMessage.notification?.body || '',
       );
     });
@@ -83,7 +83,7 @@ class NotificationService {
 
   showLocalNotification(title: string, message: string, data?: object) {
     PushNotification.localNotification({
-      channelId: 'voca-alerts',
+      channelId: 'vera-alerts',
       title,
       message,
       playSound: true,
@@ -94,7 +94,7 @@ class NotificationService {
 
   scheduleNotification(title: string, message: string, date: Date) {
     PushNotification.localNotificationSchedule({
-      channelId: 'voca-alerts',
+      channelId: 'vera-alerts',
       title,
       message,
       date,

@@ -22,7 +22,7 @@ export default function App() {
 
   const loadConfig = async () => {
     try {
-      const saved = await AsyncStorage.getItem('voca_server_config');
+      const saved = await AsyncStorage.getItem('vera_server_config');
       if (saved) {
         setServerConfig(JSON.parse(saved));
       }
@@ -33,7 +33,7 @@ export default function App() {
   };
 
   const saveConfig = async (config: ServerConfig) => {
-    await AsyncStorage.setItem('voca_server_config', JSON.stringify(config));
+    await AsyncStorage.setItem('vera_server_config', JSON.stringify(config));
     setServerConfig(config);
   };
 
@@ -54,7 +54,7 @@ export default function App() {
         <Stack.Screen
           name="Chat"
           options={{
-            title: 'Voca',
+            title: 'Vera',
             headerRight: () => null,
           }}
         >

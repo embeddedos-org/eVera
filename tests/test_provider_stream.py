@@ -6,14 +6,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from voca.providers.models import ModelTier
+from vera.providers.models import ModelTier
 
 
 class TestProviderStream:
     @pytest.mark.asyncio
     async def test_stream_raises_value_error_for_reflex_tier(self):
-        with patch("voca.providers.manager.litellm"):
-            from voca.providers.manager import ProviderManager
+        with patch("vera.providers.manager.litellm"):
+            from vera.providers.manager import ProviderManager
             pm = ProviderManager()
             with pytest.raises(ValueError, match="REFLEX"):
                 async for _ in pm.stream(
@@ -24,8 +24,8 @@ class TestProviderStream:
 
     @pytest.mark.asyncio
     async def test_stream_raises_runtime_error_no_models(self):
-        with patch("voca.providers.manager.litellm"):
-            from voca.providers.manager import ProviderManager
+        with patch("vera.providers.manager.litellm"):
+            from vera.providers.manager import ProviderManager
             pm = ProviderManager()
             pm._models = {tier: [] for tier in ModelTier}
             with pytest.raises(RuntimeError, match="No models available"):
@@ -49,9 +49,9 @@ class TestProviderStream:
             for chunk in mock_chunks:
                 yield chunk
 
-        with patch("voca.providers.manager.litellm") as mock_litellm:
+        with patch("vera.providers.manager.litellm") as mock_litellm:
             mock_litellm.acompletion = AsyncMock(return_value=mock_async_iter())
-            from voca.providers.manager import ProviderManager
+            from vera.providers.manager import ProviderManager
             pm = ProviderManager()
 
             collected = []
@@ -86,9 +86,9 @@ class TestProviderStream:
             for c in chunks:
                 yield c
 
-        with patch("voca.providers.manager.litellm") as mock_litellm:
+        with patch("vera.providers.manager.litellm") as mock_litellm:
             mock_litellm.acompletion = AsyncMock(return_value=mock_iter())
-            from voca.providers.manager import ProviderManager
+            from vera.providers.manager import ProviderManager
             pm = ProviderManager()
 
             collected = []
@@ -103,8 +103,8 @@ class TestProviderStream:
 
 class TestGetUsage:
     def test_get_usage_returns_tier_keyed_dict(self):
-        with patch("voca.providers.manager.litellm"):
-            from voca.providers.manager import ProviderManager
+        with patch("vera.providers.manager.litellm"):
+            from vera.providers.manager import ProviderManager
             pm = ProviderManager()
             usage = pm.get_usage()
             assert "REFLEX" in usage

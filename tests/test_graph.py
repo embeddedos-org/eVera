@@ -6,16 +6,16 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from voca.brain.state import VocaState
-from voca.providers.models import ModelTier
+from vera.brain.state import VeraState
+from vera.providers.models import ModelTier
 
 
 @pytest.fixture
 def mock_graph():
     """Build a graph with fully mocked LLM."""
-    with patch("voca.providers.manager.litellm") as mock_litellm, \
-         patch("voca.memory.vault.settings") as mock_mem_settings, \
-         patch("voca.safety.policy.settings") as mock_safety_settings:
+    with patch("vera.providers.manager.litellm") as mock_litellm, \
+         patch("vera.memory.vault.settings") as mock_mem_settings, \
+         patch("vera.safety.policy.settings") as mock_safety_settings:
 
         # Memory settings
         mock_mem_settings.memory.working_memory_max_turns = 10
@@ -35,11 +35,11 @@ def mock_graph():
         mock_response.usage = MagicMock(prompt_tokens=10, completion_tokens=20, total_tokens=30)
         mock_litellm.acompletion = AsyncMock(return_value=mock_response)
 
-        from voca.brain.graph import build_graph
-        from voca.memory.vault import MemoryVault
-        from voca.providers.manager import ProviderManager
-        from voca.safety.policy import PolicyService
-        from voca.safety.privacy import PrivacyGuard
+        from vera.brain.graph import build_graph
+        from vera.memory.vault import MemoryVault
+        from vera.providers.manager import ProviderManager
+        from vera.safety.policy import PolicyService
+        from vera.safety.privacy import PrivacyGuard
 
         pm = ProviderManager()
         mv = MemoryVault()
@@ -54,7 +54,7 @@ def mock_graph():
 async def test_tier0_flow(mock_graph):
     """Tier 0 queries should not invoke LLM."""
     graph, mock_litellm = mock_graph
-    state: VocaState = {"transcript": "What time is it?", "session_id": "test", "metadata": {}}
+    state: VeraState = {"transcript": "What time is it?", "session_id": "test", "metadata": {}}
     result = await graph.ainvoke(state)
 
     assert result["final_response"] is not None
@@ -81,7 +81,7 @@ async def test_agent_flow(mock_graph):
 
     mock_litellm.acompletion = AsyncMock(side_effect=[classify_resp, agent_resp])
 
-    state: VocaState = {"transcript": "Tell me a joke", "session_id": "test", "metadata": {}}
+    state: VeraState = {"transcript": "Tell me a joke", "session_id": "test", "metadata": {}}
     result = await graph.ainvoke(state)
 
     assert result["final_response"] is not None

@@ -1,5 +1,5 @@
 /**
- * SettingsScreen — Configure eVoca server connection.
+ * SettingsScreen — Configure eVera server connection.
  *
  * Allows user to enter server host, port, and API key.
  * Tests connection before saving.
@@ -51,7 +51,7 @@ export default function SettingsScreen({ currentConfig, onSave }: Props) {
     } else {
       Alert.alert(
         'Connection Failed',
-        `Could not connect to ${config.host}:${config.port}.\n\nMake sure:\n• eVoca server is running\n• Your phone is on the same network\n• VOCA_SERVER_HOST=0.0.0.0 in .env`,
+        `Could not connect to ${config.host}:${config.port}.\n\nMake sure:\n• eVera server is running\n• Your phone is on the same network\n• VERA_SERVER_HOST=0.0.0.0 in .env`,
         [
           { text: 'Save Anyway', onPress: () => onSave(config) },
           { text: 'Try Again', style: 'cancel' },
@@ -148,7 +148,7 @@ export default function SettingsScreen({ currentConfig, onSave }: Props) {
 
       <Text style={[styles.sectionTitle, { marginTop: 32 }]}>ℹ️ Setup Guide</Text>
       <Text style={styles.hint}>
-        1. On your PC, set VOCA_SERVER_HOST=0.0.0.0 in .env{'\n'}
+        1. On your PC, set VERA_SERVER_HOST=0.0.0.0 in .env{'\n'}
         2. Run: python main.py --mode server{'\n'}
         3. Find your PC's IP: ipconfig (Windows) or ifconfig (Mac/Linux){'\n'}
         4. Enter the IP above and tap "Test & Connect"{'\n'}

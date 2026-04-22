@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from voca.brain.router import TierRouter
-from voca.providers.models import ModelTier
+from vera.brain.router import TierRouter
+from vera.providers.models import ModelTier
 
 
 @pytest.fixture

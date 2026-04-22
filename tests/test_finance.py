@@ -11,7 +11,7 @@ import pytest
 @pytest.fixture
 def finance_env(tmp_path):
     """Patch finance module DATA_DIR to tmp_path so tests use temp storage."""
-    import voca.brain.agents.finance as fin_mod
+    import vera.brain.agents.finance as fin_mod
     fin_mod.DATA_DIR = tmp_path
     return tmp_path
 
@@ -21,7 +21,7 @@ def finance_env(tmp_path):
 class TestCheckBalances:
     @pytest.mark.asyncio
     async def test_no_accounts_returns_info(self, finance_env):
-        from voca.brain.agents.finance import CheckBalancesTool
+        from vera.brain.agents.finance import CheckBalancesTool
         tool = CheckBalancesTool()
         result = await tool.execute()
         assert result["status"] == "info"
@@ -30,7 +30,7 @@ class TestCheckBalances:
 
     @pytest.mark.asyncio
     async def test_with_accounts_returns_total(self, finance_env):
-        from voca.brain.agents.finance import CheckBalancesTool
+        from vera.brain.agents.finance import CheckBalancesTool
         data = {
             "accounts": [
                 {"name": "Checking", "balance": 1500.50},
@@ -49,7 +49,7 @@ class TestCheckBalances:
 
     @pytest.mark.asyncio
     async def test_with_zero_balance_account(self, finance_env):
-        from voca.brain.agents.finance import CheckBalancesTool
+        from vera.brain.agents.finance import CheckBalancesTool
         data = {"accounts": [{"name": "Empty", "balance": 0}]}
         (finance_env / "finance.json").write_text(json.dumps(data))
 
@@ -64,7 +64,7 @@ class TestCheckBalances:
 class TestAddAccount:
     @pytest.mark.asyncio
     async def test_add_valid_account(self, finance_env):
-        from voca.brain.agents.finance import AddAccountTool
+        from vera.brain.agents.finance import AddAccountTool
         tool = AddAccountTool()
         result = await tool.execute(name="Chase Checking", balance=2500.00, type="checking")
         assert result["status"] == "success"
@@ -78,7 +78,7 @@ class TestAddAccount:
 
     @pytest.mark.asyncio
     async def test_add_account_empty_name_error(self, finance_env):
-        from voca.brain.agents.finance import AddAccountTool
+        from vera.brain.agents.finance import AddAccountTool
         tool = AddAccountTool()
         result = await tool.execute(name="", balance=100)
         assert result["status"] == "error"
@@ -86,7 +86,7 @@ class TestAddAccount:
 
     @pytest.mark.asyncio
     async def test_add_multiple_accounts(self, finance_env):
-        from voca.brain.agents.finance import AddAccountTool
+        from vera.brain.agents.finance import AddAccountTool
         tool = AddAccountTool()
         await tool.execute(name="Account1", balance=100)
         await tool.execute(name="Account2", balance=200)
@@ -99,7 +99,7 @@ class TestAddAccount:
 class TestAddTransaction:
     @pytest.mark.asyncio
     async def test_expense_transaction(self, finance_env):
-        from voca.brain.agents.finance import AddTransactionTool
+        from vera.brain.agents.finance import AddTransactionTool
         tool = AddTransactionTool()
         result = await tool.execute(description="Coffee", amount=-5.50, category="food")
         assert result["status"] == "success"
@@ -109,7 +109,7 @@ class TestAddTransaction:
 
     @pytest.mark.asyncio
     async def test_income_transaction(self, finance_env):
-        from voca.brain.agents.finance import AddTransactionTool
+        from vera.brain.agents.finance import AddTransactionTool
         tool = AddTransactionTool()
         result = await tool.execute(description="Paycheck", amount=3000.00, category="income")
         assert result["status"] == "success"
@@ -118,7 +118,7 @@ class TestAddTransaction:
 
     @pytest.mark.asyncio
     async def test_empty_description_error(self, finance_env):
-        from voca.brain.agents.finance import AddTransactionTool
+        from vera.brain.agents.finance import AddTransactionTool
         tool = AddTransactionTool()
         result = await tool.execute(description="", amount=50)
         assert result["status"] == "error"
@@ -126,7 +126,7 @@ class TestAddTransaction:
 
     @pytest.mark.asyncio
     async def test_transaction_persists_to_disk(self, finance_env):
-        from voca.brain.agents.finance import AddTransactionTool
+        from vera.brain.agents.finance import AddTransactionTool
         tool = AddTransactionTool()
         await tool.execute(description="Groceries", amount=-42.00, category="food", account="chase")
         data = json.loads((finance_env / "finance.json").read_text())
@@ -140,7 +140,7 @@ class TestAddTransaction:
 class TestViewTransactions:
     @pytest.mark.asyncio
     async def test_no_transactions(self, finance_env):
-        from voca.brain.agents.finance import ViewTransactionsTool
+        from vera.brain.agents.finance import ViewTransactionsTool
         tool = ViewTransactionsTool()
         result = await tool.execute()
         assert result["status"] == "success"
@@ -149,7 +149,7 @@ class TestViewTransactions:
 
     @pytest.mark.asyncio
     async def test_filter_by_days(self, finance_env):
-        from voca.brain.agents.finance import ViewTransactionsTool
+        from vera.brain.agents.finance import ViewTransactionsTool
         now = datetime.now()
         data = {
             "transactions": [
@@ -166,7 +166,7 @@ class TestViewTransactions:
 
     @pytest.mark.asyncio
     async def test_filter_by_category(self, finance_env):
-        from voca.brain.agents.finance import ViewTransactionsTool
+        from vera.brain.agents.finance import ViewTransactionsTool
         now = datetime.now()
         data = {
             "transactions": [
@@ -183,7 +183,7 @@ class TestViewTransactions:
 
     @pytest.mark.asyncio
     async def test_total_spent_and_income(self, finance_env):
-        from voca.brain.agents.finance import ViewTransactionsTool
+        from vera.brain.agents.finance import ViewTransactionsTool
         now = datetime.now()
         data = {
             "transactions": [
@@ -201,7 +201,7 @@ class TestViewTransactions:
 
     @pytest.mark.asyncio
     async def test_filter_by_account(self, finance_env):
-        from voca.brain.agents.finance import ViewTransactionsTool
+        from vera.brain.agents.finance import ViewTransactionsTool
         now = datetime.now()
         data = {
             "transactions": [
@@ -222,7 +222,7 @@ class TestViewTransactions:
 class TestSpendingAnalysis:
     @pytest.mark.asyncio
     async def test_analysis_with_transactions_and_budgets(self, finance_env):
-        from voca.brain.agents.finance import SpendingAnalysisTool
+        from vera.brain.agents.finance import SpendingAnalysisTool
         now = datetime.now()
         data = {
             "transactions": [
@@ -248,7 +248,7 @@ class TestSpendingAnalysis:
 
     @pytest.mark.asyncio
     async def test_analysis_no_transactions(self, finance_env):
-        from voca.brain.agents.finance import SpendingAnalysisTool
+        from vera.brain.agents.finance import SpendingAnalysisTool
         tool = SpendingAnalysisTool()
         result = await tool.execute()
         assert result["status"] == "success"
@@ -257,7 +257,7 @@ class TestSpendingAnalysis:
 
     @pytest.mark.asyncio
     async def test_analysis_weekly_period(self, finance_env):
-        from voca.brain.agents.finance import SpendingAnalysisTool
+        from vera.brain.agents.finance import SpendingAnalysisTool
         now = datetime.now()
         data = {
             "transactions": [
@@ -278,7 +278,7 @@ class TestSpendingAnalysis:
 class TestSetBudget:
     @pytest.mark.asyncio
     async def test_set_valid_budget(self, finance_env):
-        from voca.brain.agents.finance import SetBudgetTool
+        from vera.brain.agents.finance import SetBudgetTool
         tool = SetBudgetTool()
         result = await tool.execute(category="food", amount=500)
         assert result["status"] == "success"
@@ -291,28 +291,28 @@ class TestSetBudget:
 
     @pytest.mark.asyncio
     async def test_set_budget_empty_category_error(self, finance_env):
-        from voca.brain.agents.finance import SetBudgetTool
+        from vera.brain.agents.finance import SetBudgetTool
         tool = SetBudgetTool()
         result = await tool.execute(category="", amount=100)
         assert result["status"] == "error"
 
     @pytest.mark.asyncio
     async def test_set_budget_zero_amount_error(self, finance_env):
-        from voca.brain.agents.finance import SetBudgetTool
+        from vera.brain.agents.finance import SetBudgetTool
         tool = SetBudgetTool()
         result = await tool.execute(category="food", amount=0)
         assert result["status"] == "error"
 
     @pytest.mark.asyncio
     async def test_set_budget_negative_amount_error(self, finance_env):
-        from voca.brain.agents.finance import SetBudgetTool
+        from vera.brain.agents.finance import SetBudgetTool
         tool = SetBudgetTool()
         result = await tool.execute(category="food", amount=-50)
         assert result["status"] == "error"
 
     @pytest.mark.asyncio
     async def test_set_budget_overwrites_existing(self, finance_env):
-        from voca.brain.agents.finance import SetBudgetTool
+        from vera.brain.agents.finance import SetBudgetTool
         tool = SetBudgetTool()
         await tool.execute(category="food", amount=200)
         await tool.execute(category="food", amount=300)
@@ -324,23 +324,23 @@ class TestSetBudget:
 
 class TestHelpers:
     def test_ensure_data_dir_creates_dir(self, finance_env):
-        from voca.brain.agents.finance import _ensure_data_dir
+        from vera.brain.agents.finance import _ensure_data_dir
         result = _ensure_data_dir()
         assert result.exists()
 
     def test_load_json_nonexistent_returns_empty(self, finance_env):
-        from voca.brain.agents.finance import _load_json
+        from vera.brain.agents.finance import _load_json
         result = _load_json("nonexistent.json")
         assert result == {}
 
     def test_load_json_corrupt_returns_empty(self, finance_env):
-        from voca.brain.agents.finance import _load_json
+        from vera.brain.agents.finance import _load_json
         (finance_env / "corrupt.json").write_text("not valid json{{{")
         result = _load_json("corrupt.json")
         assert result == {}
 
     def test_save_and_load_roundtrip(self, finance_env):
-        from voca.brain.agents.finance import _load_json, _save_json
+        from vera.brain.agents.finance import _load_json, _save_json
         data = {"key": "value", "number": 42}
         _save_json("test.json", data)
         loaded = _load_json("test.json")
@@ -351,17 +351,17 @@ class TestHelpers:
 
 class TestFinanceAgent:
     def test_agent_has_six_tools(self):
-        from voca.brain.agents.finance import FinanceAgent
+        from vera.brain.agents.finance import FinanceAgent
         agent = FinanceAgent()
         assert len(agent.tools) == 6
 
     def test_agent_name(self):
-        from voca.brain.agents.finance import FinanceAgent
+        from vera.brain.agents.finance import FinanceAgent
         agent = FinanceAgent()
         assert agent.name == "finance"
 
     def test_agent_has_offline_responses(self):
-        from voca.brain.agents.finance import FinanceAgent
+        from vera.brain.agents.finance import FinanceAgent
         agent = FinanceAgent()
         assert len(agent.offline_responses) > 0
         assert "balance" in agent.offline_responses

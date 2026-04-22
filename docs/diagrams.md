@@ -1,4 +1,4 @@
-# eVoca Architecture Diagrams
+# eVera Architecture Diagrams
 
 All diagrams are written in [Mermaid](https://mermaid.js.org/) syntax and can be rendered in GitHub, VS Code (with Mermaid extension), or exported to PNG via `mmdc` (mermaid-cli).
 
@@ -29,7 +29,7 @@ graph TB
         Webhooks["Webhooks<br/>TradingView, Slack<br/>Discord, Telegram"]
     end
 
-    subgraph Brain["🧠 VocaBrain (LangGraph)"]
+    subgraph Brain["🧠 VeraBrain (LangGraph)"]
         Pipeline["StateGraph Pipeline<br/>enrich → classify → safety<br/>→ agent → store → synthesize"]
 
         subgraph Agents["🤖 10 Agents (90+ tools)"]
@@ -107,8 +107,8 @@ classDiagram
         +tier: ModelTier
         +system_prompt: str
         +_tools: list~Tool~
-        +run(state: VocaState) VocaState
-        +respond_offline(state: VocaState) str
+        +run(state: VeraState) VeraState
+        +respond_offline(state: VeraState) str
         #_setup_tools() void
         -_build_system_prompt(state) str
         -_extract_mood(text) str
@@ -289,21 +289,21 @@ sequenceDiagram
 
     Dev->>Py: python build_backend.py
     Note over Py: Bundle Python backend<br/>into single executable
-    Py->>Py: Collect voca/, config.py, main.py
+    Py->>Py: Collect vera/, config.py, main.py
     Py->>Py: Include dependencies (fastapi, langgraph, etc.)
-    Py-->>Dev: dist/voca-server.exe
+    Py-->>Dev: dist/vera-server.exe
 
     Dev->>EB: cd electron && node build.js [platform]
     Note over EB: Package Electron app<br/>with bundled backend
-    EB->>EB: Copy voca-server.exe to resources
+    EB->>EB: Copy vera-server.exe to resources
     EB->>EB: Build Electron app with electron-builder
 
     alt Windows
-        EB-->>Dev: Voca-Setup.exe (NSIS installer)
+        EB-->>Dev: Vera-Setup.exe (NSIS installer)
     else macOS
-        EB-->>Dev: Voca.dmg
+        EB-->>Dev: Vera.dmg
     else Linux
-        EB-->>Dev: Voca.AppImage + Voca.deb
+        EB-->>Dev: Vera.AppImage + Vera.deb
     end
 
     CI->>CI: On push to main

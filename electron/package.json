@@ -1,7 +1,7 @@
 {
-  "name": "voca-desktop",
-  "version": "0.5.1",
-  "description": "Voca - Voice-first AI Assistant Desktop App",
+  "name": "vera-desktop",
+  "version": "0.8.0",
+  "description": "Vera - Voice-first AI Assistant Desktop App",
   "author": "Srikanth Patchava",
   "main": "main.js",
   "scripts": {
@@ -12,8 +12,8 @@
     "build:linux": "electron-builder --linux"
   },
   "build": {
-    "appId": "com.voca.desktop",
-    "productName": "Voca",
+    "appId": "com.vera.desktop",
+    "productName": "Vera",
     "icon": "icon",
     "directories": {
       "output": "dist"
@@ -27,7 +27,7 @@
     ],
     "extraResources": [
       {
-        "from": "../dist/voca-server/",
+        "from": "../dist/vera-server/",
         "to": "backend",
         "filter": ["**/*"]
       }
@@ -57,7 +57,7 @@
       ]
     },
     "appImage": {
-      "artifactName": "Voca-${version}-${arch}.AppImage"
+      "artifactName": "Vera-${version}-${arch}.AppImage"
     }
   },
   "dependencies": {

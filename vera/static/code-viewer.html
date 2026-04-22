@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vera — Code Viewer</title>
+    <meta name="theme-color" content="#0a0e1a">
+    <style>
+        :root {
+            --bg-deep: #070b14;
+            --bg-primary: #0a0e1a;
+            --bg-glass: rgba(15, 20, 40, 0.65);
+            --bg-glass-strong: rgba(12, 16, 32, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-border-hover: rgba(255, 255, 255, 0.15);
+            --text-primary: #e8eaf6;
+            --text-secondary: #8b90b0;
+            --text-muted: #555875;
+            --accent: #6c7bff;
+            --accent-glow: rgba(108, 123, 255, 0.3);
+            --accent-dim: rgba(108, 123, 255, 0.15);
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --error: #f43f5e;
+            --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .layout {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* === Toolbar === */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: var(--bg-glass-strong);
+            border-bottom: 1px solid var(--glass-border);
+            flex-shrink: 0;
+        }
+
+        .toolbar-title {
+            font-size: 16px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6c7bff, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .toolbar-file {
+            margin-left: 12px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 400px;
+        }
+
+        .toolbar-spacer { flex: 1; }
+
+        .toolbar-btn {
+            background: var(--bg-glass);
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            font-size: 12px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .toolbar-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            border-color: var(--glass-border-hover);
+        }
+
+        .toolbar-btn.active {
+            background: var(--accent-dim);
+            border-color: rgba(108, 123, 255, 0.3);
+            color: var(--accent);
+        }
+
+        .nav-btn {
+            background: var(--bg-glass);
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            font-size: 16px;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
+
+        .complexity-badge {
+            font-size: 11px;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .complexity-low { background: rgba(74, 222, 128, 0.15); color: #4ade80; }
+        .complexity-medium { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+        .complexity-high { background: rgba(244, 63, 94, 0.15); color: #f43f5e; }
+
+        /* === Content Area === */
+        .content {
+            flex: 1;
+            display: flex;
+            min-height: 0;
+            position: relative;
+        }
+
+        /* === Sidebar === */
+        .sidebar {
+            width: 250px;
+            background: rgba(10, 14, 26, 0.6);
+            border-right: 1px solid var(--glass-border);
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 10px 16px;
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .tree-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: background 0.15s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tree-item:hover { background: rgba(255, 255, 255, 0.04); }
+        .tree-item.active { background: var(--accent-dim); color: var(--accent); }
+        .tree-item.dir { color: var(--text-muted); font-weight: 500; }
+        .tree-icon { flex-shrink: 0; font-size: 13px; }
+
+        /* === Code Panel === */
+        .code-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .code-container {
+            flex: 1;
+            overflow: auto;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.7;
+            transition: flex 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .code-line {
+            display: flex;
+            padding: 0 16px;
+            min-height: 22px;
+            transition: background 0.3s ease;
+        }
+
+        .code-line:hover { background: rgba(255, 255, 255, 0.02); }
+
+        .code-line.highlighted {
+            background: rgba(108, 123, 255, 0.12);
+            border-left: 3px solid var(--accent);
+        }
+
+        .line-number {
+            color: var(--text-muted);
+            text-align: right;
+            width: 48px;
+            flex-shrink: 0;
+            user-select: none;
+            padding-right: 16px;
+            opacity: 0.6;
+        }
+
+        .line-content {
+            flex: 1;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        .code-placeholder {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .code-placeholder span {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        /* === Syntax Colors === */
+        .tok-keyword { color: #c792ea; }
+        .tok-string { color: #c3e88d; }
+        .tok-comment { color: #546e7a; font-style: italic; }
+        .tok-number { color: #f78c6c; }
+        .tok-function { color: #82aaff; }
+        .tok-class { color: #ffcb6b; }
+        .tok-operator { color: #89ddff; }
+        .tok-decorator { color: #ff5572; }
+
+        /* === AI Panel === */
+        .ai-panel {
+            background: var(--bg-glass-strong);
+            border-top: 1px solid var(--glass-border);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .ai-panel.open {
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .ai-panel.loading {
+            border-top: 2px solid var(--accent);
+            animation: glow-border 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow-border {
+            from { border-top-color: var(--accent); }
+            to { border-top-color: rgba(167, 139, 250, 0.8); }
+        }
+
+        .ai-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .ai-panel-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--accent);
+            letter-spacing: 0.5px;
+        }
+
+        .ai-panel-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .ai-panel-body {
+            padding: 16px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .ai-loading {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 20px 16px;
+            color: var(--accent);
+            font-size: 13px;
+        }
+
+        .ai-loading .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(108, 123, 255, 0.2);
+            border-top: 2px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .concept-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .concept-tag {
+            font-size: 11px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            background: var(--accent-dim);
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .step-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+        }
+
+        .step-number {
+            font-size: 11px;
+            color: var(--accent);
+            font-weight: 700;
+            margin-right: 8px;
+        }
+
+        .issue-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+        }
+
+        .issue-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .severity-badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .severity-low { background: rgba(74, 222, 128, 0.15); color: #4ade80; }
+        .severity-medium { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+        .severity-high { background: rgba(244, 63, 94, 0.15); color: #f43f5e; }
+        .severity-critical { background: rgba(239, 68, 68, 0.25); color: #ef4444; }
+
+        .issue-line-ref {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        .issue-suggestion {
+            font-size: 12px;
+            color: var(--success);
+            margin-top: 4px;
+        }
+
+        /* === Activity History === */
+        .activity-panel {
+            background: var(--bg-glass-strong);
+            border-top: 1px solid var(--glass-border);
+            flex-shrink: 0;
+        }
+
+        .activity-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 16px;
+            cursor: pointer;
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .activity-toggle:hover { color: var(--text-secondary); }
+
+        .activity-list {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .activity-list.open {
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 16px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .activity-icon { font-size: 14px; }
+        .activity-name { color: var(--text-secondary); font-weight: 500; }
+        .activity-file { font-family: var(--font-mono); color: var(--text-muted); }
+        .activity-time { margin-left: auto; font-size: 10px; }
+
+        /* === Gesture Overlay === */
+        .gesture-overlay {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 240px;
+            height: 180px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            background: rgba(7, 11, 20, 0.9);
+            overflow: hidden;
+            display: none;
+            z-index: 100;
+        }
+
+        .gesture-overlay.active { display: block; }
+
+        .gesture-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        .gesture-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: scaleX(-1);
+        }
+
+        .gesture-ripple {
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 200;
+            animation: ripple-out 0.6s ease-out forwards;
+        }
+
+        @keyframes ripple-out {
+            from { transform: scale(0); opacity: 0.6; }
+            to { transform: scale(3); opacity: 0; }
+        }
+
+        /* === Graph Modal === */
+        .graph-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(7, 11, 20, 0.95);
+            z-index: 300;
+            display: none;
+            flex-direction: column;
+        }
+
+        .graph-modal.open { display: flex; }
+
+        .graph-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .graph-tab {
+            font-size: 13px;
+            padding: 6px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            background: none;
+            border: 1px solid transparent;
+        }
+
+        .graph-tab.active {
+            background: var(--accent-dim);
+            color: var(--accent);
+            border-color: rgba(108, 123, 255, 0.3);
+        }
+
+        .graph-tab:hover:not(.active) { color: var(--text-secondary); }
+
+        .graph-close {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .graph-close:hover { color: var(--text-primary); }
+
+        .graph-canvas-container {
+            flex: 1;
+            position: relative;
+        }
+
+        .graph-canvas-container canvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <div class="toolbar">
+            <span class="toolbar-title">👁️ Code Viewer</span>
+            <button class="nav-btn" id="btnPrev" title="Previous file (←)">←</button>
+            <button class="nav-btn" id="btnNext" title="Next file (→)">→</button>
+            <span class="toolbar-file" id="currentFile">No file selected</span>
+            <span class="complexity-badge" id="complexityBadge" style="display:none;"></span>
+            <span class="toolbar-spacer"></span>
+            <button class="toolbar-btn" id="btnCamera" title="Toggle gesture camera">📸 Camera</button>
+            <button class="toolbar-btn" id="btnGraph" title="Open graph view">📊 Graph</button>
+        </div>
+
+        <div class="content">
+            <div class="sidebar">
+                <div class="sidebar-header">Files</div>
+                <div id="fileTree"></div>
+            </div>
+
+            <div class="code-panel">
+                <div class="code-container" id="codeContainer">
+                    <div class="code-placeholder">
+                        <span>📂</span>
+                        Select a file from the sidebar to view
+                        <br><small style="margin-top:8px;color:var(--text-muted);">
+                            Press S to summarize · E to explain · F to find issues
+                        </small>
+                    </div>
+                </div>
+
+                <div class="ai-panel" id="aiPanel">
+                    <div class="ai-panel-header">
+                        <span class="ai-panel-title" id="aiPanelTitle">AI Analysis</span>
+                        <button class="ai-panel-close" id="aiPanelClose">✕</button>
+                    </div>
+                    <div class="ai-panel-body" id="aiPanelBody"></div>
+                </div>
+
+                <div class="activity-panel">
+                    <div class="activity-toggle" id="activityToggle">
+                        <span>📋 Activity History</span>
+                        <span id="activityCount">0</span>
+                    </div>
+                    <div class="activity-list" id="activityList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gesture overlay -->
+    <div class="gesture-overlay" id="gestureOverlay">
+        <video class="gesture-video" id="gestureVideo" autoplay playsinline></video>
+        <canvas class="gesture-canvas" id="gestureCanvas"></canvas>
+    </div>
+
+    <!-- Graph modal -->
+    <div class="graph-modal" id="graphModal">
+        <div class="graph-header">
+            <button class="graph-tab active" data-tab="memory" id="tabMemory">Memory Graph</button>
+            <button class="graph-tab" data-tab="deps" id="tabDeps">Dependencies</button>
+            <button class="graph-close" id="graphClose">✕</button>
+        </div>
+        <div class="graph-canvas-container">
+            <canvas id="graphCanvas"></canvas>
+        </div>
+    </div>
+
+    <!-- MediaPipe CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3/drawing_utils.min.js"></script>
+
+    <!-- Local modules -->
+    <script src="/static/gesture-engine.js"></script>
+    <script src="/static/graphify.js"></script>
+    <script src="/static/code-viewer.js"></script>
+
+    <script>
+        (function () {
+            "use strict";
+
+            // Initialize modules
+            VeraCodeViewer.init();
+
+            VeraGestureEngine.init(
+                document.getElementById("gestureVideo"),
+                document.getElementById("gestureCanvas")
+            );
+
+            // Wire gesture → viewer
+            VeraGestureEngine.onGesture(function (gesture) {
+                switch (gesture.type) {
+                    case "swipe_left":
+                        VeraCodeViewer.navigateFile(-1);
+                        break;
+                    case "swipe_right":
+                        VeraCodeViewer.navigateFile(1);
+                        break;
+                    case "pinch":
+                        VeraCodeViewer.triggerAnalysis("summarize");
+                        break;
+                    case "open_palm":
+                        VeraCodeViewer.triggerAnalysis("explain");
+                        break;
+                    case "point":
+                        VeraCodeViewer.triggerAnalysis("find_issues");
+                        break;
+                }
+            });
+
+            // Camera toggle
+            document.getElementById("btnCamera").addEventListener("click", function () {
+                VeraGestureEngine.toggleCamera();
+                var overlay = document.getElementById("gestureOverlay");
+                overlay.classList.toggle("active", VeraGestureEngine.isTracking());
+                this.classList.toggle("active", VeraGestureEngine.isTracking());
+            });
+
+            // Graph toggle
+            document.getElementById("btnGraph").addEventListener("click", function () {
+                var modal = document.getElementById("graphModal");
+                modal.classList.add("open");
+                VeraGraphify.init(document.getElementById("graphCanvas"));
+                VeraGraphify.loadMemoryGraph();
+            });
+
+            document.getElementById("graphClose").addEventListener("click", function () {
+                document.getElementById("graphModal").classList.remove("open");
+                VeraGraphify.destroy();
+            });
+
+            // Graph tabs
+            document.getElementById("tabMemory").addEventListener("click", function () {
+                document.getElementById("tabMemory").classList.add("active");
+                document.getElementById("tabDeps").classList.remove("active");
+                VeraGraphify.loadMemoryGraph();
+            });
+
+            document.getElementById("tabDeps").addEventListener("click", function () {
+                document.getElementById("tabDeps").classList.add("active");
+                document.getElementById("tabMemory").classList.remove("active");
+                VeraGraphify.loadDependencyGraph();
+            });
+
+            // Close graph on Escape
+            document.addEventListener("keydown", function (e) {
+                if (e.key === "Escape") {
+                    document.getElementById("graphModal").classList.remove("open");
+                    VeraGraphify.destroy();
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

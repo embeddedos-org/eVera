@@ -1,5 +1,5 @@
 /**
- * ChatScreen — Main voice-first chat interface for eVoca mobile.
+ * ChatScreen — Main voice-first chat interface for eVera mobile.
  *
  * Features: animated mic button, message bubbles with agent badges,
  * streaming text display, confirmation flow, haptic feedback.
@@ -19,7 +19,7 @@ import {
   Platform,
   Vibration,
 } from 'react-native';
-import { ServerConfig, VocaWebSocket, ChatMessage, VocaResponse } from '../services/api';
+import { ServerConfig, VeraWebSocket, ChatMessage, VeraResponse } from '../services/api';
 import { voiceService } from '../services/voice';
 
 interface Props {
@@ -60,7 +60,7 @@ export default function ChatScreen({ serverConfig, onOpenSettings }: Props) {
   const [listening, setListening] = useState(false);
   const [streamingText, setStreamingText] = useState('');
 
-  const wsRef = useRef<VocaWebSocket | null>(null);
+  const wsRef = useRef<VeraWebSocket | null>(null);
   const flatListRef = useRef<FlatList>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const msgIdCounter = useRef(0);
@@ -70,13 +70,13 @@ export default function ChatScreen({ serverConfig, onOpenSettings }: Props) {
   // ─── WebSocket setup ───
 
   useEffect(() => {
-    const ws = new VocaWebSocket(serverConfig);
+    const ws = new VeraWebSocket(serverConfig);
 
     ws.onConnection = (isConnected) => {
       setConnected(isConnected);
     };
 
-    ws.onMessage = (msg: VocaResponse) => {
+    ws.onMessage = (msg: VeraResponse) => {
       addAssistantMessage(msg);
       if (msg.mood !== 'error') {
         voiceService.speak(msg.response);
@@ -87,7 +87,7 @@ export default function ChatScreen({ serverConfig, onOpenSettings }: Props) {
       setStreamingText((prev) => prev + token);
     };
 
-    ws.onStreamEnd = (msg: VocaResponse) => {
+    ws.onStreamEnd = (msg: VeraResponse) => {
       setStreamingText('');
       addAssistantMessage(msg);
       voiceService.speak(msg.response);
@@ -129,7 +129,7 @@ export default function ChatScreen({ serverConfig, onOpenSettings }: Props) {
 
   // ─── Helpers ───
 
-  const addAssistantMessage = useCallback((msg: VocaResponse) => {
+  const addAssistantMessage = useCallback((msg: VeraResponse) => {
     const chatMsg: ChatMessage = {
       id: newMsgId(),
       role: 'assistant',

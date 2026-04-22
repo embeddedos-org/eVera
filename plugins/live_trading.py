@@ -1,6 +1,6 @@
-"""eVoca Trading Plugin — bridges stocks_plugin into eVoca's agent system.
+"""eVera Trading Plugin — bridges stocks_plugin into eVera's agent system.
 
-Connects eVoca voice commands to live trading on IBKR, TradeStation,
+Connects eVera voice commands to live trading on IBKR, TradeStation,
 Schwab/thinkorswim, and TradingView via the stocks_plugin framework.
 
 Supports:
@@ -10,7 +10,7 @@ Supports:
 - Portfolio analytics & risk management
 - Strategy backtesting
 
-Drop this file in eVoca's plugins/ directory to auto-register.
+Drop this file in eVera's plugins/ directory to auto-register.
 """
 
 from __future__ import annotations
@@ -26,13 +26,13 @@ from typing import Any
 # Add stocks_plugin to Python path
 STOCKS_PLUGIN_DIR = Path(__file__).resolve().parent.parent / "dev_platfrom" / "stocks_plugin"
 if not STOCKS_PLUGIN_DIR.exists():
-    # Try relative to eVoca project root
+    # Try relative to eVera project root
     STOCKS_PLUGIN_DIR = Path(__file__).resolve().parent.parent.parent / "stocks_plugin"
 if STOCKS_PLUGIN_DIR.exists() and str(STOCKS_PLUGIN_DIR) not in sys.path:
     sys.path.insert(0, str(STOCKS_PLUGIN_DIR))
 
-from voca.brain.agents.base import BaseAgent, Tool
-from voca.providers.models import ModelTier
+from vera.brain.agents.base import BaseAgent, Tool
+from vera.providers.models import ModelTier
 
 logger = logging.getLogger(__name__)
 
@@ -347,7 +347,7 @@ class RiskCheckTool(Tool):
 # ─── Plugin Agent ────────────────────────────────────────────
 
 class LiveTradingAgent(BaseAgent):
-    """Live trading agent — bridges eVoca to IBKR, TradeStation, Schwab, and TradingView.
+    """Live trading agent — bridges eVera to IBKR, TradeStation, Schwab, and TradingView.
 
     Connects to stocks_plugin for real broker APIs, AI trading decisions,
     portfolio analytics, and risk management.

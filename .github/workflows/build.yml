@@ -4,20 +4,60 @@ on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip test suite (use for hotfix releases)'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '20'
 
 jobs:
+  # ─── Pre-flight: Lint + Test ──────────────────────────────────
+  preflight:
+    name: ✅ Pre-flight checks
+    runs-on: ubuntu-latest
+    if: ${{ !inputs.skip_tests }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt || true
+          pip install pytest pytest-asyncio pytest-cov httpx ruff
+
+      - name: Lint
+        run: ruff check . --output-format=github
+
+      - name: Test
+        run: pytest tests/ -v -m "not slow" --tb=short
+
   # ─── Desktop (Electron) ─────────────────────────────────────
   build-desktop:
+    name: 📦 Desktop (${{ matrix.platform }})
+    needs: [preflight]
+    if: ${{ !failure() && !cancelled() }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: windows-latest
             platform: win
+            artifact_pattern: "Vera-Setup-*.exe"
           - os: macos-latest
             platform: mac
+            artifact_pattern: "Vera-*.dmg"
           - os: ubuntu-latest
             platform: linux
+            artifact_pattern: "Vera-*.AppImage"
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -25,19 +65,24 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Install Python dependencies
         run: |
+          pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller
 
-      - name: Build Python backend
+      - name: Build Python backend (PyInstaller)
         run: python build_backend.py --clean
+
+      - name: Verify backend build
+        run: ls dist/vera-server/
+        shell: bash
 
       - name: Install Electron dependencies
         working-directory: electron
@@ -45,7 +90,9 @@ jobs:
 
       - name: Build Electron installer
         working-directory: electron
-        run: node build.js --skip-backend ${{ matrix.platform }}
+        run: npx electron-builder --${{ matrix.platform }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload desktop artifact
         uses: actions/upload-artifact@v4
@@ -60,6 +107,9 @@ jobs:
 
   # ─── Mobile Android (APK) ───────────────────────────────────
   build-android:
+    name: 📱 Android APK
+    needs: [preflight]
+    if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -71,7 +121,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Install mobile dependencies
         working-directory: mobile
@@ -80,9 +130,9 @@ jobs:
       - name: Generate Android project
         working-directory: mobile
         run: |
-          npx --yes @react-native-community/cli init VocaMobileTemp --skip-install --skip-git-init
-          cp -r VocaMobileTemp/android ./
-          rm -rf VocaMobileTemp
+          npx --yes @react-native-community/cli init VeraMobileTemp --skip-install --skip-git-init
+          cp -r VeraMobileTemp/android ./
+          rm -rf VeraMobileTemp
 
       - name: Build release APK
         working-directory: mobile/android
@@ -99,13 +149,16 @@ jobs:
 
   # ─── Mobile iOS (IPA) ──────────────────────────────────────
   build-ios:
+    name: 🍎 iOS Archive
+    needs: [preflight]
+    if: ${{ !failure() && !cancelled() }}
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Install mobile dependencies
         working-directory: mobile
@@ -114,9 +167,9 @@ jobs:
       - name: Generate iOS project
         working-directory: mobile
         run: |
-          npx --yes @react-native-community/cli init VocaMobileTemp --skip-install --skip-git-init
-          cp -r VocaMobileTemp/ios ./
-          rm -rf VocaMobileTemp
+          npx --yes @react-native-community/cli init VeraMobileTemp --skip-install --skip-git-init
+          cp -r VeraMobileTemp/ios ./
+          rm -rf VeraMobileTemp
 
       - name: Install CocoaPods
         working-directory: mobile/ios
@@ -127,10 +180,10 @@ jobs:
         run: |
           xcodebuild \
             -workspace *.xcworkspace \
-            -scheme VocaMobileTemp \
+            -scheme VeraMobileTemp \
             -configuration Release \
             -sdk iphoneos \
-            -archivePath build/Voca.xcarchive \
+            -archivePath build/Vera.xcarchive \
             archive \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
@@ -140,26 +193,46 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ios-archive
-          path: mobile/ios/build/Voca.xcarchive
+          path: mobile/ios/build/Vera.xcarchive
           if-no-files-found: warn
 
   # ─── Create GitHub Release ─────────────────────────────────
   release:
-    needs: [build-desktop]
+    name: 🚀 GitHub Release
+    needs: [build-desktop, build-android, build-ios]
+    if: ${{ startsWith(github.ref, 'refs/tags/v') && !failure() }}
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
+          merge-multiple: true
 
       - name: List artifacts
         run: find artifacts -type f | head -50
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            CHANGES=$(git log --oneline --pretty=format:"- %s" HEAD)
+          else
+            CHANGES=$(git log --oneline --pretty=format:"- %s" ${PREV_TAG}..HEAD)
+          fi
+          echo "CHANGES<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             artifacts/**/*.exe
@@ -167,5 +240,24 @@ jobs:
             artifacts/**/*.AppImage
             artifacts/**/*.deb
             artifacts/**/*.apk
-          draft: true
+          body: |
+            ## What's Changed
+            ${{ steps.changelog.outputs.CHANGES }}
+
+            ## 📥 Download & Install
+
+            | Platform | Download | Install |
+            |----------|----------|---------|
+            | **Windows** | `Vera-Setup-*.exe` | Run the installer |
+            | **macOS** | `Vera-*.dmg` | Open DMG → drag to Applications |
+            | **Linux** | `Vera-*.AppImage` | `chmod +x Vera-*.AppImage && ./Vera-*.AppImage` |
+            | **Android** | `Vera-*.apk` | Enable unknown sources → install APK |
+
+            ## 🐍 From Source
+            ```bash
+            git clone https://github.com/srpatcha/eVera.git && cd eVera
+            python -m venv .venv && source .venv/bin/activate
+            pip install -r requirements.txt
+            python main.py --mode server
+            ```
           generate_release_notes: true

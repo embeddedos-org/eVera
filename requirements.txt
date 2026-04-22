@@ -1,4 +1,4 @@
-# Voca — Python Dependencies
+# Vera — Python Dependencies
 # Install in a virtual environment: python3 -m venv .venv && source .venv/bin/activate
 
 # Core API
@@ -38,3 +38,9 @@ pyperclip>=1.8.0
 
 # Build
 pyinstaller>=6.0
+
+# Browser automation
+playwright>=1.40.0
+
+# Streaming TTS
+edge-tts>=6.1.0

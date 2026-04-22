@@ -1,12 +1,12 @@
 # 🤖 Agents Reference
 
-eVoca ships with 10 specialized agents, each designed for a specific domain. All agents extend `BaseAgent` and use the same tool calling framework.
+eVera ships with 10 specialized agents, each designed for a specific domain. All agents extend `BaseAgent` and use the same tool calling framework.
 
 ---
 
 ## 💬 Companion Agent
 
-**File:** `voca/brain/agents/companion.py`
+**File:** `vera/brain/agents/companion.py`
 **Tier:** Executor (Ollama local)
 **Description:** Casual conversation, emotional support, jokes, mood checks.
 
@@ -19,15 +19,15 @@ eVoca ships with 10 specialized agents, each designed for a specific domain. All
 
 **Example:**
 ```
-User: "Hey Voca, I'm feeling bored"
-Voca: "I feel you! 😄 How about: 🎮 Try a new game, 📚 Start that book, 🎨 Do some creative sketching, or 🎵 Discover new music? What sounds fun?"
+User: "Hey Vera, I'm feeling bored"
+Vera: "I feel you! 😄 How about: 🎮 Try a new game, 📚 Start that book, 🎨 Do some creative sketching, or 🎵 Discover new music? What sounds fun?"
 ```
 
 ---
 
 ## 💻 Operator Agent
 
-**File:** `voca/brain/agents/operator.py`
+**File:** `vera/brain/agents/operator.py`
 **Tier:** Specialist (GPT-4o-mini)
 **Description:** Full PC automation — apps, scripts, files, mouse, keyboard, windows, processes, system info.
 
@@ -57,14 +57,14 @@ Voca: "I feel you! 😄 How about: 🎮 Try a new game, 📚 Start that book, �
 **Example:**
 ```
 User: "Open Chrome and click at 500, 300"
-Voca: "Done! ✅ Opening Chrome for you! 🚀"
+Vera: "Done! ✅ Opening Chrome for you! 🚀"
 ```
 
 ---
 
 ## 🌐 Browser Agent
 
-**File:** `voca/brain/agents/browser.py`
+**File:** `vera/brain/agents/browser.py`
 **Tier:** Specialist (GPT-4o-mini)
 **Description:** Web automation via Playwright — navigate, login, fill forms, post on social media.
 
@@ -85,14 +85,14 @@ Voca: "Done! ✅ Opening Chrome for you! 🚀"
 **Example:**
 ```
 User: "Go to twitter.com and post 'Hello world!'"
-Voca: "I'll need to log in first. Should I go ahead? 🤔 (yes/no)"
+Vera: "I'll need to log in first. Should I go ahead? 🤔 (yes/no)"
 ```
 
 ---
 
 ## 🔍 Researcher Agent
 
-**File:** `voca/brain/agents/researcher.py`
+**File:** `vera/brain/agents/researcher.py`
 **Tier:** Specialist (GPT-4o-mini)
 **Description:** Web search, URL summarization, academic papers, fact-checking.
 
@@ -107,7 +107,7 @@ Voca: "I'll need to log in first. Should I go ahead? 🤔 (yes/no)"
 
 ## ✍️ Writer Agent
 
-**File:** `voca/brain/agents/writer.py`
+**File:** `vera/brain/agents/writer.py`
 **Tier:** Specialist (GPT-4o-mini)
 **Description:** Draft, edit, format, and translate text.
 
@@ -122,7 +122,7 @@ Voca: "I'll need to log in first. Should I go ahead? 🤔 (yes/no)"
 
 ## 📅 Life Manager Agent
 
-**File:** `voca/brain/agents/life_manager.py`
+**File:** `vera/brain/agents/life_manager.py`
 **Tier:** Specialist (GPT-4o-mini)
 **Description:** Calendar, reminders, to-do lists, email.
 
@@ -138,7 +138,7 @@ Voca: "I'll need to log in first. Should I go ahead? 🤔 (yes/no)"
 
 ## 🏠 Home Controller Agent
 
-**File:** `voca/brain/agents/home_controller.py`
+**File:** `vera/brain/agents/home_controller.py`
 **Tier:** Executor (Ollama local)
 **Description:** Smart home device control via Home Assistant API.
 
@@ -155,7 +155,7 @@ Voca: "I'll need to log in first. Should I go ahead? 🤔 (yes/no)"
 
 ## 📈 Income Agent
 
-**File:** `voca/brain/agents/income.py` + `voca/brain/agents/brokers.py`
+**File:** `vera/brain/agents/income.py` + `vera/brain/agents/brokers.py`
 **Tier:** Strategist (GPT-4o)
 **Description:** Stock market monitoring, paper trading, and real broker integration.
 
@@ -180,7 +180,7 @@ Voca: "I'll need to log in first. Should I go ahead? 🤔 (yes/no)"
 
 ## 💻 Coder Agent
 
-**File:** `voca/brain/agents/coder.py`
+**File:** `vera/brain/agents/coder.py`
 **Tier:** Specialist (GPT-4o-mini)
 **Description:** Read, write, edit code files and integrate with VS Code.
 
@@ -196,7 +196,7 @@ Voca: "I'll need to log in first. Should I go ahead? 🤔 (yes/no)"
 
 ## 📦 Git Agent
 
-**File:** `voca/brain/agents/git_agent.py`
+**File:** `vera/brain/agents/git_agent.py`
 **Tier:** Specialist (GPT-4o-mini)
 **Description:** Git operations and AI-powered code review.
 
@@ -224,7 +224,7 @@ Custom agents can be added as Python files in the `plugins/` directory. They are
 
 ## Multi-Agent Crews
 
-**File:** `voca/brain/crew.py`
+**File:** `vera/brain/crew.py`
 
 Multiple agents can collaborate on complex tasks using 4 strategies:
 

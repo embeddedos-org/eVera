@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vera — Diagram Viewer</title>
+    <meta name="theme-color" content="#0a0e1a">
+    <style>
+        :root {
+            --bg-deep: #070b14;
+            --bg-primary: #0a0e1a;
+            --bg-glass: rgba(15, 20, 40, 0.65);
+            --bg-glass-strong: rgba(12, 16, 32, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-border-hover: rgba(255, 255, 255, 0.15);
+            --text-primary: #e8eaf6;
+            --text-secondary: #8b90b0;
+            --text-muted: #555875;
+            --accent: #6c7bff;
+            --accent-glow: rgba(108, 123, 255, 0.3);
+            --accent-dim: rgba(108, 123, 255, 0.15);
+            --success: #4ade80;
+            --error: #f43f5e;
+            --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .layout {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: var(--bg-glass-strong);
+            border-bottom: 1px solid var(--glass-border);
+            flex-shrink: 0;
+        }
+
+        .toolbar-title {
+            font-size: 16px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6c7bff, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-right: auto;
+        }
+
+        .toolbar-btn {
+            background: var(--bg-glass);
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            font-size: 12px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .toolbar-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            border-color: var(--glass-border-hover);
+        }
+
+        .toolbar-btn.primary {
+            background: var(--accent-dim);
+            border-color: rgba(108, 123, 255, 0.3);
+            color: var(--accent);
+        }
+
+        .toolbar-btn.primary:hover {
+            background: rgba(108, 123, 255, 0.25);
+        }
+
+        .content {
+            flex: 1;
+            display: flex;
+            min-height: 0;
+        }
+
+        .editor-panel {
+            width: 40%;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--glass-border);
+        }
+
+        .editor-header {
+            padding: 10px 16px;
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .editor-textarea {
+            flex: 1;
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.6;
+            padding: 16px;
+            resize: none;
+            outline: none;
+        }
+
+        .editor-textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .preview-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .preview-header {
+            padding: 10px 16px;
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .preview-container {
+            flex: 1;
+            overflow: auto;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-container svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .preview-placeholder {
+            color: var(--text-muted);
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .preview-placeholder span {
+            display: block;
+            font-size: 40px;
+            margin-bottom: 12px;
+            opacity: 0.3;
+        }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 20px;
+            background: var(--bg-glass-strong);
+            border-top: 1px solid var(--glass-border);
+            font-size: 11px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        .status-dot.error {
+            background: var(--error);
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <div class="toolbar">
+            <span class="toolbar-title">📊 Diagram Editor</span>
+            <button class="toolbar-btn" id="btnCopy" title="Copy Mermaid text">📋 Copy</button>
+            <button class="toolbar-btn" id="btnSvg" title="Export SVG">⬇ SVG</button>
+            <button class="toolbar-btn" id="btnPng" title="Export PNG">⬇ PNG</button>
+            <button class="toolbar-btn" id="btnOpen" title="Open from file">📂 Open</button>
+            <button class="toolbar-btn primary" id="btnRender" title="Render diagram">▶ Render</button>
+        </div>
+
+        <div class="content">
+            <div class="editor-panel">
+                <div class="editor-header">Mermaid Source</div>
+                <textarea class="editor-textarea" id="editor" placeholder="Enter Mermaid diagram markup here...
+
+Example:
+graph TD
+    A[Start] --> B{Decision}
+    B -->|Yes| C[Action 1]
+    B -->|No| D[Action 2]
+    C --> E[End]
+    D --> E">graph TD
+    A[Start] --> B{Decision}
+    B -->|Yes| C[Action 1]
+    B -->|No| D[Action 2]
+    C --> E[End]
+    D --> E</textarea>
+            </div>
+            <div class="preview-panel">
+                <div class="preview-header">Preview</div>
+                <div class="preview-container" id="preview">
+                    <div class="preview-placeholder">
+                        <span>📊</span>
+                        Click "Render" or press Ctrl+Enter to preview
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">Ready</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <script src="/static/diagram-viewer.js"></script>
+    <script>
+        (function () {
+            "use strict";
+
+            var editor = document.getElementById("editor");
+            var preview = document.getElementById("preview");
+            var statusDot = document.getElementById("statusDot");
+            var statusText = document.getElementById("statusText");
+            var debounceTimer = null;
+
+            // Initialize mermaid
+            if (typeof mermaid !== "undefined") {
+                mermaid.initialize({
+                    startOnLoad: false,
+                    theme: "dark",
+                    themeVariables: {
+                        darkMode: true,
+                        background: "#0a0e1a",
+                        primaryColor: "#1e2444",
+                        primaryTextColor: "#e8eaf6",
+                        primaryBorderColor: "#6c7bff",
+                        lineColor: "#6c7bff",
+                    },
+                });
+            }
+
+            function renderDiagram() {
+                var text = editor.value.trim();
+                if (!text) return;
+
+                statusDot.className = "status-dot";
+                statusText.textContent = "Rendering...";
+
+                if (typeof VeraDiagramViewer !== "undefined") {
+                    VeraDiagramViewer.render(text, preview);
+                    statusText.textContent = "Rendered successfully";
+                } else if (typeof mermaid !== "undefined") {
+                    var id = "preview-diagram-" + Date.now();
+                    mermaid.render(id, text).then(function (result) {
+                        preview.innerHTML = result.svg;
+                        statusText.textContent = "Rendered successfully";
+                    }).catch(function (err) {
+                        preview.innerHTML = '<div class="preview-placeholder" style="color:#f43f5e;">' + (err.message || "Render error") + '</div>';
+                        statusDot.className = "status-dot error";
+                        statusText.textContent = "Render error";
+                    });
+                }
+            }
+
+            // Live preview with debounce
+            editor.addEventListener("input", function () {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(renderDiagram, 800);
+            });
+
+            // Ctrl+Enter to render
+            editor.addEventListener("keydown", function (e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                    e.preventDefault();
+                    renderDiagram();
+                }
+            });
+
+            // Toolbar buttons
+            document.getElementById("btnRender").addEventListener("click", renderDiagram);
+
+            document.getElementById("btnCopy").addEventListener("click", function () {
+                navigator.clipboard.writeText(editor.value).then(function () {
+                    statusText.textContent = "Copied to clipboard!";
+                });
+            });
+
+            document.getElementById("btnSvg").addEventListener("click", function () {
+                var svg = preview.querySelector("svg");
+                if (!svg) return;
+                var svgString = new XMLSerializer().serializeToString(svg);
+                var blob = new Blob([svgString], { type: "image/svg+xml" });
+                var a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = "diagram.svg";
+                a.click();
+                URL.revokeObjectURL(a.href);
+                statusText.textContent = "SVG exported";
+            });
+
+            document.getElementById("btnPng").addEventListener("click", function () {
+                var svg = preview.querySelector("svg");
+                if (!svg) return;
+                var svgString = new XMLSerializer().serializeToString(svg);
+                var blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+                var url = URL.createObjectURL(blob);
+                var img = new Image();
+                img.onload = function () {
+                    var canvas = document.createElement("canvas");
+                    canvas.width = img.width * 2;
+                    canvas.height = img.height * 2;
+                    var ctx = canvas.getContext("2d");
+                    ctx.scale(2, 2);
+                    ctx.drawImage(img, 0, 0);
+                    URL.revokeObjectURL(url);
+                    canvas.toBlob(function (blob) {
+                        var a = document.createElement("a");
+                        a.href = URL.createObjectURL(blob);
+                        a.download = "diagram.png";
+                        a.click();
+                        URL.revokeObjectURL(a.href);
+                        statusText.textContent = "PNG exported";
+                    }, "image/png");
+                };
+                img.src = url;
+            });
+
+            document.getElementById("btnOpen").addEventListener("click", function () {
+                var input = document.createElement("input");
+                input.type = "file";
+                input.accept = ".mmd,.mermaid,.md,.txt";
+                input.addEventListener("change", function (e) {
+                    var file = e.target.files[0];
+                    if (!file) return;
+                    var reader = new FileReader();
+                    reader.onload = function (ev) {
+                        editor.value = ev.target.result;
+                        renderDiagram();
+                        statusText.textContent = "Loaded: " + file.name;
+                    };
+                    reader.readAsText(file);
+                });
+                input.click();
+            });
+
+            // Initial render
+            renderDiagram();
+        })();
+    </script>
+</body>
+</html>

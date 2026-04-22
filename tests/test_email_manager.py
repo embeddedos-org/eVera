@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from voca.brain.agents.email_manager import (
+from vera.brain.agents.email_manager import (
     ReadEmailTool,
     ReadInboxTool,
     ReplyEmailTool,
@@ -28,7 +28,7 @@ class TestGetImapConnection:
             assert "IMAP not configured" in err
 
     def test_host_but_no_user_returns_none(self):
-        with patch.dict("os.environ", {"VOCA_IMAP_HOST": "imap.test.com"}, clear=True):
+        with patch.dict("os.environ", {"VERA_IMAP_HOST": "imap.test.com"}, clear=True):
             conn, err = _get_imap_connection()
             assert conn is None
             assert "IMAP not configured" in err
@@ -36,11 +36,11 @@ class TestGetImapConnection:
     def test_successful_connection(self):
         mock_conn = MagicMock()
         with patch.dict("os.environ", {
-            "VOCA_IMAP_HOST": "imap.test.com",
-            "VOCA_IMAP_USER": "user@test.com",
-            "VOCA_IMAP_PASS": "password123",
+            "VERA_IMAP_HOST": "imap.test.com",
+            "VERA_IMAP_USER": "user@test.com",
+            "VERA_IMAP_PASS": "password123",
         }, clear=True):
-            with patch("voca.brain.agents.email_manager.imaplib.IMAP4_SSL", return_value=mock_conn):
+            with patch("vera.brain.agents.email_manager.imaplib.IMAP4_SSL", return_value=mock_conn):
                 conn, err = _get_imap_connection()
                 assert conn is mock_conn
                 assert err is None
@@ -48,11 +48,11 @@ class TestGetImapConnection:
 
     def test_connection_failure(self):
         with patch.dict("os.environ", {
-            "VOCA_IMAP_HOST": "imap.test.com",
-            "VOCA_IMAP_USER": "user@test.com",
-            "VOCA_IMAP_PASS": "wrong",
+            "VERA_IMAP_HOST": "imap.test.com",
+            "VERA_IMAP_USER": "user@test.com",
+            "VERA_IMAP_PASS": "wrong",
         }, clear=True):
-            with patch("voca.brain.agents.email_manager.imaplib.IMAP4_SSL", side_effect=Exception("Connection refused")):
+            with patch("vera.brain.agents.email_manager.imaplib.IMAP4_SSL", side_effect=Exception("Connection refused")):
                 conn, err = _get_imap_connection()
                 assert conn is None
                 assert "IMAP connection failed" in err
@@ -60,11 +60,11 @@ class TestGetImapConnection:
     def test_falls_back_to_smtp_user(self):
         mock_conn = MagicMock()
         with patch.dict("os.environ", {
-            "VOCA_IMAP_HOST": "imap.test.com",
-            "VOCA_SMTP_USER": "smtp_user@test.com",
-            "VOCA_SMTP_PASS": "smtp_pass",
+            "VERA_IMAP_HOST": "imap.test.com",
+            "VERA_SMTP_USER": "smtp_user@test.com",
+            "VERA_SMTP_PASS": "smtp_pass",
         }, clear=True):
-            with patch("voca.brain.agents.email_manager.imaplib.IMAP4_SSL", return_value=mock_conn):
+            with patch("vera.brain.agents.email_manager.imaplib.IMAP4_SSL", return_value=mock_conn):
                 conn, err = _get_imap_connection()
                 assert conn is mock_conn
                 assert err is None
@@ -145,7 +145,7 @@ class TestReadInboxTool:
     @pytest.mark.asyncio
     async def test_no_imap_config_returns_error(self):
         tool = ReadInboxTool()
-        with patch("voca.brain.agents.email_manager._get_imap_connection", return_value=(None, "IMAP not configured")):
+        with patch("vera.brain.agents.email_manager._get_imap_connection", return_value=(None, "IMAP not configured")):
             result = await tool.execute()
             assert result["status"] == "error"
             assert "IMAP not configured" in result["message"]
@@ -155,7 +155,7 @@ class TestReadInboxTool:
         tool = ReadInboxTool()
         mock_conn = MagicMock()
         mock_conn.search.return_value = ("OK", [b""])
-        with patch("voca.brain.agents.email_manager._get_imap_connection", return_value=(mock_conn, None)):
+        with patch("vera.brain.agents.email_manager._get_imap_connection", return_value=(mock_conn, None)):
             result = await tool.execute()
             assert result["status"] == "success"
             assert result["count"] == 0
@@ -174,7 +174,7 @@ class TestReadInboxTool:
 
         mock_conn.fetch.return_value = ("OK", [(b"1", msg.as_bytes())])
 
-        with patch("voca.brain.agents.email_manager._get_imap_connection", return_value=(mock_conn, None)):
+        with patch("vera.brain.agents.email_manager._get_imap_connection", return_value=(mock_conn, None)):
             result = await tool.execute(count=5)
             assert result["status"] == "success"
             assert result["count"] >= 1
@@ -184,7 +184,7 @@ class TestReadInboxTool:
         tool = ReadInboxTool()
         mock_conn = MagicMock()
         mock_conn.search.return_value = ("OK", [b""])
-        with patch("voca.brain.agents.email_manager._get_imap_connection", return_value=(mock_conn, None)):
+        with patch("vera.brain.agents.email_manager._get_imap_connection", return_value=(mock_conn, None)):
             result = await tool.execute(count=100)
             # No crash — count was capped internally
             assert result["status"] == "success"
@@ -196,7 +196,7 @@ class TestReadEmailTool:
     @pytest.mark.asyncio
     async def test_no_email_id_returns_error(self):
         tool = ReadEmailTool()
-        with patch("voca.brain.agents.email_manager._get_imap_connection", return_value=(MagicMock(), None)):
+        with patch("vera.brain.agents.email_manager._get_imap_connection", return_value=(MagicMock(), None)):
             result = await tool.execute()
             assert result["status"] == "error"
             assert "No email_id" in result["message"]
@@ -204,7 +204,7 @@ class TestReadEmailTool:
     @pytest.mark.asyncio
     async def test_no_imap_config_returns_error(self):
         tool = ReadEmailTool()
-        with patch("voca.brain.agents.email_manager._get_imap_connection", return_value=(None, "IMAP not configured")):
+        with patch("vera.brain.agents.email_manager._get_imap_connection", return_value=(None, "IMAP not configured")):
             result = await tool.execute(email_id="123")
             assert result["status"] == "error"
 
@@ -219,7 +219,7 @@ class TestReadEmailTool:
 
         mock_conn.fetch.return_value = ("OK", [(b"5", msg.as_bytes())])
 
-        with patch("voca.brain.agents.email_manager._get_imap_connection", return_value=(mock_conn, None)):
+        with patch("vera.brain.agents.email_manager._get_imap_connection", return_value=(mock_conn, None)):
             result = await tool.execute(email_id="5")
             assert result["status"] == "success"
             assert result["email"]["subject"] == "Specific Email"
@@ -231,7 +231,7 @@ class TestReadEmailTool:
         mock_conn = MagicMock()
         mock_conn.fetch.return_value = ("OK", [None])
 
-        with patch("voca.brain.agents.email_manager._get_imap_connection", return_value=(mock_conn, None)):
+        with patch("vera.brain.agents.email_manager._get_imap_connection", return_value=(mock_conn, None)):
             result = await tool.execute(email_id="999")
             assert result["status"] == "error"
             assert "not found" in result["message"]
@@ -257,7 +257,7 @@ class TestReplyEmailTool:
     @pytest.mark.asyncio
     async def test_no_imap_returns_error(self):
         tool = ReplyEmailTool()
-        with patch("voca.brain.agents.email_manager._get_imap_connection", return_value=(None, "IMAP not configured")):
+        with patch("vera.brain.agents.email_manager._get_imap_connection", return_value=(None, "IMAP not configured")):
             result = await tool.execute(email_id="1", body="Thanks!")
             assert result["status"] == "error"
 
@@ -274,7 +274,7 @@ class TestReplyEmailTool:
         msg["Date"] = "Mon, 1 Jan 2024 10:00:00 +0000"
         mock_conn.fetch.return_value = ("OK", [(b"1", msg.as_bytes())])
 
-        with patch("voca.brain.agents.email_manager._get_imap_connection", return_value=(mock_conn, None)):
+        with patch("vera.brain.agents.email_manager._get_imap_connection", return_value=(mock_conn, None)):
             with patch.dict("os.environ", {}, clear=True):
                 result = await tool.execute(email_id="1", body="Thanks!")
                 assert result["status"] == "error"
@@ -287,7 +287,7 @@ class TestSearchEmailsTool:
     @pytest.mark.asyncio
     async def test_no_imap_returns_error(self):
         tool = SearchEmailsTool()
-        with patch("voca.brain.agents.email_manager._get_imap_connection", return_value=(None, "IMAP not configured")):
+        with patch("vera.brain.agents.email_manager._get_imap_connection", return_value=(None, "IMAP not configured")):
             result = await tool.execute(query="test")
             assert result["status"] == "error"
 
@@ -303,7 +303,7 @@ class TestSearchEmailsTool:
 
         mock_conn.fetch.return_value = ("OK", [(b"1", msg.as_bytes())])
 
-        with patch("voca.brain.agents.email_manager._get_imap_connection", return_value=(mock_conn, None)):
+        with patch("vera.brain.agents.email_manager._get_imap_connection", return_value=(mock_conn, None)):
             result = await tool.execute(query="test search")
             assert result["status"] == "success"
             assert result["count"] >= 1
@@ -314,7 +314,7 @@ class TestSearchEmailsTool:
         mock_conn = MagicMock()
         mock_conn.search.return_value = ("OK", [b""])
 
-        with patch("voca.brain.agents.email_manager._get_imap_connection", return_value=(mock_conn, None)):
+        with patch("vera.brain.agents.email_manager._get_imap_connection", return_value=(mock_conn, None)):
             result = await tool.execute(from_addr="boss@company.com")
             assert result["status"] == "success"
 
@@ -324,6 +324,6 @@ class TestSearchEmailsTool:
         mock_conn = MagicMock()
         mock_conn.search.return_value = ("OK", [b""])
 
-        with patch("voca.brain.agents.email_manager._get_imap_connection", return_value=(mock_conn, None)):
+        with patch("vera.brain.agents.email_manager._get_imap_connection", return_value=(mock_conn, None)):
             result = await tool.execute(subject="Invoice")
             assert result["status"] == "success"

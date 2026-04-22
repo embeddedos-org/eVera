@@ -1,5 +1,5 @@
 /**
- * Voca Desktop — Build Script
+ * Vera Desktop — Build Script
  *
  * Builds the Python backend via PyInstaller, then packages with electron-builder.
  * Usage:
@@ -16,7 +16,7 @@ const skipBackend = args.includes("--skip-backend");
 const platformArg = args.find((a) => !a.startsWith("--")) || "current";
 
 const ROOT = path.join(__dirname, "..");
-const DIST_BACKEND = path.join(ROOT, "dist", "voca-server");
+const DIST_BACKEND = path.join(ROOT, "dist", "vera-server");
 
 const electronCommands = {
     win: "npx electron-builder --win --x64",
@@ -73,7 +73,7 @@ function buildElectron() {
 
 console.log(`
 ╔══════════════════════════════════════════╗
-║  🔨 Voca Desktop Builder v0.5.0        ║
+║  🔨 Vera Desktop Builder v0.5.0        ║
 ║  Platform: ${platformArg.padEnd(30)}║
 ║  Skip backend: ${String(skipBackend).padEnd(25)}║
 ╚══════════════════════════════════════════╝

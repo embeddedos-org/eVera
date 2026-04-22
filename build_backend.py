@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build script — bundles the Voca Python backend via PyInstaller.
+"""Build script — bundles the Vera Python backend via PyInstaller.
 
 Usage:
     python build_backend.py              # Build for current platform
@@ -16,12 +16,12 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).parent
-DIST_DIR = ROOT / "dist" / "voca-server"
+DIST_DIR = ROOT / "dist" / "vera-server"
 DATA_TEMPLATE_DIR = ROOT / "data"
 ENV_EXAMPLE = ROOT / ".env.example"
 
 SYSTEM = platform.system()
-EXE_NAME = "voca-server.exe" if SYSTEM == "Windows" else "voca-server"
+EXE_NAME = "vera-server.exe" if SYSTEM == "Windows" else "vera-server"
 
 
 def clean() -> None:
@@ -35,9 +35,9 @@ def clean() -> None:
 
 def build() -> None:
     """Run PyInstaller with the spec file."""
-    spec = ROOT / "voca.spec"
+    spec = ROOT / "vera.spec"
     if not spec.exists():
-        print("❌ voca.spec not found — run from the project root")
+        print("❌ vera.spec not found — run from the project root")
         sys.exit(1)
 
     print("🔨 Running PyInstaller...")
@@ -93,13 +93,13 @@ def validate() -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build Voca backend with PyInstaller")
+    parser = argparse.ArgumentParser(description="Build Vera backend with PyInstaller")
     parser.add_argument("--clean", action="store_true", help="Clean previous builds first")
     args = parser.parse_args()
 
     print(f"""
 ===========================================
-  Voca Backend Builder v0.5.1
+  Vera Backend Builder v0.5.1
   Platform: {SYSTEM}
 ===========================================
 """)

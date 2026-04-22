@@ -6,13 +6,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from voca.safety.policy import PolicyAction, PolicyDecision
+from vera.safety.policy import PolicyAction, PolicyDecision
 
 
 @pytest.fixture
 def operator_agent():
     """Create an OperatorAgent instance."""
-    from voca.brain.agents.operator import OperatorAgent
+    from vera.brain.agents.operator import OperatorAgent
     return OperatorAgent()
 
 
@@ -37,7 +37,7 @@ class TestOperatorRun:
         mock_tool = AsyncMock()
         mock_tool.execute = AsyncMock(return_value={"status": "success"})
 
-        with patch("voca.safety.policy.PolicyService") as MockPolicyService:
+        with patch("vera.safety.policy.PolicyService") as MockPolicyService:
             MockPolicyService.return_value.check.return_value = allow_decision
             operator_agent.get_tool = MagicMock(return_value=mock_tool)
 
@@ -61,7 +61,7 @@ class TestOperatorRun:
             tool_name="open_application",
         )
 
-        with patch("voca.safety.policy.PolicyService") as MockPolicyService:
+        with patch("vera.safety.policy.PolicyService") as MockPolicyService:
             MockPolicyService.return_value.check.return_value = deny_decision
 
             result = await operator_agent.run(state)
@@ -85,7 +85,7 @@ class TestOperatorRun:
             tool_name="open_application",
         )
 
-        with patch("voca.safety.policy.PolicyService") as MockPolicyService:
+        with patch("vera.safety.policy.PolicyService") as MockPolicyService:
             MockPolicyService.return_value.check.return_value = confirm_decision
 
             result = await operator_agent.run(state)
@@ -112,7 +112,7 @@ class TestOperatorRun:
         mock_tool = AsyncMock()
         mock_tool.execute = AsyncMock(return_value={"status": "success"})
 
-        with patch("voca.safety.policy.PolicyService") as MockPolicyService:
+        with patch("vera.safety.policy.PolicyService") as MockPolicyService:
             MockPolicyService.return_value.check.return_value = allow_decision
             operator_agent.get_tool = MagicMock(return_value=mock_tool)
 
@@ -136,7 +136,7 @@ class TestOperatorRun:
             tool_name="take_screenshot",
         )
 
-        with patch("voca.safety.policy.PolicyService") as MockPolicyService:
+        with patch("vera.safety.policy.PolicyService") as MockPolicyService:
             MockPolicyService.return_value.check.return_value = deny_decision
 
             result = await operator_agent.run(state)
@@ -162,7 +162,7 @@ class TestOperatorRun:
         mock_tool = AsyncMock()
         mock_tool.execute = AsyncMock(return_value={"status": "error", "message": "App not found"})
 
-        with patch("voca.safety.policy.PolicyService") as MockPolicyService:
+        with patch("vera.safety.policy.PolicyService") as MockPolicyService:
             MockPolicyService.return_value.check.return_value = allow_decision
             operator_agent.get_tool = MagicMock(return_value=mock_tool)
 

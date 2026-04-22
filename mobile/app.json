@@ -1,28 +1,28 @@
 {
-  "name": "voca-mobile",
-  "displayName": "Voca",
+  "name": "vera-mobile",
+  "displayName": "Vera",
   "expo": {
-    "name": "Voca",
-    "slug": "voca-mobile",
-    "version": "0.5.0",
+    "name": "Vera",
+    "slug": "vera-mobile",
+    "version": "0.8.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
       "backgroundColor": "#0a0a1a"
     },
     "ios": {
-      "bundleIdentifier": "com.patchava.voca",
+      "bundleIdentifier": "com.patchava.vera",
       "supportsTablet": true,
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Voca needs microphone access for voice commands",
-        "NSCameraUsageDescription": "Voca needs camera access for visual analysis",
-        "NSContactsUsageDescription": "Voca needs contacts access to help manage your contacts",
-        "NSCalendarsUsageDescription": "Voca needs calendar access to manage your schedule",
-        "NSLocationWhenInUseUsageDescription": "Voca needs location access for location-aware assistance"
+        "NSMicrophoneUsageDescription": "Vera needs microphone access for voice commands",
+        "NSCameraUsageDescription": "Vera needs camera access for visual analysis",
+        "NSContactsUsageDescription": "Vera needs contacts access to help manage your contacts",
+        "NSCalendarsUsageDescription": "Vera needs calendar access to manage your schedule",
+        "NSLocationWhenInUseUsageDescription": "Vera needs location access for location-aware assistance"
       }
     },
     "android": {
-      "package": "com.patchava.voca",
+      "package": "com.patchava.vera",
       "adaptiveIcon": {
         "backgroundColor": "#0a0a1a"
       },

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from voca.memory.semantic import SemanticMemory
-from voca.memory.working import WorkingMemory
+from vera.memory.semantic import SemanticMemory
+from vera.memory.working import WorkingMemory
 
 
 def test_working_memory_add_get():
@@ -79,7 +79,7 @@ def test_semantic_persistence(tmp_path: Path):
 
 
 def test_secure_vault_roundtrip(tmp_path: Path):
-    from voca.memory.secure import SecureVault
+    from vera.memory.secure import SecureVault
 
     vault = SecureVault(vault_path=tmp_path / "vault.enc")
     vault.store("api_key", "sk-12345")
@@ -91,7 +91,7 @@ def test_secure_vault_roundtrip(tmp_path: Path):
 
 
 def test_secure_vault_persistence(tmp_path: Path):
-    from voca.memory.secure import SecureVault
+    from vera.memory.secure import SecureVault
 
     path = tmp_path / "vault.enc"
     v1 = SecureVault(vault_path=path)

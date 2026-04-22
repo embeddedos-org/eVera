@@ -13,7 +13,7 @@ def plugin_dir(tmp_path):
 
 
 def test_discover_empty(plugin_dir):
-    from voca.brain.plugins import PluginManager
+    from vera.brain.plugins import PluginManager
     pm = PluginManager(plugins_dir=plugin_dir)
     result = pm.discover()
     assert isinstance(result, list)
@@ -23,8 +23,8 @@ def test_load_plugin(plugin_dir):
     # Create a test plugin
     plugin_file = plugin_dir / "test_plugin.py"
     plugin_file.write_text('''
-from voca.brain.agents.base import BaseAgent, Tool
-from voca.providers.models import ModelTier
+from vera.brain.agents.base import BaseAgent, Tool
+from vera.providers.models import ModelTier
 
 class TestTool(Tool):
     def __init__(self):
@@ -44,7 +44,7 @@ PLUGIN_AGENTS = [TestPluginAgent]
 PLUGIN_INTENTS = {"test_intent": "test_plugin"}
 ''')
 
-    from voca.brain.plugins import PluginManager
+    from vera.brain.plugins import PluginManager
     pm = PluginManager(plugins_dir=plugin_dir)
     agents = pm.load_all()
 
@@ -57,7 +57,7 @@ def test_skip_underscore_files(plugin_dir):
     (plugin_dir / "_private.py").write_text("# skip me")
     (plugin_dir / "__init__.py").write_text("")
 
-    from voca.brain.plugins import PluginManager
+    from vera.brain.plugins import PluginManager
     pm = PluginManager(plugins_dir=plugin_dir)
     result = pm.discover()
     assert len(result) == 0
@@ -65,7 +65,7 @@ def test_skip_underscore_files(plugin_dir):
 
 def test_example_plugin_created(tmp_path):
     empty_dir = tmp_path / "new_plugins"
-    from voca.brain.plugins import PluginManager
+    from vera.brain.plugins import PluginManager
     pm = PluginManager(plugins_dir=empty_dir)
     pm.discover()
     assert (empty_dir / "_example_plugin.py").exists()

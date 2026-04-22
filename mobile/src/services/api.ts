@@ -1,7 +1,7 @@
 /**
- * eVoca API service — REST and WebSocket client for the mobile app.
+ * eVera API service — REST and WebSocket client for the mobile app.
  *
- * Connects to the eVoca FastAPI server with authentication,
+ * Connects to the eVera FastAPI server with authentication,
  * auto-reconnection, and streaming token support.
  */
 
@@ -24,7 +24,7 @@ export interface ChatMessage {
   streaming?: boolean;
 }
 
-export interface VocaResponse {
+export interface VeraResponse {
   type: string;
   response: string;
   agent: string;
@@ -34,9 +34,9 @@ export interface VocaResponse {
   mood: string;
 }
 
-type MessageHandler = (msg: VocaResponse) => void;
+type MessageHandler = (msg: VeraResponse) => void;
 type StreamHandler = (token: string) => void;
-type StreamEndHandler = (msg: VocaResponse) => void;
+type StreamEndHandler = (msg: VeraResponse) => void;
 type ConnectionHandler = (connected: boolean) => void;
 
 const buildBaseUrl = (config: ServerConfig, protocol: 'http' | 'ws') => {
@@ -93,7 +93,7 @@ function getHeaders(config: ServerConfig): Record<string, string> {
 
 // ─── WebSocket Client ────────────────────────────────────────
 
-export class VocaWebSocket {
+export class VeraWebSocket {
   private ws: WebSocket | null = null;
   private config: ServerConfig;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -117,7 +117,7 @@ export class VocaWebSocket {
       this.ws = new WebSocket(url);
 
       this.ws.onopen = () => {
-        console.log('[VocaWS] Connected');
+        console.log('[VeraWS] Connected');
         this.reconnectAttempts = 0;
         this.onConnection?.(true);
         this.startPing();
@@ -128,12 +128,12 @@ export class VocaWebSocket {
           const data = JSON.parse(event.data);
           this.handleMessage(data);
         } catch (e) {
-          console.warn('[VocaWS] Parse error:', e);
+          console.warn('[VeraWS] Parse error:', e);
         }
       };
 
       this.ws.onclose = (event) => {
-        console.log('[VocaWS] Disconnected:', event.code, event.reason);
+        console.log('[VeraWS] Disconnected:', event.code, event.reason);
         this.onConnection?.(false);
         this.stopPing();
         if (event.code !== 4001) {
@@ -142,10 +142,10 @@ export class VocaWebSocket {
       };
 
       this.ws.onerror = (error) => {
-        console.warn('[VocaWS] Error:', error);
+        console.warn('[VeraWS] Error:', error);
       };
     } catch (e) {
-      console.error('[VocaWS] Failed to connect:', e);
+      console.error('[VeraWS] Failed to connect:', e);
       this.scheduleReconnect();
     }
   }
@@ -153,26 +153,26 @@ export class VocaWebSocket {
   private handleMessage(data: any) {
     switch (data.type) {
       case 'response':
-        this.onMessage?.(data as VocaResponse);
+        this.onMessage?.(data as VeraResponse);
         break;
       case 'stream_token':
         this.onStreamToken?.(data.content);
         break;
       case 'stream_end':
-        this.onStreamEnd?.(data as VocaResponse);
+        this.onStreamEnd?.(data as VeraResponse);
         break;
       case 'pong':
         break;
       case 'status':
         break;
       default:
-        console.log('[VocaWS] Unknown message type:', data.type);
+        console.log('[VeraWS] Unknown message type:', data.type);
     }
   }
 
   send(transcript: string, stream: boolean = false) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      console.warn('[VocaWS] Not connected');
+      console.warn('[VeraWS] Not connected');
       return false;
     }
     this.ws.send(JSON.stringify({
@@ -229,12 +229,12 @@ export class VocaWebSocket {
 
   private scheduleReconnect() {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.warn('[VocaWS] Max reconnect attempts reached');
+      console.warn('[VeraWS] Max reconnect attempts reached');
       return;
     }
     const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
     this.reconnectAttempts++;
-    console.log(`[VocaWS] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
+    console.log(`[VeraWS] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
     this.reconnectTimer = setTimeout(() => this.connect(), delay);
   }
 }

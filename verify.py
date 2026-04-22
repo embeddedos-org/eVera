@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Voca Pre-Push Verification — runs all checks before pushing to GitHub.
+"""Vera Pre-Push Verification — runs all checks before pushing to GitHub.
 
 Usage: python verify.py
 
@@ -53,7 +53,7 @@ def run_cmd(cmd, timeout=60):
 def main():
     print("""
 ╔══════════════════════════════════════════╗
-║  🔍 Voca Pre-Push Verification v0.5.0   ║
+║  🔍 Vera Pre-Push Verification v0.5.0   ║
 ╚══════════════════════════════════════════╝
 """)
 
@@ -85,23 +85,23 @@ def main():
 
     modules = [
         ("config", "settings"),
-        ("voca.core", "VocaBrain"),
-        ("voca.app", "create_app"),
-        ("voca.brain.state", "VocaState"),
-        ("voca.brain.router", "TierRouter"),
-        ("voca.brain.supervisor", "SupervisorAgent"),
-        ("voca.brain.language", "correct_spelling"),
-        ("voca.brain.plugins", "PluginManager"),
-        ("voca.brain.crew", "Crew"),
-        ("voca.brain.workflow", "WorkflowEngine"),
-        ("voca.rbac", "RBACManager"),
-        ("voca.scheduler", "ProactiveScheduler"),
-        ("voca.messaging", "broadcast_notification"),
-        ("voca.safety.policy", "PolicyService"),
-        ("voca.safety.privacy", "PrivacyGuard"),
-        ("voca.memory.vault", "MemoryVault"),
-        ("voca.providers.manager", "ProviderManager"),
-        ("voca.providers.models", "ModelTier"),
+        ("vera.core", "VeraBrain"),
+        ("vera.app", "create_app"),
+        ("vera.brain.state", "VeraState"),
+        ("vera.brain.router", "TierRouter"),
+        ("vera.brain.supervisor", "SupervisorAgent"),
+        ("vera.brain.language", "correct_spelling"),
+        ("vera.brain.plugins", "PluginManager"),
+        ("vera.brain.crew", "Crew"),
+        ("vera.brain.workflow", "WorkflowEngine"),
+        ("vera.rbac", "RBACManager"),
+        ("vera.scheduler", "ProactiveScheduler"),
+        ("vera.messaging", "broadcast_notification"),
+        ("vera.safety.policy", "PolicyService"),
+        ("vera.safety.privacy", "PrivacyGuard"),
+        ("vera.memory.vault", "MemoryVault"),
+        ("vera.providers.manager", "ProviderManager"),
+        ("vera.providers.models", "ModelTier"),
     ]
 
     for mod_name, attr in modules:
@@ -118,7 +118,7 @@ def main():
     print("\n3️⃣  Agent Registration")
 
     try:
-        from voca.brain.agents import AGENT_REGISTRY
+        from vera.brain.agents import AGENT_REGISTRY
 
         expected_agents = [
             "companion", "operator", "researcher", "writer",
@@ -173,7 +173,7 @@ def main():
 
     # Check policy engine
     try:
-        from voca.safety.policy import PolicyAction, PolicyService
+        from vera.safety.policy import PolicyAction, PolicyService
         ps = PolicyService()
 
         check("transfer_money DENIED",
@@ -193,7 +193,7 @@ def main():
 
     # Check PII detection
     try:
-        from voca.safety.privacy import PrivacyGuard
+        from vera.safety.privacy import PrivacyGuard
         pg = PrivacyGuard()
         check("Detects SSN", pg.has_pii("SSN: 123-45-6789"))
         check("Detects credit card", pg.has_pii("Card: 4111-1111-1111-1111"))
@@ -206,7 +206,7 @@ def main():
     try:
         import asyncio
 
-        from voca.brain.agents.operator import ExecuteScriptTool
+        from vera.brain.agents.operator import ExecuteScriptTool
         tool = ExecuteScriptTool()
 
         async def check_cmd_safety():
@@ -224,7 +224,7 @@ def main():
 
     # Check path sandboxing
     try:
-        from voca.brain.agents.coder import _is_path_safe
+        from vera.brain.agents.coder import _is_path_safe
         safe1, _ = _is_path_safe(Path.home() / ".ssh" / "id_rsa")
         safe2, _ = _is_path_safe(Path.home() / "Documents" / "test.txt")
         check("Blocks .ssh access", not safe1)
@@ -238,7 +238,7 @@ def main():
     print("\n5️⃣  Language & Spell Correction")
 
     try:
-        from voca.brain.language import correct_spelling, detect_language
+        from vera.brain.language import correct_spelling, detect_language
 
         check("Corrects 'crome' → 'chrome'", "chrome" in correct_spelling("crome"))
         check("Corrects 'calender' → 'calendar'", "calendar" in correct_spelling("calender"))
@@ -255,7 +255,7 @@ def main():
 
     # Check all agents have offline responses
     try:
-        from voca.brain.agents import AGENT_REGISTRY
+        from vera.brain.agents import AGENT_REGISTRY
         for name, agent in AGENT_REGISTRY.items():
             has_offline = len(agent.offline_responses) > 0 or name == "git"
             check(f"  {name} has offline fallback", has_offline)
@@ -264,7 +264,7 @@ def main():
 
     # Check scheduler
     try:
-        from voca.scheduler import ProactiveScheduler
+        from vera.scheduler import ProactiveScheduler
         s = ProactiveScheduler()
         check("Scheduler initializes", s is not None)
         check("Scheduler has 0 handlers initially", len(s._notification_handlers) == 0)
@@ -273,7 +273,7 @@ def main():
 
     # Check RBAC
     try:
-        from voca.rbac import RBACManager
+        from vera.rbac import RBACManager
         rm = RBACManager()
         check("RBAC initializes", rm is not None)
     except Exception as e:
@@ -281,7 +281,7 @@ def main():
 
     # Check workflow engine
     try:
-        from voca.brain.workflow import WorkflowEngine
+        from vera.brain.workflow import WorkflowEngine
         we = WorkflowEngine()
         check("Workflow engine initializes", we is not None)
     except Exception as e:
@@ -327,32 +327,32 @@ def main():
     print("\n9️⃣  File Structure")
 
     required_files = [
-        "main.py", "config.py", "setup_voca.py",
+        "main.py", "config.py", "setup_vera.py",
         "requirements.txt", "pyproject.toml",
         "README.md", "CHANGELOG.md",
         ".env.example",
         ".github/workflows/ci.yml",
-        "voca/__init__.py", "voca/app.py", "voca/core.py",
-        "voca/scheduler.py", "voca/rbac.py", "voca/messaging.py",
-        "voca/brain/graph.py", "voca/brain/router.py",
-        "voca/brain/crew.py", "voca/brain/workflow.py",
-        "voca/brain/language.py", "voca/brain/plugins.py",
-        "voca/brain/agents/base.py",
-        "voca/brain/agents/companion.py",
-        "voca/brain/agents/operator.py",
-        "voca/brain/agents/browser.py",
-        "voca/brain/agents/researcher.py",
-        "voca/brain/agents/income.py",
-        "voca/brain/agents/coder.py",
-        "voca/brain/agents/git_agent.py",
-        "voca/brain/agents/brokers.py",
-        "voca/brain/agents/vision.py",
-        "voca/static/index.html",
-        "voca/static/app.js",
-        "voca/static/face.js",
-        "voca/static/listener.js",
-        "voca/static/waveform.js",
-        "voca/static/style.css",
+        "vera/__init__.py", "vera/app.py", "vera/core.py",
+        "vera/scheduler.py", "vera/rbac.py", "vera/messaging.py",
+        "vera/brain/graph.py", "vera/brain/router.py",
+        "vera/brain/crew.py", "vera/brain/workflow.py",
+        "vera/brain/language.py", "vera/brain/plugins.py",
+        "vera/brain/agents/base.py",
+        "vera/brain/agents/companion.py",
+        "vera/brain/agents/operator.py",
+        "vera/brain/agents/browser.py",
+        "vera/brain/agents/researcher.py",
+        "vera/brain/agents/income.py",
+        "vera/brain/agents/coder.py",
+        "vera/brain/agents/git_agent.py",
+        "vera/brain/agents/brokers.py",
+        "vera/brain/agents/vision.py",
+        "vera/static/index.html",
+        "vera/static/app.js",
+        "vera/static/face.js",
+        "vera/static/listener.js",
+        "vera/static/waveform.js",
+        "vera/static/style.css",
     ]
 
     for f in required_files:

@@ -20,19 +20,19 @@ No Python or Node.js required — everything is bundled into a single installer.
 
 | Platform | File | Install |
 |----------|------|---------|
-| **Windows** | [Voca-Setup.exe](https://github.com/patchava-sr/eVoca/releases/latest) | Run the installer |
-| **macOS** | [Voca.dmg](https://github.com/patchava-sr/eVoca/releases/latest) | Open DMG → drag to Applications |
-| **Linux** | [Voca.AppImage](https://github.com/patchava-sr/eVoca/releases/latest) | `chmod +x Voca-*.AppImage && ./Voca-*.AppImage` |
+| **Windows** | [Vera-Setup.exe](https://github.com/patchava-sr/eVera/releases/latest) | Run the installer |
+| **macOS** | [Vera.dmg](https://github.com/patchava-sr/eVera/releases/latest) | Open DMG → drag to Applications |
+| **Linux** | [Vera.AppImage](https://github.com/patchava-sr/eVera/releases/latest) | `chmod +x Vera-*.AppImage && ./Vera-*.AppImage` |
 
 ### First Launch
 
 1. Launch the app — it will show a splash screen while the backend starts
 2. The main window opens automatically at `localhost:8000`
-3. Type or speak to start interacting with Voca
+3. Type or speak to start interacting with Vera
 
 ### Global Shortcut
 
-Press `Ctrl+Shift+V` to toggle the Voca window from anywhere.
+Press `Ctrl+Shift+V` to toggle the Vera window from anywhere.
 
 ---
 
@@ -41,8 +41,8 @@ Press `Ctrl+Shift+V` to toggle the Voca window from anywhere.
 ### Clone and Install
 
 ```bash
-git clone https://github.com/patchava-sr/eVoca.git
-cd eVoca
+git clone https://github.com/patchava-sr/eVera.git
+cd eVera
 python -m venv .venv
 
 # Activate virtual environment
@@ -65,15 +65,15 @@ Edit `.env` and add your API keys:
 
 ```env
 # Required: at least one LLM provider
-VOCA_LLM_OPENAI_API_KEY=sk-your-key-here
-VOCA_LLM_GEMINI_API_KEY=your-gemini-key
+VERA_LLM_OPENAI_API_KEY=sk-your-key-here
+VERA_LLM_GEMINI_API_KEY=your-gemini-key
 
 # Optional: local Ollama (free, no API key)
-VOCA_LLM_OLLAMA_URL=http://localhost:11434
-VOCA_LLM_OLLAMA_MODEL=llama3.2
+VERA_LLM_OLLAMA_URL=http://localhost:11434
+VERA_LLM_OLLAMA_MODEL=llama3.2
 
 # Optional: API security
-VOCA_SERVER_API_KEY=my-secret-key
+VERA_SERVER_API_KEY=my-secret-key
 ```
 
 ### Run
@@ -107,18 +107,18 @@ See [Configuration Reference](configuration.md) for all environment variables.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `VOCA_LLM_OLLAMA_URL` | `http://localhost:11434` | Ollama server URL |
-| `VOCA_LLM_OPENAI_API_KEY` | (none) | OpenAI API key |
-| `VOCA_LLM_GEMINI_API_KEY` | (none) | Gemini API key |
-| `VOCA_SERVER_HOST` | `127.0.0.1` | Server bind address |
-| `VOCA_SERVER_PORT` | `8000` | Server port |
-| `VOCA_SERVER_API_KEY` | (empty) | API authentication key |
+| `VERA_LLM_OLLAMA_URL` | `http://localhost:11434` | Ollama server URL |
+| `VERA_LLM_OPENAI_API_KEY` | (none) | OpenAI API key |
+| `VERA_LLM_GEMINI_API_KEY` | (none) | Gemini API key |
+| `VERA_SERVER_HOST` | `127.0.0.1` | Server bind address |
+| `VERA_SERVER_PORT` | `8000` | Server port |
+| `VERA_SERVER_API_KEY` | (empty) | API authentication key |
 
 ---
 
 ## Next Steps
 
-- [Architecture Overview](architecture.md) — Understand how eVoca works
+- [Architecture Overview](architecture.md) — Understand how eVera works
 - [Agents Reference](agents.md) — See all 10 agents and their tools
 - [API Reference](api_reference.md) — REST and WebSocket endpoint docs
 - [Development Guide](development.md) — Build from source and contribute

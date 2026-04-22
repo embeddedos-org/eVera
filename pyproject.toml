@@ -3,9 +3,9 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "voca"
-version = "0.5.0"
-description = "Voice-first multi-agent AI buddy with 10 agents, 78+ tools, glassmorphism UI, live agent visualization, Electron desktop app, and PWA support"
+name = "vera"
+version = "0.8.0"
+description = "Voice-first multi-agent AI assistant with 23+ agents, 165+ tools, glassmorphism UI, Electron desktop app, React Native mobile, and office automation"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
@@ -60,7 +60,7 @@ trading = [
     "ib_insync>=0.9.86",
 ]
 all = [
-    "voca[voice,browser,trading]",
+    "vera[voice,browser,trading]",
 ]
 dev = [
     "pytest>=8.0",
@@ -74,13 +74,13 @@ dev = [
 ]
 
 [project.scripts]
-voca = "main:main"
+vera = "main:main"
 
 [project.urls]
-Homepage = "https://github.com/patchava-sr/eVoca"
-Repository = "https://github.com/patchava-sr/eVoca"
-Documentation = "https://github.com/patchava-sr/eVoca#readme"
-Changelog = "https://github.com/patchava-sr/eVoca/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/srpatcha/eVera"
+Repository = "https://github.com/srpatcha/eVera"
+Documentation = "https://github.com/srpatcha/eVera#readme"
+Changelog = "https://github.com/srpatcha/eVera/blob/main/CHANGELOG.md"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Master deploy script — builds all eVoca platforms.
+"""Master deploy script — builds all eVera platforms.
 
 Usage:
     python deploy.py                    # Build everything for current platform
@@ -140,7 +140,7 @@ def build_mobile_android() -> bool:
     android_dir = mobile_dir / "android"
     if not android_dir.exists() or not (android_dir / "gradlew").exists():
         print("⚠️  Android native project not initialized.")
-        print("   Run: cd mobile && npx react-native init VocaMobile --template react-native-template-typescript")
+        print("   Run: cd mobile && npx react-native init VeraMobile --template react-native-template-typescript")
         print("   Then copy src/ files into the generated project.")
         print("\n   Alternatively, generate the APK with:")
         print("   cd mobile/android && ./gradlew assembleRelease")
@@ -184,8 +184,8 @@ def build_mobile_ios() -> bool:
     # Build archive
     print("🔨 Building iOS archive...")
     if run(
-        "xcodebuild -workspace VocaMobile.xcworkspace -scheme VocaMobile "
-        "-configuration Release -archivePath build/VocaMobile.xcarchive archive",
+        "xcodebuild -workspace VeraMobile.xcworkspace -scheme VeraMobile "
+        "-configuration Release -archivePath build/VeraMobile.xcarchive archive",
         cwd=ios_dir,
     ) != 0:
         return False
@@ -193,7 +193,7 @@ def build_mobile_ios() -> bool:
     # Export IPA
     print("📦 Exporting IPA...")
     if run(
-        "xcodebuild -exportArchive -archivePath build/VocaMobile.xcarchive "
+        "xcodebuild -exportArchive -archivePath build/VeraMobile.xcarchive "
         "-exportPath build/ipa -exportOptionsPlist ExportOptions.plist",
         cwd=ios_dir,
     ) != 0:
@@ -205,7 +205,7 @@ def build_mobile_ios() -> bool:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="eVoca Deploy — Build all platforms")
+    parser = argparse.ArgumentParser(description="eVera Deploy — Build all platforms")
     parser.add_argument("--desktop", action="store_true", help="Build desktop (Electron) installer")
     parser.add_argument("--mobile", action="store_true", help="Build mobile (Android APK + iOS IPA)")
     parser.add_argument("--android-only", action="store_true", help="Build Android APK only")
@@ -220,7 +220,7 @@ def main() -> None:
 
     print(f"""
 ╔══════════════════════════════════════════════════════════╗
-║  🚀 eVoca Deploy v0.5.0                                ║
+║  🚀 eVera Deploy v0.5.0                                ║
 ║  System: {SYSTEM:<49}║
 ║  Desktop: {'Yes' if (build_all or args.desktop) else 'No':<48}║
 ║  Mobile:  {'Yes' if (build_all or args.mobile) else 'No':<48}║

@@ -1,8 +1,149 @@
 # Changelog
 
-All notable changes to Voca are documented here.
+All notable changes to eVera are documented here.
 
-## [0.5.1] — 2026-04-20
+## [0.8.0] — 2026-04-22
+
+### 🏷️ Full Rebrand: eSri → eVera
+- **Project renamed** from eSri/Sri to eVera/Vera across the entire codebase
+- 165 files updated — all imports, class names (`VeraBrain`, `VeraState`, `VeraResponse`), config prefixes (`VERA_*`), UI strings, wake words, and documentation
+- Directories renamed: `sri/` → `vera/`, `eSri/` → `eVera/`
+- Files renamed: `setup_sri.py` → `setup_vera.py`, `sri.spec` → `vera.spec`
+- Protected author name "Srikanth" from accidental renaming
+
+### 📦 Unified Versioning
+- All packages synced to v0.8.0: `pyproject.toml`, `electron/package.json`, `mobile/package.json`, `mobile/app.json`
+- GitHub URLs standardized to `srpatcha/eVera` across all files
+
+### 🔄 CI/CD Overhaul
+- Consolidated CI (`ci.yml`) and build (`build.yml`) workflows
+- Upgraded `softprops/action-gh-release` to v2
+- Android and iOS mobile build jobs added to build pipeline
+- Automated GitHub Release creation on version tags
+
+### 📝 Documentation
+- README rewritten with new eVera ASCII art and branding
+- CHANGELOG backfilled for v0.6.0 and v0.7.0
+- DISTRIBUTION.md updated with current version and URLs
+
+---
+
+## [0.7.0] — 2026-04-22
+
+### 🎫 Jira Agent (NEW — 7 tools)
+- `get_tickets` — List assigned/reported tickets with JQL filtering
+- `get_ticket` — Get full ticket details by key (PROJ-123)
+- `create_ticket` — Create issues with type, priority, assignee, labels
+- `update_ticket` — Update status, assignee, priority, add comments
+- `get_sprint` — View active sprint board with ticket status
+- `search_tickets` — Full JQL search support
+- `add_comment` — Add comments to any ticket
+
+### 🚀 Work Pilot Agent (NEW — 3 tools)
+- `start_work` — Fetch Jira ticket → create Git branch → track state
+- `complete_work` — Commit → push → create PR → update Jira status
+- `work_status` — Check progress of active ticket work
+
+### 📝 Meeting Agent (NEW — 3 tools)
+- `extract_action_items` — Parse meeting notes/transcripts for action items
+- `create_tasks_from_notes` — Auto-create todo items and Jira tickets
+- `summarize_meeting` — Generate structured meeting summaries
+
+### 🗺️ Codebase Indexer Agent (NEW — 4 tools)
+- `index_project` — Scan and index project files, extract definitions
+- `get_architecture` — Generate architecture summary of indexed project
+- `find_definitions` — Search for function/class definitions
+- `find_related_files` — Find files related to a given topic or file
+
+### 💬 Slack Channel Monitor
+- Background polling for channel activity
+- @mention alerts with message context
+- Auto-summarization of channel activity
+
+### 🔀 PR Creation
+- `git_create_pr` tool added to Git agent (10 tools total)
+- Uses `gh` CLI with GitHub REST API fallback
+
+### ⏰ 2 New Scheduler Loops
+- Automatic Jira ticket scanning at configurable intervals
+- Slack channel monitoring with poll intervals
+
+### ⚙️ 4 New Config Blocks
+- `VERA_JIRA_*` — Jira connection and scanning settings
+- `VERA_CHANNEL_*` — Slack channel monitoring settings
+- `VERA_CODEBASE_*` — Codebase indexer settings
+- `VERA_MEETING_*` — Meeting agent auto-creation settings
+
+### 📊 Stats
+- 23+ agents (was 18), 165+ tools (was 130+)
+- 9 scheduler loops (was 7)
+
+---
+
+## [0.6.0] — 2026-04-21
+
+### 👁️ Vision Monitor
+- Continuous background screen monitoring with hash-based debounce
+- Configurable via `VERA_VISION_MONITOR_ENABLED` and `VERA_VISION_MONITOR_INTERVAL`
+- Change detection — only analyzes when screen content changes
+
+### 🎙️ Voice Server (WebSocket)
+- `/ws/voice` endpoint for real-time voice I/O
+- PCM16 audio input, TTS audio output
+- Streaming transcription with faster-whisper
+
+### 🔧 Admin Operations & GUI Tools
+- System service management (start, stop, restart)
+- GUI dialog tools — file picker, message box, input dialog
+- Admin elevation for Windows services
+
+### 📱 Mobile Control
+- React Native mobile app with voice commands
+- `/ws/mobile` WebSocket protocol for device control
+- Send notifications, open apps, set alarms, toggle settings
+- `VERA_MOBILE_CONTROL_ENABLED` config
+
+### 🧙 Setup Wizards
+- Interactive trading setup wizard (Alpaca, IBKR configuration)
+- Home Assistant setup wizard (URL, token, device discovery)
+- First-run configuration flow
+
+### 🎭 Playwright Auto-Install
+- Browser agent auto-installs Playwright browsers on first use
+- No manual `playwright install` needed
+
+### 📂 Path Overrides
+- Coder agent respects `VERA_CODER_WORKSPACE` for file operations
+- Sandboxed to configured workspace directory
+
+### 📋 Planner Agent (NEW — 8 tools)
+- Morning planning, daily/weekly/monthly reviews
+- Goal setting with Eisenhower matrix prioritization
+- Habit tracking and streak monitoring
+
+### 🧘 Wellness Agent (NEW — 7 tools)
+- Pomodoro focus sessions with break reminders
+- Screen time tracking and limits
+- Energy level tracking and burnout prevention
+
+### 📰 Digest Agent (NEW — 6 tools)
+- RSS feed management and news digests
+- Reading lists with progress tracking
+- Thread summarization
+
+### 🌍 Language Tutor Agent (NEW — 5 tools)
+- Language lessons in 16+ languages
+- Vocabulary builder, grammar drills, pronunciation practice
+- Quiz mode with spaced repetition
+
+### 💼 Job Hunter Agent (NEW — 12 tools)
+- Job search across multiple platforms
+- Resume matching and optimization
+- Application tracking and auto-apply
+
+### 📊 Stats
+- 18 agents (was 12), 130+ tools (was 115+)
+- 7 scheduler loops (was 7)
 
 ### 🎬 ContentCreator Agent (NEW — 5 tools)
 - `generate_script` — AI video/content scripts for YouTube, TikTok, Instagram, LinkedIn, Twitter
@@ -102,9 +243,9 @@ All notable changes to Voca are documented here.
 - Applied 126 ruff auto-fixes across codebase
 
 ### 📁 New Files
-- `voca/static/agents-view.js` — Live agent visualization (cards, timeline, constellation)
-- `voca/static/manifest.json` — PWA manifest
-- `voca/static/sw.js` — Service worker for offline caching
+- `vera/static/agents-view.js` — Live agent visualization (cards, timeline, constellation)
+- `vera/static/manifest.json` — PWA manifest
+- `vera/static/sw.js` — Service worker for offline caching
 - `electron/main.js` — Electron main process (window, tray, shortcuts)
 - `electron/preload.js` — Secure context bridge
 - `electron/package.json` — Electron dependencies + build config
@@ -115,7 +256,7 @@ All notable changes to Voca are documented here.
 ## [0.4.1] — 2026-04-18
 
 ### 🧪 Comprehensive Test Suite (200+ tests)
-- **Foundational tests** (13) — Singleton, components, VocaResponse, VocaState, config defaults, model tiers
+- **Foundational tests** (13) — Singleton, components, VeraResponse, VeraState, config defaults, model tiers
 - **Security & Data Breach tests** (38) — Auth bypass, data leak prevention, path traversal, command injection, policy enforcement, audit logging, encrypted storage
 - **Sanity tests** (19) — All imports, agent basics, router patterns, memory roundtrip
 - **Performance tests** (10) — Tier0 <1ms, spell correction <5ms, PII detection <2ms, policy <0.5ms
@@ -142,7 +283,7 @@ All notable changes to Voca are documented here.
 - **Proactive Scheduler** — Background loops: reminder firing, calendar alerts (15 min warning), stock price alerts (5%+ moves), daily morning briefing
 - **Messaging Bots** — Slack, Discord, Telegram webhook handlers: receive commands + push proactive notifications
 - **19 Languages** — Speech recognition in 19 languages, auto-detection by script, language selector in UI
-- **Spell Correction** — 50+ voice recognition fixes, fuzzy matching against 100+ command vocabulary
+- **Spell Correction** — 50+ voice recognition fixes, fuzzy matching against 100+ command veraboulary
 
 ### 🐛 Bug Fixes
 - Fixed `NameError` in TradingView webhook (`data` → `body`)
@@ -173,7 +314,7 @@ All notable changes to Voca are documented here.
 - **App name sanitization** — Only alphanumeric characters, spaces, and hyphens allowed in app launch commands
 
 #### HIGH Fixes
-- **API key authentication** — All REST and WebSocket endpoints protected by `VOCA_SERVER_API_KEY` (Bearer token or query param)
+- **API key authentication** — All REST and WebSocket endpoints protected by `VERA_SERVER_API_KEY` (Bearer token or query param)
 - **Localhost default** — Server binds to `127.0.0.1` instead of `0.0.0.0` — not network-accessible by default
 - **Strict CORS** — Default origins changed from `*` to `["http://localhost:8000"]`
 - **Path sandboxing** — File read/write/edit restricted to user's home directory and CWD; `.ssh`, `.env`, `.aws`, `.gnupg` directories blocked
@@ -181,8 +322,8 @@ All notable changes to Voca are documented here.
 - **Encrypted session cookies** — Browser cookies stored alongside encrypted vault
 
 #### Configuration
-- New env vars: `VOCA_SERVER_API_KEY`, `VOCA_SERVER_WEBHOOK_SECRET`
-- Secure defaults for `VOCA_SERVER_HOST` and `VOCA_SERVER_CORS_ORIGINS`
+- New env vars: `VERA_SERVER_API_KEY`, `VERA_SERVER_WEBHOOK_SECRET`
+- Secure defaults for `VERA_SERVER_HOST` and `VERA_SERVER_CORS_ORIGINS`
 
 ---
 
@@ -221,7 +362,7 @@ All notable changes to Voca are documented here.
 ### 🚀 Major Features
 - **Animated Face** — Canvas-based with 8 expressions, blinking, bobbing, mouth sync
 - **Audio Waveform** — Web Audio API visualizer synced to mic input
-- **Always-On Listening** — 3 modes: Push-to-Talk, Wake Word ("Hey Voca"), Always On
+- **Always-On Listening** — 3 modes: Push-to-Talk, Wake Word ("Hey Vera"), Always On
 - **Buddy Personality** — Warm, emoji-rich, name-aware personality across all agents
 - **Tool Execution Pipeline** — LLM can now call tools and receive results
 
@@ -229,14 +370,14 @@ All notable changes to Voca are documented here.
 - Username detection and personalized greetings
 - Mood field in all responses driving face expressions
 - WebSocket greeting on connect with name awareness
-- VocaState TypedDict updated with `mood` and `user_name` fields
+- VeraState TypedDict updated with `mood` and `user_name` fields
 - Tier 0 responses updated with buddy personality
 - Confirmation flow stores and replays pending actions
 
 ### 📁 New Files
-- `voca/static/face.js` — Animated face renderer
-- `voca/static/waveform.js` — Audio waveform visualizer
-- `voca/static/listener.js` — Continuous listening manager
+- `vera/static/face.js` — Animated face renderer
+- `vera/static/waveform.js` — Audio waveform visualizer
+- `vera/static/listener.js` — Continuous listening manager
 
 ---
 

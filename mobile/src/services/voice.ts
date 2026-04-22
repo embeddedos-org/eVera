@@ -1,5 +1,5 @@
 /**
- * Voice service — speech-to-text and text-to-speech for eVoca mobile.
+ * Voice service — speech-to-text and text-to-speech for eVera mobile.
  *
  * Uses @react-native-community/voice for STT and react-native-tts for TTS.
  * Handles native microphone permission and provides a simple API.

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from voca.brain.language import (
+from vera.brain.language import (
     correct_spelling,
     detect_language,
     get_language_name,
@@ -16,7 +16,7 @@ from voca.brain.language import (
 class TestSpellCorrection:
     def test_corrects_known_misspellings(self):
         assert "chrome" in correct_spelling("opne crome")
-        assert "voca" in correct_spelling("hey boca")
+        assert "vera" in correct_spelling("hey boca")
         assert "calendar" in correct_spelling("check my calender")
         assert "screenshot" in correct_spelling("take a screanshot")
 

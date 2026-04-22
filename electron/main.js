@@ -1,5 +1,5 @@
 /**
- * Voca Desktop — Electron Main Process
+ * Vera Desktop — Electron Main Process
  *
  * Features:
  * - Auto-starts bundled Python backend
@@ -34,8 +34,8 @@ try {
     Store = null;
 }
 
-const BACKEND_PORT = parseInt(process.env.VOCA_PORT || "8000", 10);
-const VOCA_URL = process.env.VOCA_URL || `http://localhost:${BACKEND_PORT}`;
+const BACKEND_PORT = parseInt(process.env.VERA_PORT || "8000", 10);
+const VERA_URL = process.env.VERA_URL || `http://localhost:${BACKEND_PORT}`;
 const IS_DEV = !app.isPackaged;
 const HEALTH_CHECK_INTERVAL = 1000;
 const HEALTH_CHECK_TIMEOUT = 60000;
@@ -91,7 +91,7 @@ function getBackendPath() {
     }
     const resourcesPath = process.resourcesPath;
     const platform = process.platform;
-    const exeName = platform === "win32" ? "voca-server.exe" : "voca-server";
+    const exeName = platform === "win32" ? "vera-server.exe" : "vera-server";
     return path.join(resourcesPath, "backend", exeName);
 }
 
@@ -167,7 +167,7 @@ function waitForBackend() {
         const startTime = Date.now();
 
         const check = () => {
-            const req = http.get(`${VOCA_URL}/health`, (res) => {
+            const req = http.get(`${VERA_URL}/health`, (res) => {
                 if (res.statusCode === 200) {
                     backendRunning = true;
                     console.log("[Backend] Health check passed ✅");
@@ -234,7 +234,7 @@ function createSplashWindow() {
         @keyframes spin { to { transform: rotate(360deg); } }
     </style></head>
     <body>
-        <div class="title">🎙️ Voca</div>
+        <div class="title">🎙️ Vera</div>
         <div class="sub">Starting AI backend...</div>
         <div class="spinner"></div>
     </body>
@@ -253,7 +253,7 @@ function createWindow() {
         height: bounds.height,
         minWidth: 800,
         minHeight: 600,
-        title: "Voca",
+        title: "Vera",
         icon: getIcon("icon.png"),
         backgroundColor: "#070b14",
         show: false,
@@ -264,7 +264,7 @@ function createWindow() {
         },
     });
 
-    mainWindow.loadURL(VOCA_URL);
+    mainWindow.loadURL(VERA_URL);
 
     mainWindow.once("ready-to-show", () => {
         if (splashWindow) {
@@ -327,7 +327,7 @@ function registerIPC() {
         return {
             running: backendRunning,
             pid: backendProcess ? backendProcess.pid : null,
-            url: VOCA_URL,
+            url: VERA_URL,
         };
     });
 
@@ -340,16 +340,76 @@ function registerIPC() {
     });
 }
 
+// --- Diagram Viewer Window ---
+
+let diagramWindow = null;
+
+function openDiagramWindow() {
+    if (diagramWindow && !diagramWindow.isDestroyed()) {
+        diagramWindow.show();
+        diagramWindow.focus();
+        return;
+    }
+
+    diagramWindow = new BrowserWindow({
+        width: 1200,
+        height: 800,
+        title: "Vera — Diagram Viewer",
+        icon: getIcon("icon.png"),
+        backgroundColor: "#070b14",
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+        },
+    });
+
+    diagramWindow.loadURL(`${VERA_URL}/diagrams`);
+
+    diagramWindow.on("closed", () => {
+        diagramWindow = null;
+    });
+}
+
+// --- Code Viewer Window ---
+
+let codeViewerWindow = null;
+
+function openCodeViewerWindow() {
+    if (codeViewerWindow && !codeViewerWindow.isDestroyed()) {
+        codeViewerWindow.show();
+        codeViewerWindow.focus();
+        return;
+    }
+
+    codeViewerWindow = new BrowserWindow({
+        width: 1400,
+        height: 900,
+        title: "Vera — Code Viewer",
+        icon: getIcon("icon.png"),
+        backgroundColor: "#070b14",
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+        },
+    });
+
+    codeViewerWindow.loadURL(`${VERA_URL}/code-viewer`);
+
+    codeViewerWindow.on("closed", () => {
+        codeViewerWindow = null;
+    });
+}
+
 // --- System Tray ---
 
 function createTray() {
     const icon = getIcon("tray-icon.png") || getIcon("icon.png");
     tray = new Tray(icon);
-    tray.setToolTip("Voca — AI Buddy");
+    tray.setToolTip("Vera — AI Buddy");
 
     const contextMenu = Menu.buildFromTemplate([
         {
-            label: "Show Voca",
+            label: "Show Vera",
             click: () => {
                 if (mainWindow) {
                     mainWindow.show();
@@ -387,6 +447,14 @@ function createTray() {
         },
         { type: "separator" },
         {
+            label: "📊 Diagram Viewer",
+            click: () => openDiagramWindow(),
+        },
+        {
+            label: "👁️ Code Viewer",
+            click: () => openCodeViewerWindow(),
+        },
+        {
             label: "Restart Backend",
             click: async () => {
                 stopBackend();
@@ -394,7 +462,7 @@ function createTray() {
             },
         },
         {
-            label: "Quit Voca",
+            label: "Quit Vera",
             click: () => {
                 app.isQuitting = true;
                 app.quit();
@@ -440,7 +508,7 @@ function registerGlobalShortcut() {
 function showNotification(title, body) {
     if (Notification.isSupported()) {
         const notification = new Notification({
-            title: title || "Voca",
+            title: title || "Vera",
             body: body || "",
             icon: getIcon("icon.png"),
         });

@@ -1,11 +1,11 @@
-# 📱 Voca Mobile — React Native App
+# 📱 Vera Mobile — React Native App
 
-Voice-first mobile companion for the eVoca AI assistant. Connects to your eVoca server over WiFi.
+Voice-first mobile companion for the eVera AI assistant. Connects to your eVera server over WiFi.
 
 ## Features
 
 - 🎙️ **Voice input** — Native speech-to-text via platform APIs
-- 🔊 **Voice output** — Text-to-speech for Voca's responses
+- 🔊 **Voice output** — Text-to-speech for Vera's responses
 - 💬 **Real-time chat** — WebSocket connection with streaming support
 - 🔔 **Push notifications** — FCM (Android) / APNs (iOS) for proactive alerts
 - 📱 **Native permissions** — Microphone, camera, contacts, calendar, location
@@ -20,7 +20,7 @@ Voice-first mobile companion for the eVoca AI assistant. Connects to your eVoca 
 - Node.js 18+
 - React Native CLI (`npm install -g react-native`)
 - Android Studio (for Android) or Xcode (for iOS)
-- eVoca server running on your PC
+- eVera server running on your PC
 
 ### Install Dependencies
 
@@ -35,13 +35,13 @@ npm install
 cd ios && pod install && cd ..
 ```
 
-### Configure eVoca Server
+### Configure eVera Server
 
 On your PC, set the server to accept network connections:
 
 ```env
-# In eVoca/.env
-VOCA_SERVER_HOST=0.0.0.0
+# In eVera/.env
+VERA_SERVER_HOST=0.0.0.0
 ```
 
 ### Run
@@ -61,7 +61,7 @@ npx react-native run-ios
 3. Enter port (default: 8000) and API key (if configured)
 4. Tap "Test & Connect"
 5. Grant microphone permission when prompted
-6. Start talking to Voca! 🎙️
+6. Start talking to Vera! 🎙️
 
 ## Architecture
 

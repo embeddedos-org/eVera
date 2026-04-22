@@ -1,5 +1,5 @@
 /**
- * Voca Desktop — Preload Script
+ * Vera Desktop — Preload Script
  *
  * Secure bridge between Node.js and the renderer process.
  * Exposes a minimal API via contextBridge.
@@ -7,7 +7,7 @@
 
 const { contextBridge, ipcRenderer } = require("electron");
 
-contextBridge.exposeInMainWorld("vocaDesktop", {
+contextBridge.exposeInMainWorld("veraDesktop", {
     platform: process.platform,
     isElectron: true,
 

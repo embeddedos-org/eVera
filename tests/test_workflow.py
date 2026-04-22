@@ -7,9 +7,9 @@ import pytest
 
 @pytest.fixture
 def workflow_engine(tmp_path):
-    import voca.brain.workflow as wf_mod
+    import vera.brain.workflow as wf_mod
     wf_mod.WORKFLOWS_DIR = tmp_path / "workflows"
-    from voca.brain.workflow import WorkflowEngine
+    from vera.brain.workflow import WorkflowEngine
     return WorkflowEngine()
 
 
@@ -51,6 +51,6 @@ class TestWorkflowEngine:
             "steps": [{"id": "1", "type": "notify", "message": "saved"}],
         })
         # Reload
-        import voca.brain.workflow as wf_mod
+        import vera.brain.workflow as wf_mod
         engine2 = wf_mod.WorkflowEngine()
         assert engine2.get("persistent") is not None

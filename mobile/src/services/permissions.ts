@@ -1,5 +1,5 @@
 /**
- * Native permissions manager for eVoca mobile.
+ * Native permissions manager for eVera mobile.
  *
  * Handles runtime permission requests for Android and iOS with
  * user-friendly explanations for each permission.
@@ -51,12 +51,12 @@ const PERMISSION_MAP: Record<PermissionType, { android: Permission; ios: Permiss
 };
 
 const PERMISSION_DESCRIPTIONS: Record<PermissionType, string> = {
-  microphone: 'Voca needs microphone access for voice commands. Speak naturally and Voca will understand!',
-  camera: 'Voca can use your camera for visual analysis — tell it "what do you see?" to try it.',
-  contacts: 'Voca can help manage your contacts — "call Mom" or "text John" becomes possible.',
-  calendar: 'Voca can read and create calendar events — "schedule a meeting tomorrow at 3pm".',
-  location: 'Voca can provide location-aware assistance — "find restaurants near me".',
-  notifications: 'Voca sends proactive alerts — reminders, calendar warnings, stock price alerts.',
+  microphone: 'Vera needs microphone access for voice commands. Speak naturally and Vera will understand!',
+  camera: 'Vera can use your camera for visual analysis — tell it "what do you see?" to try it.',
+  contacts: 'Vera can help manage your contacts — "call Mom" or "text John" becomes possible.',
+  calendar: 'Vera can read and create calendar events — "schedule a meeting tomorrow at 3pm".',
+  location: 'Vera can provide location-aware assistance — "find restaurants near me".',
+  notifications: 'Vera sends proactive alerts — reminders, calendar warnings, stock price alerts.',
 };
 
 function getPlatformPermission(type: PermissionType): Permission {

@@ -6,7 +6,7 @@ All endpoints are served by the FastAPI backend on `http://localhost:8000`.
 
 ## Authentication
 
-If `VOCA_SERVER_API_KEY` is set, all endpoints (except `/`, `/health`, and `/static/*`) require authentication:
+If `VERA_SERVER_API_KEY` is set, all endpoints (except `/`, `/health`, and `/static/*`) require authentication:
 
 ```
 Authorization: Bearer <your-api-key>
@@ -176,7 +176,7 @@ View audit log (last 100 entries).
 
 ### `POST /webhook/tradingview`
 
-TradingView alert webhook. Requires `X-Webhook-Secret` header if `VOCA_SERVER_WEBHOOK_SECRET` is set.
+TradingView alert webhook. Requires `X-Webhook-Secret` header if `VERA_SERVER_WEBHOOK_SECRET` is set.
 
 **Request:**
 ```json

@@ -1,15 +1,15 @@
 # 🛡️ Security
 
-eVoca implements defense-in-depth security across multiple layers.
+eVera implements defense-in-depth security across multiple layers.
 
 ---
 
 ## API Authentication
 
-All REST and WebSocket endpoints are protected by API key authentication when `VOCA_SERVER_API_KEY` is configured.
+All REST and WebSocket endpoints are protected by API key authentication when `VERA_SERVER_API_KEY` is configured.
 
 **How it works:**
-- Set `VOCA_SERVER_API_KEY=my-secret-key` in `.env`
+- Set `VERA_SERVER_API_KEY=my-secret-key` in `.env`
 - Include `Authorization: Bearer my-secret-key` header in requests
 - Or pass `?api_key=my-secret-key` as query parameter
 - Public endpoints exempt: `/`, `/health`, `/static/*`
@@ -21,7 +21,7 @@ All REST and WebSocket endpoints are protected by API key authentication when `V
 
 ## Safety Policy Engine
 
-**File:** `voca/safety/policy.py`
+**File:** `vera/safety/policy.py`
 
 Every agent action is evaluated against a rule-based policy before execution.
 
@@ -37,9 +37,9 @@ Every agent action is evaluated against a rule-based policy before execution.
 
 1. **Specific rule** — Match `agent.tool` exactly (e.g., `operator.execute_script`)
 2. **Wildcard rule** — Match `agent.*` (e.g., `companion.*`)
-3. **Config denied list** — `VOCA_SAFETY_DENIED_ACTIONS`
-4. **Config confirm list** — `VOCA_SAFETY_CONFIRM_ACTIONS`
-5. **Config allowed list** — `VOCA_SAFETY_ALLOWED_ACTIONS`
+3. **Config denied list** — `VERA_SAFETY_DENIED_ACTIONS`
+4. **Config confirm list** — `VERA_SAFETY_CONFIRM_ACTIONS`
+5. **Config allowed list** — `VERA_SAFETY_ALLOWED_ACTIONS`
 6. **Default** — `CONFIRM` (unknown actions require approval)
 
 ### Example Rules
@@ -58,7 +58,7 @@ Every agent action is evaluated against a rule-based policy before execution.
 
 ## PII Detection & Privacy
 
-**File:** `voca/safety/privacy.py`
+**File:** `vera/safety/privacy.py`
 
 The PrivacyGuard detects and anonymizes Personally Identifiable Information before sending transcripts to cloud LLMs.
 
@@ -119,7 +119,7 @@ The `execute_script` tool blocks 30+ dangerous shell patterns:
 
 ## Encrypted Storage
 
-**File:** `voca/memory/secure.py`
+**File:** `vera/memory/secure.py`
 
 Sensitive data is encrypted with Fernet symmetric encryption:
 
@@ -148,16 +148,16 @@ Real broker trades (Alpaca, IBKR) have additional safety measures:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `VOCA_SERVER_HOST` | `127.0.0.1` | Localhost only (not network accessible) |
-| `VOCA_SERVER_CORS_ORIGINS` | `["http://localhost:8000"]` | Strict CORS policy |
-| `VOCA_SERVER_API_KEY` | (empty) | API key authentication |
-| `VOCA_SERVER_WEBHOOK_SECRET` | (empty) | Webhook verification secret |
+| `VERA_SERVER_HOST` | `127.0.0.1` | Localhost only (not network accessible) |
+| `VERA_SERVER_CORS_ORIGINS` | `["http://localhost:8000"]` | Strict CORS policy |
+| `VERA_SERVER_API_KEY` | (empty) | API key authentication |
+| `VERA_SERVER_WEBHOOK_SECRET` | (empty) | Webhook verification secret |
 
 ---
 
 ## RBAC (Role-Based Access Control)
 
-**File:** `voca/rbac.py`
+**File:** `vera/rbac.py`
 
 Enterprise-grade user management:
 
