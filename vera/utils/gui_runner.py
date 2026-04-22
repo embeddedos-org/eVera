@@ -63,6 +63,6 @@ async def run_in_gui_thread(fn: Callable[..., T], *args: Any, timeout: float = _
 
     try:
         return await asyncio.wait_for(future, timeout=timeout)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         logger.warning("GUI timed out after %ss", timeout)
         return None

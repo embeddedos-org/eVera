@@ -1,5 +1,7 @@
 """Quick audit of eVera project completeness."""
-import ast, os, re
+import ast
+import os
+import re
 
 print("=" * 50)
 print("  eVera v0.5.1 — Project Audit")
@@ -77,7 +79,7 @@ print(f"[Scheduler] {len(loops)} loops: {', '.join(loops)}")
 
 # 9. Files summary
 py_files = sum(1 for r, d, fs in os.walk("vera") for f in fs if f.endswith(".py"))
-print(f"\n[Summary]")
+print("\n[Summary]")
 print(f"  Python files in vera/: {py_files}")
 print(f"  Agents: {len(agents)} + {len(plugins)} plugins = {len(agents) + len(plugins)}")
 print(f"  Tools: {tool_count}")

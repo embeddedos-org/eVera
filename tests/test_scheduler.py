@@ -354,7 +354,7 @@ class TestSchedulerStartStop:
         assert sched._running is False
         await sched.start()
         assert sched._running is True
-        assert len(sched._tasks) == 7
+        assert len(sched._tasks) == 15
         await sched.stop()
 
     @pytest.mark.asyncio
@@ -367,7 +367,8 @@ class TestSchedulerStartStop:
 
     def test_remove_notification_handler(self, scheduler):
         sched, _ = scheduler
-        handler = lambda n: None
+        def handler(n):
+            return None
         sched.add_notification_handler(handler)
         assert len(sched._notification_handlers) == 1
         sched.remove_notification_handler(handler)

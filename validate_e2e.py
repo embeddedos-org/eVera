@@ -102,7 +102,7 @@ check(f"All {len(key_files)} key files exist", len(missing) == 0,
 # ═══════════════════════════════════════════════════════════
 section("2. Configuration (config.py)")
 
-from config import Settings, LLMSettings, VoiceSettings, MemorySettings, SafetySettings, ServerSettings
+from config import LLMSettings, MemorySettings, SafetySettings, ServerSettings, Settings, VoiceSettings  # noqa: E402
 
 s = Settings()
 check("Settings loads with defaults", s is not None)
@@ -120,7 +120,7 @@ check("Data dir is Path", isinstance(s.data_dir, Path))
 section("3. Memory System")
 
 try:
-    from vera.memory.working import WorkingMemory, Turn
+    from vera.memory.working import Turn, WorkingMemory
     wm_available = True
 except ImportError:
     wm_available = False
@@ -192,7 +192,7 @@ else:
 # ═══════════════════════════════════════════════════════════
 section("4. Safety System (policy.py)")
 
-from vera.safety.policy import PolicyService, PolicyAction, PolicyDecision
+from vera.safety.policy import PolicyAction, PolicyDecision, PolicyService  # noqa: E402
 
 ps = PolicyService()
 check("PolicyService creates", ps is not None)
@@ -266,7 +266,7 @@ expected_agents = ["life_manager", "home_controller", "researcher", "writer",
 
 for agent in expected_agents:
     check(f"Router has intents for {agent}", agent in agent_map,
-          f"Missing from INTENT_AGENT_MAP")
+          "Missing from INTENT_AGENT_MAP")
 
 # Check classification prompt mentions all agents
 check("Classification prompt has content_creator", "content_creator" in router_src)
@@ -313,7 +313,7 @@ print(f"  Total tool classes: {total_tools}")
 for name, count in sorted(agent_tools.items()):
     check(f"{name}: {count} tools", count > 0)
 
-check(f"Total tools >= 99", total_tools >= 99, f"Got {total_tools}")
+check("Total tools >= 99", total_tools >= 99, f"Got {total_tools}")
 
 # ═══════════════════════════════════════════════════════════
 #  7. SCHEDULER

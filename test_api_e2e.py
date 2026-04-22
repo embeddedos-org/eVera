@@ -5,10 +5,10 @@ litellm, langgraph, numpy, or any LLM provider.
 """
 
 import json
-import sys
 import os
+import sys
 from pathlib import Path
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 # ── Mock heavy dependencies before any imports ──
 # These modules require numpy, litellm, langgraph etc.
@@ -50,7 +50,8 @@ sys.path.insert(0, str(ROOT))
 os.chdir(ROOT)
 
 # Now import the app
-from fastapi.testclient import TestClient
+from fastapi.testclient import TestClient  # noqa: E402
+
 
 # Mock VeraBrain to avoid all heavy initialization
 class MockBrain:
@@ -202,9 +203,12 @@ print("\n--- SSE Streams ---")
 # SSE endpoints are infinite async generators — verified via source inspection
 with open("vera/app.py", encoding="utf-8") as f:
     app_src = f.read()
-PASS += 1; print("  PASS  GET /events/stream — endpoint registered (source verified)")
-PASS += 1; print("  PASS  GET /agents/stream — endpoint registered (source verified)")
-PASS += 1; print("  PASS  POST /chat/stream — endpoint registered (source verified)")
+PASS += 1
+print("  PASS  GET /events/stream — endpoint registered (source verified)")
+PASS += 1
+print("  PASS  GET /agents/stream — endpoint registered (source verified)")
+PASS += 1
+print("  PASS  POST /chat/stream — endpoint registered (source verified)")
 
 # ── 7. Webhooks ──
 print("\n--- Webhooks ---")

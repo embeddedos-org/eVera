@@ -181,7 +181,7 @@ class CompleteWorkItemTool(Tool):
         summary = item.get("ticket_summary", ticket_id)
 
         # 1. Check for changes
-        from vera.brain.agents.git_agent import GitStatusTool, GitCommitTool, GitPushTool, GitCreatePRTool
+        from vera.brain.agents.git_agent import GitCommitTool, GitCreatePRTool, GitPushTool, GitStatusTool
         status_result = await GitStatusTool().execute(repo_path=repo)
         if status_result.get("status") == "success" and not status_result.get("output", "").strip():
             return {"status": "error", "message": "No changes to commit. Make code changes first."}
@@ -209,7 +209,7 @@ class CompleteWorkItemTool(Tool):
         pr_url = pr_result.get("pr_url", "")
 
         # 5. Update Jira — move to "In Review"
-        from vera.brain.agents.jira_agent import UpdateTicketStatusTool, AddCommentTool
+        from vera.brain.agents.jira_agent import AddCommentTool, UpdateTicketStatusTool
         await UpdateTicketStatusTool().execute(ticket_id=ticket_id, status="In Review")
 
         # 6. Add PR link as Jira comment
@@ -229,7 +229,7 @@ class CompleteWorkItemTool(Tool):
             "branch": branch,
             "commit_message": commit_msg,
             "pr_url": pr_url,
-            "message": f"Work complete! PR created and Jira updated to In Review.",
+            "message": "Work complete! PR created and Jira updated to In Review.",
         }
 
 

@@ -6,8 +6,9 @@ import asyncio
 import logging
 import time
 from collections import deque
+from collections.abc import Callable, Coroutine
 from enum import Enum
-from typing import Any, Callable, Coroutine, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ class EventType(str, Enum):
     ERROR = "error"
 
 
-EventCallback = Callable[[EventType, Dict[str, Any]], Coroutine[Any, Any, None]]
+EventCallback = Callable[[EventType, dict[str, Any]], Coroutine[Any, Any, None]]
 
 
 class EventBus:

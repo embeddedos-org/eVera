@@ -170,8 +170,8 @@ INTENT_AGENT_MAP: dict[str, str] = {
     # Content creation
     "video": "content_creator",
     "content": "content_creator",
-    "script": "content_creator",
-    "youtube": "content_creator",
+    "video_script": "content_creator",
+    "youtube_video": "content_creator",
     "tiktok": "content_creator",
     "reel": "content_creator",
     "marketing": "content_creator",

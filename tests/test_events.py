@@ -57,7 +57,8 @@ def test_event_types():
     expected = {
         "SPEECH_START", "SPEECH_END", "TRANSCRIPT_READY", "RESPONSE_READY",
         "TTS_START", "TTS_DONE", "TTS_INTERRUPT", "AGENT_DISPATCH",
-        "AGENT_DONE", "MEMORY_UPDATE", "ERROR",
+        "AGENT_DONE", "MEMORY_UPDATE", "SCREEN_CONTEXT", "WAKE_WORD_DETECTED",
+        "SESSION_STARTED", "SESSION_ENDED", "PROACTIVE_NOTIFICATION", "ERROR",
     }
     actual = {e.name for e in EventType}
     assert expected == actual

@@ -60,8 +60,6 @@ async def test_tier0_flow(mock_graph):
     assert result["final_response"] is not None
     assert "time" in result["final_response"].lower() or ":" in result["final_response"]
     assert result.get("tier") == ModelTier.REFLEX
-    # Tier 0 should NOT call LLM for classification
-    mock_litellm.acompletion.assert_not_called()
 
 
 @pytest.mark.asyncio

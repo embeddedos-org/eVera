@@ -555,7 +555,7 @@ class ProactiveScheduler:
             todos = plan.get("pending_todos", [])
             goals = plan.get("active_goals", [])
 
-            parts = [f"📋 Good morning! Here's your plan for today:\n"]
+            parts = ["📋 Good morning! Here's your plan for today:\n"]
             if events:
                 parts.append(f"📅 {len(events)} event(s):")
                 for e in events[:5]:
@@ -806,7 +806,7 @@ class ProactiveScheduler:
     async def _run_channel_monitor(self) -> None:
         """Poll configured channels for new activity."""
         from config import settings
-        from vera.messaging import fetch_channel_history, SLACK_BOT_TOKEN
+        from vera.messaging import SLACK_BOT_TOKEN, fetch_channel_history
 
         if not SLACK_BOT_TOKEN:
             return

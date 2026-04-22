@@ -290,6 +290,7 @@ class SmartHomeSetupTool(Tool):
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         import httpx
+
         from vera.utils.env_writer import read_env_value, update_env_file
 
         step = kwargs.get("step", "check")

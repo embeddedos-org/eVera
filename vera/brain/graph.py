@@ -27,13 +27,13 @@ from vera.brain.state import VeraState
 from vera.brain.supervisor import SupervisorAgent
 from vera.emotional.mood_tracker import MoodTracker
 from vera.emotional.sentiment import analyze_sentiment
+from vera.events.bus import emit_pipeline_event
 from vera.memory.fact_extractor import extract_facts
 from vera.memory.vault import MemoryVault
 from vera.providers.manager import ProviderManager
 from vera.providers.models import ModelTier
 from vera.safety.policy import PolicyAction, PolicyService
 from vera.safety.privacy import PrivacyGuard
-from vera.events.bus import emit_pipeline_event
 
 # Patterns to detect the user's name
 NAME_PATTERNS = [

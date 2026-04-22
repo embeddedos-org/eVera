@@ -32,6 +32,7 @@ async def play_activation_chime() -> None:
 
     try:
         import asyncio
+
         import sounddevice as sd
 
         t = np.linspace(0, _CHIME_DURATION_S, int(_CHIME_SAMPLE_RATE * _CHIME_DURATION_S), endpoint=False)

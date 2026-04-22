@@ -58,7 +58,7 @@ async def _send_to_mobile(
             "data": result.get("data"),
             "message": result.get("message", ""),
         }
-    except asyncio.TimeoutError:
+    except TimeoutError:
         session.get("pending", {}).pop(cmd_id, None)
         return {"status": "error", "message": f"Mobile command timed out ({timeout}s)"}
     except Exception as e:

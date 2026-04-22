@@ -12,17 +12,17 @@ class TestTTSEngineFactory:
         with patch("config.settings") as mock_settings:
             mock_settings.voice.tts_engine = "pyttsx3"
             mock_settings.voice.tts_rate = 175
-            from vera.action.tts import get_tts_engine, LocalTTSEngine
+            from vera.action.tts import LocalTTSEngine, get_tts_engine
             engine = get_tts_engine()
             assert isinstance(engine, LocalTTSEngine)
 
     def test_edge_tts_returns_edge(self):
-        from vera.action.tts import get_tts_engine, EdgeTTSEngine
+        from vera.action.tts import EdgeTTSEngine, get_tts_engine
         engine = get_tts_engine("edge-tts")
         assert isinstance(engine, EdgeTTSEngine)
 
     def test_explicit_name_overrides_config(self):
-        from vera.action.tts import get_tts_engine, EdgeTTSEngine
+        from vera.action.tts import EdgeTTSEngine, get_tts_engine
         engine = get_tts_engine("edge")
         assert isinstance(engine, EdgeTTSEngine)
 

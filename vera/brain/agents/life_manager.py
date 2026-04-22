@@ -342,7 +342,10 @@ class LifeManagerAgent(BaseAgent):
 
     def _setup_tools(self) -> None:
         from vera.brain.agents.email_manager import (
-            ReadInboxTool, ReadEmailTool, ReplyEmailTool, SearchEmailsTool,
+            ReadEmailTool,
+            ReadInboxTool,
+            ReplyEmailTool,
+            SearchEmailsTool,
         )
         self._tools = [
             CheckCalendarTool(),

@@ -56,7 +56,7 @@ def _safe_walk(project_path: str, max_files: int = 200) -> list[str]:
 def _parse_python_file(filepath: str) -> ast.Module | None:
     """Parse a Python file into an AST, returning None on failure."""
     try:
-        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+        with open(filepath, encoding="utf-8", errors="ignore") as f:
             return ast.parse(f.read(), filename=filepath)
     except (SyntaxError, UnicodeDecodeError, OSError) as e:
         logger.debug("Skipping %s: %s", filepath, e)

@@ -6,8 +6,8 @@ import logging
 
 from vera.brain.agents.base import BaseAgent
 from vera.brain.agents.browser import BrowserAgent
-from vera.brain.agents.coder import CoderAgent
 from vera.brain.agents.codebase_indexer import CodebaseIndexerAgent
+from vera.brain.agents.coder import CoderAgent
 from vera.brain.agents.companion import CompanionAgent
 from vera.brain.agents.content_creator import ContentCreatorAgent
 from vera.brain.agents.diagram_agent import DiagramAgent
@@ -50,7 +50,8 @@ AGENT_REGISTRY: dict[str, BaseAgent] = {
 }
 
 # Conditionally register mobile controller
-from config import settings as _settings
+from config import settings as _settings  # noqa: E402
+
 if _settings.mobile.control_enabled:
     from vera.brain.agents.mobile import MobileControlAgent
     AGENT_REGISTRY["mobile_controller"] = MobileControlAgent()

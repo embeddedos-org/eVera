@@ -87,8 +87,8 @@ class GenerateScriptTool(Tool):
                 "intro": f"[INTRO - 15 seconds] Introduce yourself and what viewers will learn about {topic}",
                 "main_points": [
                     f"[POINT 1] Key insight about {topic}",
-                    f"[POINT 2] Supporting evidence or example",
-                    f"[POINT 3] Practical takeaway",
+                    "[POINT 2] Supporting evidence or example",
+                    "[POINT 3] Practical takeaway",
                 ],
                 "cta": f"[CTA] Subscribe/follow for more {style} content about {topic}",
                 "outro": "[OUTRO] Summary + tease next video",

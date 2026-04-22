@@ -37,9 +37,6 @@ class TestSendToMobile:
         ws_mock = AsyncMock()
         ws_mock.send_json = AsyncMock()
 
-        future = asyncio.get_running_loop().create_future()
-        future.set_result({"success": True, "data": {"key": "value"}})
-
         sessions = {
             "mobile-1": {
                 "websocket": ws_mock,
@@ -51,12 +48,11 @@ class TestSendToMobile:
 
         from vera.brain.agents.mobile import _send_to_mobile
 
-        # Patch to inject our future
-        original_pending = sessions["mobile-1"]["pending"]
-
         async def patched_send(msg):
             cmd_id = msg["id"]
-            sessions["mobile-1"]["pending"][cmd_id] = future
+            pending_future = sessions["mobile-1"]["pending"].get(cmd_id)
+            if pending_future and not pending_future.done():
+                pending_future.set_result({"success": True, "data": {"key": "value"}})
 
         ws_mock.send_json = patched_send
 

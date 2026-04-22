@@ -479,6 +479,7 @@ class ShowFormTool(Tool):
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         import json as _json
+
         from vera.utils.gui_runner import run_in_gui_thread
         title = kwargs.get("title", "Form")
         fields_raw = kwargs.get("fields", "[]")
@@ -800,10 +801,14 @@ class WindowManageTool(Tool):
                 if not matches:
                     return {"status": "error", "message": f"No window matching '{title}'"}
                 win = matches[0]
-                if action == "focus": win.activate()
-                elif action == "minimize": win.minimize()
-                elif action == "maximize": win.maximize()
-                elif action == "close": win.close()
+                if action == "focus":
+                    win.activate()
+                elif action == "minimize":
+                    win.minimize()
+                elif action == "maximize":
+                    win.maximize()
+                elif action == "close":
+                    win.close()
                 return {"status": "success", "action": action, "window": win.title}
             elif SYSTEM == "Darwin":
                 if action == "list":
@@ -864,16 +869,19 @@ class ProcessManagerTool(Tool):
                 if not pid:
                     return {"status": "error", "message": "PID required"}
                 p = psutil.Process(pid)
-                return {"status": "success", "pid": pid, "name": p.name(), "cpu": p.cpu_percent(), "mem_mb": round(p.memory_info().rss / 1024**2, 1), "status": p.status()}
+                return {"status": "success", "pid": pid, "name": p.name(), "cpu": p.cpu_percent(), "mem_mb": round(p.memory_info().rss / 1024**2, 1), "proc_status": p.status()}
             elif action == "kill":
                 pid, name = kwargs.get("pid"), kwargs.get("name", "")
                 killed = []
                 if pid:
-                    p = psutil.Process(int(pid)); p.terminate(); killed.append({"pid": int(pid), "name": p.name()})
+                    p = psutil.Process(int(pid))
+                    p.terminate()
+                    killed.append({"pid": int(pid), "name": p.name()})
                 elif name:
                     for p in psutil.process_iter(["pid", "name"]):
                         if name.lower() in p.info["name"].lower():
-                            p.terminate(); killed.append({"pid": p.info["pid"], "name": p.info["name"]})
+                            p.terminate()
+                            killed.append({"pid": p.info["pid"], "name": p.info["name"]})
                 else:
                     return {"status": "error", "message": "Provide PID or name"}
                 return {"status": "success", "killed": killed}
@@ -940,7 +948,8 @@ class ServiceManagerTool(Tool):
                 cmds = {"start": ["sc", "start", name], "stop": ["sc", "stop", name], "status": ["sc", "query", name]}
                 if action == "restart":
                     subprocess.run(["sc", "stop", name], capture_output=True, timeout=15)
-                    import time; time.sleep(2)
+                    import time
+                    time.sleep(2)
                     r = subprocess.run(["sc", "start", name], capture_output=True, text=True, timeout=15)
                 else:
                     cmd = cmds.get(action)
@@ -969,7 +978,8 @@ class ServiceManagerTool(Tool):
                 cmds = {"start": ["launchctl", "start", name], "stop": ["launchctl", "stop", name], "status": ["launchctl", "list", name]}
                 if action == "restart":
                     subprocess.run(["launchctl", "stop", name], capture_output=True, timeout=15)
-                    import time; time.sleep(1)
+                    import time
+                    time.sleep(1)
                     r = subprocess.run(["launchctl", "start", name], capture_output=True, text=True, timeout=15)
                 else:
                     cmd = cmds.get(action)

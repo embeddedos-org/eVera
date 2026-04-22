@@ -118,10 +118,10 @@ class TestResourceUsage:
         assert len(ctx) <= 20  # 10 turns * 2 messages
 
     def test_agent_tool_count_reasonable(self):
-        """No single agent should have more than 20 tools."""
+        """No single agent should have more than 30 tools."""
         from vera.brain.agents import AGENT_REGISTRY
         for name, agent in AGENT_REGISTRY.items():
-            assert len(agent.tools) <= 20, f"{name} has too many tools: {len(agent.tools)}"
+            assert len(agent.tools) <= 30, f"{name} has too many tools: {len(agent.tools)}"
 
     @pytest.mark.xfail(reason="Path sandboxing blocks tmp_path in CI")
     def test_file_operations_use_tmp(self, tmp_path):

@@ -31,8 +31,8 @@ if not STOCKS_PLUGIN_DIR.exists():
 if STOCKS_PLUGIN_DIR.exists() and str(STOCKS_PLUGIN_DIR) not in sys.path:
     sys.path.insert(0, str(STOCKS_PLUGIN_DIR))
 
-from vera.brain.agents.base import BaseAgent, Tool
-from vera.providers.models import ModelTier
+from vera.brain.agents.base import BaseAgent, Tool  # noqa: E402
+from vera.providers.models import ModelTier  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

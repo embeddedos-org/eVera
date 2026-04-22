@@ -457,14 +457,14 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
                     if msg.get("stream"):
                         try:
                             from vera.brain.agents.base import BUDDY_PERSONALITY
-                            from vera.providers.models import ModelTier as MT
+                            from vera.providers.models import ModelTier
                             provider = brain_instance.provider_manager
                             messages = [
                                 {"role": "system", "content": BUDDY_PERSONALITY},
                                 {"role": "user", "content": transcript},
                             ]
                             full_response = ""
-                            async for chunk in provider.stream(messages, tier=MT.SPECIALIST):
+                            async for chunk in provider.stream(messages, tier=ModelTier.SPECIALIST):
                                 full_response += chunk
                                 await websocket.send_json({
                                     "type": "stream_token",
@@ -554,7 +554,7 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         session_id = f"voice-{id(websocket)}"
 
         try:
-            from vera.action.tts import get_tts_engine, EdgeTTSEngine
+            from vera.action.tts import EdgeTTSEngine, get_tts_engine
             from vera.perception.stt import SpeechToText
             from vera.perception.vad import VoiceActivityDetector
 
@@ -747,8 +747,8 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
     @app.get("/api/code/files")
     async def code_files(request: Request):
         """Return file tree for a given path."""
-        from vera.brain.agents.codebase_indexer import _build_tree
         from config import settings
+        from vera.brain.agents.codebase_indexer import _build_tree
 
         raw_path = request.query_params.get("path", ".")
         project = Path(raw_path).resolve()
@@ -763,8 +763,8 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
     @app.get("/api/code/file")
     async def code_file(request: Request):
         """Return file content, language, definitions, and complexity."""
-        from vera.brain.agents.codebase_indexer import _extract_definitions
         from vera.brain.agents.code_analysis import compute_complexity
+        from vera.brain.agents.codebase_indexer import _extract_definitions
 
         file_path = request.query_params.get("path", "")
         if not file_path:
@@ -808,7 +808,7 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
     @app.post("/api/code/analyze")
     async def code_analyze(request: CodeAnalyzeRequest):
         """Run AI analysis on a code file."""
-        from vera.brain.agents.code_analysis import summarize_code, explain_code, find_issues
+        from vera.brain.agents.code_analysis import explain_code, find_issues, summarize_code
 
         fp = Path(request.path).resolve()
         content = request.content
@@ -842,8 +842,8 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
     @app.get("/api/code/dependency-graph")
     async def code_dependency_graph(request: Request):
         """Return dependency graph nodes and edges for a path."""
-        from vera.brain.tools.dependency_parser import parse_dependencies
         from config import settings
+        from vera.brain.tools.dependency_parser import parse_dependencies
 
         raw_path = request.query_params.get("path", ".")
         project = Path(raw_path).resolve()
