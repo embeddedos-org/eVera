@@ -82,7 +82,6 @@ Always-on listening, wake word detection, or push-to-talk. Supports 19 languages
 | 🌍 Language Tutor | 5 | Language lessons, vocabulary, grammar, pronunciation, quizzes (16+ languages) |
 | 🗺️ Codebase Indexer | 4 | **Project indexing, architecture analysis, definition extraction, related files** |
 | 📝 Meeting | 3 | **Extract action items, parse meeting notes, create tasks from transcripts** |
-| 🎨 Media Factory | 12 | **Image generation (Pollinations/DALL-E), photo editing, video assembly, subtitles, voiceovers, YouTube/Instagram/TikTok upload** |
 | 📊 Diagram | 4 | **Call graphs, class diagrams, flowcharts, export to SVG/PNG/PDF** |
 
 #### Conditional Agents (enabled via config)
@@ -93,7 +92,7 @@ Always-on listening, wake word detection, or push-to-talk. Supports 19 languages
 | 💼 Job Hunter | 12 | `VERA_JOB_ENABLED` | Autonomous job search, resume matching, auto-apply, application tracking |
 | 🎫 Jira | 7 | `VERA_JIRA_ENABLED` | **Tickets, sprints, create/update issues, JQL search, comments** |
 | 🚀 Work Pilot | 3 | `VERA_JIRA_ENABLED` | **Autonomous ticket→branch→code→PR→Jira workflow** |
-|| 🎨 Media Factory | 12 | `VERA_MEDIA_ENABLED` | Image gen, video assembly, subtitles, YouTube/Instagram/TikTok upload |
+| 🎨 Media Factory | 12 | `VERA_MEDIA_ENABLED` | **Image gen (Pollinations/DALL-E), photo editing, video assembly, subtitles, voiceovers, YouTube/Instagram/TikTok upload** |
 
 ### 💻 Full System Control (v0.5.0+)
 - 🖱️ **Mouse** — click, move, drag, scroll at any screen coordinates
@@ -163,8 +162,8 @@ Sentiment analysis (keyword + LLM hybrid), mood tracking, pattern detection, pro
 │  │  Enrich → Classify → Safety → [Agent/Tier0] → Store → Out  │ │
 │  │                                                              │ │
 │  │  ┌────────────┐  ┌──────────────┐  ┌──────────────────────┐ │ │
-│  │  │MemoryVault │  │ 23+ Agents   │  │ Provider Manager     │ │ │
-│  │  │ 4 layers   │  │ 165+ tools   │  │ Ollama/OpenAI/Gemini │ │ │
+│  │  │MemoryVault │  │ 24+ Agents   │  │ Provider Manager     │ │ │
+│  │  │ 4 layers   │  │ 183+ tools   │  │ Ollama/OpenAI/Gemini │ │ │
 │  │  └────────────┘  └──────────────┘  └──────────────────────┘ │ │
 │  │  ┌────────────┐  ┌──────────────┐  ┌──────────────────────┐ │ │
 │  │  │ Safety     │  │ Event Bus    │  │ Proactive Scheduler  │ │ │
@@ -242,6 +241,18 @@ Sentiment analysis (keyword + LLM hybrid), mood tracking, pattern detection, pro
 "Create a PR for this branch"
 ```
 
+### Media Creation (v0.8.1+)
+```
+"Generate an image of a sunset over the ocean"
+"Edit image — resize to 1080x1920" / "Make it grayscale" / "Remove the background"
+"Add text overlay: Breaking News"
+"Create a voiceover: Welcome to today's update"
+"Assemble a video from these images with Ken Burns transitions"
+"Add subtitles to this video"
+"Create a reel about AI trends and upload to YouTube"
+"Upload this video to Instagram as a reel"
+```
+
 ### Productivity
 ```
 "Plan my day" / "Daily review" / "Set a goal"
@@ -282,9 +293,9 @@ Sentiment analysis (keyword + LLM hybrid), mood tracking, pattern detection, pro
 
 ---
 
-## ⚙️ Configuration — Office Automation
+## ⚙️ Configuration — Office Automation & Media
 
-Add to your `.env` file to enable the new office work features:
+Add to your `.env` file to enable advanced features:
 
 ```bash
 # Jira Integration
@@ -310,6 +321,15 @@ VERA_CODEBASE_MAX_FILES=500
 # Meeting Agent (enabled by default)
 VERA_MEETING_AUTO_CREATE_TICKETS=false
 VERA_MEETING_AUTO_CREATE_TODOS=true
+
+# Media Factory (enabled by default)
+VERA_MEDIA_ENABLED=true
+VERA_MEDIA_DALLE_API_KEY=              # Optional: premium image gen (free Pollinations used by default)
+VERA_MEDIA_YOUTUBE_CLIENT_SECRETS_PATH= # Path to YouTube OAuth client_secret.json
+VERA_MEDIA_INSTAGRAM_ACCESS_TOKEN=      # Instagram Graph API token
+VERA_MEDIA_DEFAULT_VOICE=en-US-AriaNeural
+VERA_MEDIA_DEFAULT_ASPECT_RATIO=9:16
+VERA_MEDIA_DEFAULT_IMAGE_PROVIDER=pollinations  # pollinations (free) or dalle
 ```
 
 ---
@@ -330,11 +350,11 @@ eVera includes multiple security layers to prevent misuse and protect sensitive 
 
 ---
 
-## 🧪 Testing — 489 Tests
+## 🧪 Testing — 524+ Tests
 
 ```bash
 python verify.py                    # Pre-push verification (all checks)
-pytest tests/ -v                    # All tests (489 pass, 1 skip)
+pytest tests/ -v                    # All tests (524+ pass)
 pytest tests/ --cov=vera            # With coverage
 ruff check . && ruff format .       # Lint
 ```
@@ -407,7 +427,7 @@ Full documentation is available in the [`docs/`](docs/) folder:
 | [Documentation Home](docs/index.md) | Index of all documentation |
 | [Getting Started](docs/getting_started.md) | Installation, first run, configuration |
 | [Architecture](docs/architecture.md) | System design and component overview |
-| [Agents Reference](docs/agents.md) | All 23 agents with tools and examples |
+| [Agents Reference](docs/agents.md) | All 24+ agents with tools and examples |
 | [API Reference](docs/api_reference.md) | REST, WebSocket, and SSE endpoints |
 | [Security](docs/security.md) | Safety policies, PII, sandboxing |
 | [Configuration](docs/configuration.md) | All environment variables |
