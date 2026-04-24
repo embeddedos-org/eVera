@@ -39,7 +39,7 @@ const BACKEND_PORT = parseInt(process.env.VERA_PORT || "8000", 10);
 const VERA_URL = process.env.VERA_URL || `http://localhost:${BACKEND_PORT}`;
 const IS_DEV = !app.isPackaged;
 const HEALTH_CHECK_INTERVAL = 1000;
-const HEALTH_CHECK_TIMEOUT = 60000;
+const HEALTH_CHECK_TIMEOUT = 120000;
 
 let mainWindow = null;
 let splashWindow = null;
