@@ -64,7 +64,36 @@
         langSelector: document.getElementById("langSelector"),
         expressionLabel: document.getElementById("expressionLabel"),
         particleField: document.getElementById("particleField"),
+        modelSelector: document.getElementById("modelSelector"),
     };
+
+    // --- Load available models ---
+    async function loadModels() {
+        try {
+            const resp = await fetch("/models");
+            const models = await resp.json();
+            const select = dom.modelSelector;
+            if (!select) return;
+
+            for (const [provider, modelList] of Object.entries(models)) {
+                const group = document.createElement("optgroup");
+                group.label = provider.charAt(0).toUpperCase() + provider.slice(1);
+                for (const m of modelList) {
+                    if (!m.configured) continue;
+                    const opt = document.createElement("option");
+                    opt.value = m.model_name;
+                    opt.textContent = `${m.model_name.split("/").pop()} (${m.speed_tier})`;
+                    opt.title = m.description;
+                    group.appendChild(opt);
+                }
+                if (group.children.length > 0) {
+                    select.appendChild(group);
+                }
+            }
+        } catch (e) {
+            console.warn("Failed to load models:", e);
+        }
+    }
 
     // --- Particle Background ---
 
@@ -631,6 +660,7 @@
     // --- Initialize ---
 
     initParticles();
+    loadModels();
 
     if (typeof VeraFace !== "undefined") {
         VeraFace.init("faceCanvas", "faceGlowRing");

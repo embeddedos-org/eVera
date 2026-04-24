@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>eVera</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            width: 320px;
+            background: #0a0e1a;
+            color: #e0e0e0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .header .icon { font-size: 28px; }
+        .header .title { font-size: 20px; font-weight: 700; color: #60a5fa; }
+        .status-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+        .dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: #6b7280;
+        }
+        .dot.connected { background: #4ade80; }
+        .dot.error { background: #ef4444; }
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .actions button {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(96, 165, 250, 0.12);
+            border: 1px solid rgba(96, 165, 250, 0.25);
+            border-radius: 10px;
+            color: #60a5fa;
+            cursor: pointer;
+            font-size: 14px;
+            text-align: left;
+            transition: all 0.2s;
+        }
+        .actions button:hover {
+            background: rgba(96, 165, 250, 0.2);
+        }
+        .footer {
+            margin-top: 16px;
+            font-size: 11px;
+            text-align: center;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span class="icon">🤖</span>
+        <span class="title">eVera</span>
+    </div>
+
+    <div class="status-row">
+        <div class="dot" id="statusDot"></div>
+        <span id="statusText">Checking...</span>
+    </div>
+
+    <div class="actions">
+        <button id="openSidePanel">💬 Open Chat Panel</button>
+        <button id="reconnectBtn">🔄 Reconnect</button>
+        <button id="settingsBtn">⚙️ Settings</button>
+    </div>
+
+    <div class="footer">eVera AI Copilot v1.0</div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

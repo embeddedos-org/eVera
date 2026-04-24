@@ -22,6 +22,7 @@ const {
     nativeImage,
     shell,
     ipcMain,
+    dialog,
 } = require("electron");
 const path = require("path");
 const { spawn } = require("child_process");
@@ -116,7 +117,10 @@ function startBackend() {
 
     backendProcess = spawn(cmd, args, {
         stdio: ["ignore", "pipe", "pipe"],
-        env: { ...process.env },
+        env: {
+            ...process.env,
+            VERA_ELECTRON: "1",
+        },
         cwd: backendPath ? path.dirname(backendPath) : path.join(__dirname, ".."),
     });
 
@@ -143,22 +147,38 @@ function startBackend() {
     backendProcess.on("error", (err) => {
         console.error(`[Backend] Failed to start: ${err.message}`);
         backendProcess = null;
+
+        dialog.showErrorBox(
+            "Vera Backend Error",
+            `Failed to start the AI backend:\n\n${err.message}\n\nPlease check that the application was installed correctly.`
+        );
     });
 }
 
 function stopBackend() {
     if (backendProcess) {
         console.log("[Backend] Stopping...");
-        backendProcess.kill("SIGTERM");
+        if (process.platform === "win32") {
+            // On Windows, use taskkill for clean shutdown
+            spawn("taskkill", ["/pid", String(backendProcess.pid), "/T", "/F"]);
+        } else {
+            backendProcess.kill("SIGTERM");
+        }
 
         // Force kill after 5 seconds
+        const proc = backendProcess;
         setTimeout(() => {
-            if (backendProcess) {
+            if (proc && !proc.killed) {
                 console.log("[Backend] Force killing...");
-                backendProcess.kill("SIGKILL");
-                backendProcess = null;
+                try {
+                    proc.kill("SIGKILL");
+                } catch {
+                    // Already dead
+                }
             }
         }, 5000);
+
+        backendProcess = null;
     }
 }
 
@@ -186,8 +206,12 @@ function waitForBackend() {
 
         const retry = () => {
             if (Date.now() - startTime > HEALTH_CHECK_TIMEOUT) {
-                console.error("[Backend] Health check timeout — loading anyway");
-                resolve(); // Load UI anyway
+                console.error("[Backend] Health check timeout — backend failed to start");
+                reject(
+                    new Error(
+                        "Backend failed to start within 60 seconds. Check logs for errors."
+                    )
+                );
             } else {
                 setTimeout(check, HEALTH_CHECK_INTERVAL);
             }
@@ -543,7 +567,22 @@ app.on("ready", async () => {
 
     // Start backend and wait for health check
     startBackend();
-    await waitForBackend();
+
+    try {
+        await waitForBackend();
+    } catch (err) {
+        console.error("[Backend] " + err.message);
+        if (splashWindow) {
+            splashWindow.close();
+            splashWindow = null;
+        }
+        dialog.showErrorBox(
+            "Vera — Backend Failed",
+            `The AI backend did not start in time.\n\n${err.message}\n\nThe app will now quit.`
+        );
+        app.quit();
+        return;
+    }
 
     createWindow();
     createTray();

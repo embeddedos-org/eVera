@@ -4,24 +4,43 @@
 import sys
 from pathlib import Path
 
+from PyInstaller.utils.hooks import collect_all, collect_submodules
+
 block_cipher = None
 
 ROOT = Path(SPECPATH)
 
+# Collect litellm and tiktoken fully (they discover providers/encodings at runtime)
+litellm_datas, litellm_binaries, litellm_hiddenimports = collect_all("litellm")
+tiktoken_datas, tiktoken_binaries, tiktoken_hiddenimports = collect_all("tiktoken")
+
 a = Analysis(
     [str(ROOT / "main.py")],
     pathex=[str(ROOT)],
-    binaries=[],
+    binaries=litellm_binaries + tiktoken_binaries,
     datas=[
         (str(ROOT / "vera" / "static"), "vera/static"),
         (str(ROOT / "config.py"), "."),
         (str(ROOT / ".env.example"), "."),
-    ],
+        # Bundle data skeleton for first-run
+        (str(ROOT / "data"), "data"),
+    ]
+    + litellm_datas
+    + tiktoken_datas,
     hiddenimports=[
+        # --- LiteLLM & LLM providers ---
         "litellm",
         "litellm.llms",
+        *litellm_hiddenimports,
+        # --- Tiktoken (tokenizer) ---
+        "tiktoken",
+        "tiktoken_ext",
+        "tiktoken_ext.openai_public",
+        *tiktoken_hiddenimports,
+        # --- Sentence transformers / FAISS ---
         "sentence_transformers",
         "faiss",
+        # --- Web framework ---
         "uvicorn",
         "uvicorn.logging",
         "uvicorn.loops",
@@ -33,17 +52,32 @@ a = Analysis(
         "uvicorn.protocols.websockets.auto",
         "uvicorn.lifespan",
         "uvicorn.lifespan.on",
-        "langchain_core",
-        "langgraph",
-        "langgraph.graph",
-        "langgraph.graph.state",
         "fastapi",
         "pydantic",
         "pydantic_settings",
         "websockets",
         "httpx",
+        # --- LangChain / LangGraph ---
+        "langchain_core",
+        "langgraph",
+        "langgraph.graph",
+        "langgraph.graph.state",
+        # --- Voice / TTS / STT ---
+        "pyttsx3",
+        "pyttsx3.drivers",
+        "pyttsx3.drivers.sapi5",
+        "edge_tts",
+        # --- Image / Vision ---
+        "PIL",
+        "PIL.Image",
+        # --- Browser automation ---
+        "playwright",
+        "playwright.sync_api",
+        "playwright.async_api",
+        # --- Security ---
         "cryptography",
         "cryptography.fernet",
+        # --- Utilities ---
         "duckduckgo_search",
         "beautifulsoup4",
         "bs4",
@@ -51,6 +85,7 @@ a = Analysis(
         "pyautogui",
         "psutil",
         "pyperclip",
+        "chardet",
     ],
     hookspath=[],
     hooksconfig={},

@@ -89,9 +89,15 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         lifespan=lifespan,
     )
 
+    # Merge configured origins with chrome-extension support
+    cors_origins = list(settings.server.cors_origins)
+    if "chrome-extension://*" not in cors_origins:
+        cors_origins.append("chrome-extension://*")
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.server.cors_origins,
+        allow_origins=cors_origins,
+        allow_origin_regex=r"^chrome-extension://.*$",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -270,6 +276,267 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
             for name, agent in AGENT_REGISTRY.items()
         }
 
+    # --- Model endpoints (Phase 1) ---
+
+    @app.get("/models")
+    async def list_models():
+        """Return all models grouped by provider with availability status."""
+        return brain_instance.provider_manager.get_available_models()
+
+    @app.post("/models/select")
+    async def select_model(request: Request):
+        """Select the best model for a given task type."""
+        body = await request.json()
+        task_type = body.get("task_type", "general")
+        model = brain_instance.provider_manager.select_model(task_type)
+        if model:
+            return {
+                "model_name": model.model_name,
+                "provider": model.provider,
+                "description": model.description,
+                "tier": model.tier.name,
+            }
+        return JSONResponse(status_code=404, content={"detail": f"No model available for task type: {task_type}"})
+
+    @app.get("/models/health")
+    async def models_health():
+        """Check health of all configured providers."""
+        return await brain_instance.provider_manager.provider_health_check()
+
+    # --- Knowledge Base endpoints (Phase 2) ---
+
+    @app.post("/knowledge/upload")
+    async def upload_document(request: Request):
+        """Upload a document to the knowledge base."""
+        from vera.knowledge.rag import RAGPipeline
+
+        content_type = request.headers.get("content-type", "")
+        if "multipart/form-data" not in content_type:
+            raise HTTPException(status_code=400, detail="Expected multipart/form-data")
+
+        form = await request.form()
+        file = form.get("file")
+        if not file:
+            raise HTTPException(status_code=400, detail="No file provided")
+
+        # Check file size (50MB limit)
+        contents = await file.read()
+        if len(contents) > 50 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail="File too large (max 50MB)")
+
+        rag = RAGPipeline(brain_instance.provider_manager)
+        result = await rag.ingest_document(
+            filename=file.filename,
+            content=contents,
+            content_type=file.content_type or "",
+        )
+
+        return result
+
+    @app.get("/knowledge/documents")
+    async def list_documents():
+        """List all documents in the knowledge base."""
+        from vera.knowledge.rag import RAGPipeline
+
+        rag = RAGPipeline(brain_instance.provider_manager)
+        return rag.list_documents()
+
+    @app.delete("/knowledge/documents/{doc_id}")
+    async def delete_document(doc_id: str):
+        """Delete a document from the knowledge base."""
+        from vera.knowledge.rag import RAGPipeline
+
+        rag = RAGPipeline(brain_instance.provider_manager)
+        success = rag.remove_document(doc_id)
+        if not success:
+            raise HTTPException(status_code=404, detail=f"Document not found: {doc_id}")
+        return {"status": "deleted", "doc_id": doc_id}
+
+    @app.post("/knowledge/query")
+    async def query_knowledge(request: Request):
+        """Query the knowledge base with RAG."""
+        body = await request.json()
+        query = body.get("query", "")
+        if not query:
+            raise HTTPException(status_code=400, detail="Query is required")
+
+        from vera.knowledge.rag import RAGPipeline
+
+        rag = RAGPipeline(brain_instance.provider_manager)
+        result = await rag.query(query, top_k=body.get("top_k", 5))
+        return result
+
+    # --- Extension endpoints (Phase 3) ---
+
+    class ExtensionActionRequest(BaseModel):
+        text: str
+        context: str | None = None
+        model: str | None = None
+
+    @app.post("/extension/summarize")
+    async def extension_summarize(request: ExtensionActionRequest):
+        """Summarize text for Chrome extension."""
+        from vera.providers.models import ModelTier
+
+        result = await brain_instance.provider_manager.complete(
+            messages=[
+                {"role": "system", "content": "You are a concise summarizer. Provide a clear, brief summary of the given text. Use bullet points for key takeaways."},
+                {"role": "user", "content": f"Summarize this text:\n\n{request.text}"},
+            ],
+            tier=ModelTier.SPECIALIST,
+            model_override=request.model,
+        )
+        return {"result": result.content, "model": result.model}
+
+    @app.post("/extension/translate")
+    async def extension_translate(request: Request):
+        """Translate text for Chrome extension."""
+        from vera.providers.models import ModelTier
+
+        body = await request.json()
+        text = body.get("text", "")
+        target_lang = body.get("target_language", "English")
+
+        result = await brain_instance.provider_manager.complete(
+            messages=[
+                {"role": "system", "content": f"You are a professional translator. Translate the given text to {target_lang}. Provide only the translation, no explanations."},
+                {"role": "user", "content": text},
+            ],
+            tier=ModelTier.SPECIALIST,
+            model_override=body.get("model"),
+        )
+        return {"result": result.content, "model": result.model, "target_language": target_lang}
+
+    @app.post("/extension/rewrite")
+    async def extension_rewrite(request: ExtensionActionRequest):
+        """Rewrite text for Chrome extension."""
+        from vera.providers.models import ModelTier
+
+        style = "professional and clear"
+        result = await brain_instance.provider_manager.complete(
+            messages=[
+                {"role": "system", "content": f"You are an expert editor. Rewrite the given text to be {style}. Maintain the original meaning but improve clarity and impact."},
+                {"role": "user", "content": f"Rewrite this text:\n\n{request.text}"},
+            ],
+            tier=ModelTier.SPECIALIST,
+            model_override=request.model,
+        )
+        return {"result": result.content, "model": result.model}
+
+    @app.post("/extension/explain")
+    async def extension_explain(request: ExtensionActionRequest):
+        """Explain text for Chrome extension."""
+        from vera.providers.models import ModelTier
+
+        context = f"\n\nPage context: {request.context}" if request.context else ""
+        result = await brain_instance.provider_manager.complete(
+            messages=[
+                {"role": "system", "content": "You are a helpful explainer. Explain the given text in simple terms. If it contains technical jargon, break it down clearly."},
+                {"role": "user", "content": f"Explain this:{context}\n\n{request.text}"},
+            ],
+            tier=ModelTier.SPECIALIST,
+            model_override=request.model,
+        )
+        return {"result": result.content, "model": result.model}
+
+    @app.post("/extension/grammar")
+    async def extension_grammar(request: ExtensionActionRequest):
+        """Fix grammar for Chrome extension."""
+        from vera.providers.models import ModelTier
+
+        result = await brain_instance.provider_manager.complete(
+            messages=[
+                {"role": "system", "content": "You are a grammar expert. Fix grammar, spelling, and punctuation errors in the given text. Return only the corrected text. If the text is already correct, return it unchanged."},
+                {"role": "user", "content": request.text},
+            ],
+            tier=ModelTier.SPECIALIST,
+            model_override=request.model,
+        )
+        return {"result": result.content, "model": result.model}
+
+    # --- Automation endpoints (Phase 4) ---
+
+    class AutomationPlanRequest(BaseModel):
+        task: str
+
+    class AutomationScrapeRequest(BaseModel):
+        url: str
+        data_schema: dict[str, str]
+        max_pages: int = 5
+        output_format: str = "json"
+
+    @app.post("/automation/plan")
+    async def automation_plan(request: AutomationPlanRequest):
+        """Plan a browser automation task."""
+        from vera.brain.agents.browser_planner import BrowserPlanner
+
+        planner = BrowserPlanner(brain_instance.provider_manager)
+        plan = await planner.plan(request.task)
+        return {
+            "task": plan.task,
+            "steps": [
+                {"action": s.action, "args": s.args, "description": s.description, "on_fail": s.on_fail}
+                for s in plan.steps
+            ],
+            "step_count": len(plan.steps),
+        }
+
+    @app.post("/automation/execute")
+    async def automation_execute(request: AutomationPlanRequest):
+        """Plan and execute a browser automation task."""
+        from vera.brain.agents.browser_executor import BrowserExecutor
+
+        executor = BrowserExecutor(brain_instance.provider_manager)
+        result = await executor.plan_and_execute(request.task)
+        return {
+            "task_id": result.task_id,
+            "task": result.task,
+            "status": result.status,
+            "steps_completed": result.steps_completed,
+            "steps_total": result.steps_total,
+            "total_duration_ms": round(result.total_duration_ms),
+            "step_results": [
+                {
+                    "step_index": sr.step_index,
+                    "action": sr.action,
+                    "status": sr.status,
+                    "duration_ms": round(sr.duration_ms),
+                    "error": sr.error,
+                }
+                for sr in result.step_results
+            ],
+        }
+
+    @app.post("/automation/scrape")
+    async def automation_scrape(request: AutomationScrapeRequest):
+        """Scrape structured data from a web page."""
+        from vera.brain.agents.scraper import WebScraper
+
+        scraper = WebScraper(brain_instance.provider_manager)
+        result = await scraper.scrape(
+            url=request.url,
+            schema=request.data_schema,
+            max_pages=request.max_pages,
+            output_format=request.output_format,
+        )
+
+        output = {
+            "url": result.url,
+            "status": result.status,
+            "pages_scraped": result.pages_scraped,
+            "total_items": result.total_items,
+            "items": result.items,
+            "error": result.error,
+        }
+
+        # Convert to requested format
+        if request.output_format == "csv":
+            output["csv"] = WebScraper.to_csv(result.items)
+        elif request.output_format == "markdown":
+            output["markdown"] = WebScraper.to_markdown(result.items)
+
+        return output
+
     @app.post("/chat", response_model=ChatResponse)
     async def chat(request: ChatRequest):
         result = await brain_instance.process(
@@ -438,6 +705,7 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
 
                 if msg_type == "transcript":
                     transcript = msg.get("data", msg.get("transcript", ""))
+                    model_override = msg.get("model_override") or msg.get("model")
 
                     # Handle yes/no as confirmation if there's a pending action
                     lower = transcript.strip().lower()
