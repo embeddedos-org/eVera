@@ -10,8 +10,9 @@ import asyncio
 import logging
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 from vera.brain.agents.browser_planner import BrowserPlan, BrowserPlanner, BrowserStep
 from vera.providers.manager import ProviderManager
@@ -216,6 +217,7 @@ class BrowserExecutor:
 
 
 # --- Additional tools referenced by the executor ---
+
 
 class WaitForElementTool:
     """Wait for an element to appear on the page."""

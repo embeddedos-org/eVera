@@ -376,7 +376,12 @@ class Settings(BaseSettings):
     debug: bool = Field(False, description="Enable debug logging")
     data_dir: Path = Field(default_factory=_resolve_data_dir, description="Data storage directory")
 
-    model_config = {"env_prefix": "VERA_", "env_file": _resolve_env_file(), "env_nested_delimiter": "__", "extra": "ignore"}
+    model_config = {
+        "env_prefix": "VERA_",
+        "env_file": _resolve_env_file(),
+        "env_nested_delimiter": "__",
+        "extra": "ignore",
+    }
 
     def ensure_data_dirs(self) -> None:
         """Create data directories if they don't exist."""

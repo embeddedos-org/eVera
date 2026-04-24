@@ -181,13 +181,15 @@ class RAGPipeline:
             if 0 <= idx < len(self._chunks):
                 chunk = self._chunks[idx]
                 score = float(1.0 / (1.0 + dist))
-                relevant_chunks.append({
-                    "text": chunk.text,
-                    "doc_id": chunk.doc_id,
-                    "chunk_index": chunk.index,
-                    "score": score,
-                    "filename": chunk.metadata.get("filename", "unknown"),
-                })
+                relevant_chunks.append(
+                    {
+                        "text": chunk.text,
+                        "doc_id": chunk.doc_id,
+                        "chunk_index": chunk.index,
+                        "score": score,
+                        "filename": chunk.metadata.get("filename", "unknown"),
+                    }
+                )
 
         if not relevant_chunks:
             return {
@@ -198,8 +200,7 @@ class RAGPipeline:
 
         # Build augmented prompt
         context = "\n\n---\n\n".join(
-            f"[Source: {c['filename']}, chunk {c['chunk_index']}]\n{c['text']}"
-            for c in relevant_chunks
+            f"[Source: {c['filename']}, chunk {c['chunk_index']}]\n{c['text']}" for c in relevant_chunks
         )
 
         system_prompt = (

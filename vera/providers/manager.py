@@ -17,10 +17,10 @@ import litellm
 from config import settings
 from vera.providers.models import (
     DEFAULT_MODELS,
-    ModelConfig,
-    ModelTier,
     PROVIDER_KEY_MAP,
     TASK_MODEL_ROUTING,
+    ModelConfig,
+    ModelTier,
 )
 
 logger = logging.getLogger(__name__)
@@ -116,22 +116,24 @@ class ProviderManager:
                 configured = self._is_provider_configured(provider)
                 healthy = self._provider_health.get(provider, None)
 
-                by_provider[provider].append({
-                    "model_name": model.model_name,
-                    "provider": provider,
-                    "tier": tier.name,
-                    "tier_value": int(tier),
-                    "description": model.description,
-                    "context_window": model.context_window,
-                    "supports_vision": model.supports_vision,
-                    "supports_tools": model.supports_tools,
-                    "cost_per_1k_input": model.cost_per_1k_input,
-                    "cost_per_1k_output": model.cost_per_1k_output,
-                    "speed_tier": model.speed_tier,
-                    "task_types": list(model.task_types),
-                    "configured": configured,
-                    "healthy": healthy,
-                })
+                by_provider[provider].append(
+                    {
+                        "model_name": model.model_name,
+                        "provider": provider,
+                        "tier": tier.name,
+                        "tier_value": int(tier),
+                        "description": model.description,
+                        "context_window": model.context_window,
+                        "supports_vision": model.supports_vision,
+                        "supports_tools": model.supports_tools,
+                        "cost_per_1k_input": model.cost_per_1k_input,
+                        "cost_per_1k_output": model.cost_per_1k_output,
+                        "speed_tier": model.speed_tier,
+                        "task_types": list(model.task_types),
+                        "configured": configured,
+                        "healthy": healthy,
+                    }
+                )
 
         return by_provider
 
@@ -155,10 +157,7 @@ class ProviderManager:
         # Fall back to specialist/strategist tiers
         for tier in [ModelTier.SPECIALIST, ModelTier.STRATEGIST]:
             for model in self._models.get(tier, []):
-                if (
-                    task_type in model.task_types
-                    and self._is_provider_configured(model.provider)
-                ):
+                if task_type in model.task_types and self._is_provider_configured(model.provider):
                     return model
 
         # Fall back to any configured model

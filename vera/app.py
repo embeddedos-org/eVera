@@ -380,7 +380,10 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
 
         result = await brain_instance.provider_manager.complete(
             messages=[
-                {"role": "system", "content": "You are a concise summarizer. Provide a clear, brief summary of the given text. Use bullet points for key takeaways."},
+                {
+                    "role": "system",
+                    "content": "You are a concise summarizer. Provide a clear, brief summary of the given text. Use bullet points for key takeaways.",
+                },
                 {"role": "user", "content": f"Summarize this text:\n\n{request.text}"},
             ],
             tier=ModelTier.SPECIALIST,
@@ -399,7 +402,10 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
 
         result = await brain_instance.provider_manager.complete(
             messages=[
-                {"role": "system", "content": f"You are a professional translator. Translate the given text to {target_lang}. Provide only the translation, no explanations."},
+                {
+                    "role": "system",
+                    "content": f"You are a professional translator. Translate the given text to {target_lang}. Provide only the translation, no explanations.",
+                },
                 {"role": "user", "content": text},
             ],
             tier=ModelTier.SPECIALIST,
@@ -415,7 +421,10 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         style = "professional and clear"
         result = await brain_instance.provider_manager.complete(
             messages=[
-                {"role": "system", "content": f"You are an expert editor. Rewrite the given text to be {style}. Maintain the original meaning but improve clarity and impact."},
+                {
+                    "role": "system",
+                    "content": f"You are an expert editor. Rewrite the given text to be {style}. Maintain the original meaning but improve clarity and impact.",
+                },
                 {"role": "user", "content": f"Rewrite this text:\n\n{request.text}"},
             ],
             tier=ModelTier.SPECIALIST,
@@ -431,7 +440,10 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         context = f"\n\nPage context: {request.context}" if request.context else ""
         result = await brain_instance.provider_manager.complete(
             messages=[
-                {"role": "system", "content": "You are a helpful explainer. Explain the given text in simple terms. If it contains technical jargon, break it down clearly."},
+                {
+                    "role": "system",
+                    "content": "You are a helpful explainer. Explain the given text in simple terms. If it contains technical jargon, break it down clearly.",
+                },
                 {"role": "user", "content": f"Explain this:{context}\n\n{request.text}"},
             ],
             tier=ModelTier.SPECIALIST,
@@ -446,7 +458,10 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
 
         result = await brain_instance.provider_manager.complete(
             messages=[
-                {"role": "system", "content": "You are a grammar expert. Fix grammar, spelling, and punctuation errors in the given text. Return only the corrected text. If the text is already correct, return it unchanged."},
+                {
+                    "role": "system",
+                    "content": "You are a grammar expert. Fix grammar, spelling, and punctuation errors in the given text. Return only the corrected text. If the text is already correct, return it unchanged.",
+                },
                 {"role": "user", "content": request.text},
             ],
             tier=ModelTier.SPECIALIST,

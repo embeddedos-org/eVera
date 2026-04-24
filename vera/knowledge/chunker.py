@@ -90,13 +90,15 @@ def chunk_text(
                 if len(sub_chunk) + len(word) + 1 > char_limit:
                     if sub_chunk:
                         chunk_id = _make_chunk_id(doc_id, chunk_index)
-                        chunks.append(DocumentChunk(
-                            chunk_id=chunk_id,
-                            doc_id=doc_id,
-                            text=sub_chunk.strip(),
-                            index=chunk_index,
-                            metadata=metadata or {},
-                        ))
+                        chunks.append(
+                            DocumentChunk(
+                                chunk_id=chunk_id,
+                                doc_id=doc_id,
+                                text=sub_chunk.strip(),
+                                index=chunk_index,
+                                metadata=metadata or {},
+                            )
+                        )
                         chunk_index += 1
                         # Keep overlap
                         overlap_words = sub_chunk.split()[-overlap_chars // 5 :] if overlap_chars > 0 else []
@@ -114,13 +116,15 @@ def chunk_text(
         candidate = current_chunk + "\n\n" + segment if current_chunk else segment
         if len(candidate) > char_limit and current_chunk:
             chunk_id = _make_chunk_id(doc_id, chunk_index)
-            chunks.append(DocumentChunk(
-                chunk_id=chunk_id,
-                doc_id=doc_id,
-                text=current_chunk.strip(),
-                index=chunk_index,
-                metadata=metadata or {},
-            ))
+            chunks.append(
+                DocumentChunk(
+                    chunk_id=chunk_id,
+                    doc_id=doc_id,
+                    text=current_chunk.strip(),
+                    index=chunk_index,
+                    metadata=metadata or {},
+                )
+            )
             chunk_index += 1
 
             # Keep overlap from the end of the previous chunk
@@ -135,13 +139,15 @@ def chunk_text(
     # Don't forget the last chunk
     if current_chunk.strip():
         chunk_id = _make_chunk_id(doc_id, chunk_index)
-        chunks.append(DocumentChunk(
-            chunk_id=chunk_id,
-            doc_id=doc_id,
-            text=current_chunk.strip(),
-            index=chunk_index,
-            metadata=metadata or {},
-        ))
+        chunks.append(
+            DocumentChunk(
+                chunk_id=chunk_id,
+                doc_id=doc_id,
+                text=current_chunk.strip(),
+                index=chunk_index,
+                metadata=metadata or {},
+            )
+        )
 
     logger.info("Chunked document %s into %d chunks", doc_id, len(chunks))
     return chunks

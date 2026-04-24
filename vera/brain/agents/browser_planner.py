@@ -143,13 +143,15 @@ class BrowserPlanner:
 
             steps = []
             for item in parsed:
-                steps.append(BrowserStep(
-                    action=item.get("action", ""),
-                    args=item.get("args", {}),
-                    description=item.get("description", ""),
-                    verify=item.get("verify"),
-                    on_fail=item.get("on_fail", "abort"),
-                ))
+                steps.append(
+                    BrowserStep(
+                        action=item.get("action", ""),
+                        args=item.get("args", {}),
+                        description=item.get("description", ""),
+                        verify=item.get("verify"),
+                        on_fail=item.get("on_fail", "abort"),
+                    )
+                )
 
             return steps
         except (json.JSONDecodeError, KeyError, TypeError) as e:
