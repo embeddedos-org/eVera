@@ -194,7 +194,7 @@ def correct_spelling(text: str) -> str:
             continue
 
         # Try fuzzy match
-        matches = get_close_matches(word.lower(), COMMAND_VOCABULARY, n=1, cutoff=0.75)
+        matches = get_close_matches(word.lower(), COMMAND_VOCABULARY, n=1, cutoff=0.9)
         if matches:
             fixed_words.append(matches[0])
             logger.debug("Spell corrected: '%s' → '%s'", word, matches[0])

@@ -6,7 +6,6 @@ import pytest
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="Path sandboxing blocks tmp_path in CI")
 async def test_file_read_tool(tmp_path):
     from vera.brain.agents.coder import ReadFileTool
 
@@ -22,7 +21,6 @@ async def test_file_read_tool(tmp_path):
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="Path sandboxing blocks tmp_path in CI")
 async def test_file_write_tool(tmp_path):
     from vera.brain.agents.coder import WriteFileTool
 
@@ -35,7 +33,6 @@ async def test_file_write_tool(tmp_path):
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="Path sandboxing blocks tmp_path in CI")
 async def test_file_edit_tool(tmp_path):
     from vera.brain.agents.coder import EditFileTool
 

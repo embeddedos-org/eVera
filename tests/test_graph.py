@@ -66,23 +66,20 @@ async def test_tier0_flow(mock_graph):
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="Agent routing mock doesn't match updated router patterns")
 async def test_agent_flow(mock_graph):
     """Non-tier0 queries should route to an agent via LLM."""
     graph, mock_litellm = mock_graph
 
-    # First call = classification, second call = agent response
+    # First call = classification (Tier 1), second call = fallback (Tier 2)
+    classify_msg = MagicMock(
+        content='{"intent":"chat","agent":"companion","confidence":0.9}',
+        tool_calls=None,
+    )
     classify_resp = MagicMock()
-    classify_resp.choices = [
-        MagicMock(message=MagicMock(content='{"intent":"chat","agent":"companion","confidence":0.9}'))
-    ]
+    classify_resp.choices = [MagicMock(message=classify_msg)]
     classify_resp.usage = MagicMock(prompt_tokens=10, completion_tokens=20, total_tokens=30)
 
-    agent_resp = MagicMock()
-    agent_resp.choices = [MagicMock(message=MagicMock(content="Here's a fun joke for you!"))]
-    agent_resp.usage = MagicMock(prompt_tokens=15, completion_tokens=25, total_tokens=40)
-
-    mock_litellm.acompletion = AsyncMock(side_effect=[classify_resp, agent_resp])
+    mock_litellm.acompletion = AsyncMock(return_value=classify_resp)
 
     state: VeraState = {"transcript": "Tell me a joke", "session_id": "test", "metadata": {}}
     result = await graph.ainvoke(state)

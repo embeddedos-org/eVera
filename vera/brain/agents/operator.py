@@ -289,17 +289,12 @@ class ExecuteScriptTool(Tool):
                     timeout=30,
                 )
             else:
-                # Use shlex.split to avoid shell=True where possible
-                try:
-                    cmd_parts = shlex.split(command)
-                    result = subprocess.run(
-                        cmd_parts,
-                        capture_output=True,
-                        text=True,
-                        timeout=30,
-                    )
-                except ValueError:
-                    # Complex commands that shlex can't parse — use shell with warning
+                # On Windows, many commands (echo, dir, type, etc.) are shell
+                # built-ins and require shell=True.  On POSIX we prefer
+                # shlex.split to avoid unnecessary shell invocation.
+                import platform
+
+                if platform.system() == "Windows":
                     result = subprocess.run(
                         command,
                         shell=True,
@@ -307,6 +302,23 @@ class ExecuteScriptTool(Tool):
                         text=True,
                         timeout=30,
                     )
+                else:
+                    try:
+                        cmd_parts = shlex.split(command)
+                        result = subprocess.run(
+                            cmd_parts,
+                            capture_output=True,
+                            text=True,
+                            timeout=30,
+                        )
+                    except ValueError:
+                        result = subprocess.run(
+                            command,
+                            shell=True,
+                            capture_output=True,
+                            text=True,
+                            timeout=30,
+                        )
 
             output = result.stdout[:2000] if result.stdout else ""
             error = result.stderr[:500] if result.stderr else ""

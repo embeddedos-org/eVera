@@ -129,7 +129,6 @@ class TestResourceUsage:
         for name, agent in AGENT_REGISTRY.items():
             assert len(agent.tools) <= 30, f"{name} has too many tools: {len(agent.tools)}"
 
-    @pytest.mark.xfail(reason="Path sandboxing blocks tmp_path in CI")
     def test_file_operations_use_tmp(self, tmp_path):
         """File tools should work in temp directories."""
         import asyncio

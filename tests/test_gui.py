@@ -11,6 +11,7 @@ import pytest
 class TestGuiRunner:
     @pytest.mark.asyncio
     async def test_run_simple_function(self):
+        pytest.importorskip("tkinter")
         from vera.utils.gui_runner import run_in_gui_thread
 
         with patch("vera.utils.gui_runner._gui_lock") as mock_lock:
