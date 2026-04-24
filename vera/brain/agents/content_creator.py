@@ -159,10 +159,19 @@ class CreateVideoTool(Tool):
             jobs.append(job)
             _save_json("video_jobs.json", jobs)
 
+            media_hint = ""
+            try:
+                from config import settings
+
+                if settings.media.enabled:
+                    media_hint = " 💡 Tip: Use the Media Factory agent for free image-based video creation with voiceovers and subtitles."
+            except Exception:
+                pass
+
             return {
                 "status": "saved",
                 "message": f"Video job saved. Set VERA_{provider.upper()}_API_KEY in .env to generate. "
-                f"Supported providers: Runway ($0.05/sec), Pika (free tier), HeyGen (avatar videos), D-ID (talking head).",
+                f"Supported providers: Runway ($0.05/sec), Pika (free tier), HeyGen (avatar videos), D-ID (talking head).{media_hint}",
                 "job": job,
             }
 

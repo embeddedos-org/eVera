@@ -74,6 +74,12 @@ if _settings.jira.enabled:
 
     AGENT_REGISTRY["work_pilot"] = WorkPilotAgent()
 
+# Conditionally register media factory
+if _settings.media.enabled:
+    from vera.brain.agents.media_factory import MediaFactoryAgent
+
+    AGENT_REGISTRY["media_factory"] = MediaFactoryAgent()
+
 # Load plugins
 try:
     from vera.brain.plugins import get_plugin_manager

@@ -334,6 +334,25 @@ class MeetingSettings(BaseSettings):
     model_config = {"env_prefix": "VERA_MEETING_"}
 
 
+class MediaSettings(BaseSettings):
+    """Media factory agent configuration — image gen, video assembly, social upload."""
+
+    enabled: bool = Field(True, description="Enable media factory agent")
+    dalle_api_key: str = Field("", description="OpenAI DALL-E API key for premium image generation")
+    youtube_client_secrets_path: str = Field("", description="Path to YouTube OAuth client_secret.json")
+    youtube_credentials_path: str = Field(
+        "data/media/youtube_creds.json", description="Path to cached YouTube OAuth credentials"
+    )
+    instagram_access_token: str = Field("", description="Instagram Graph API access token")
+    tiktok_session_cookie: str = Field("", description="TikTok session cookie for browser automation")
+    default_voice: str = Field("en-US-AriaNeural", description="Default edge-tts voice for voiceovers")
+    default_aspect_ratio: str = Field("9:16", description="Default video aspect ratio (Reels format)")
+    max_video_duration_sec: int = Field(120, description="Maximum video duration in seconds")
+    default_image_provider: str = Field("pollinations", description="Default image provider: pollinations or dalle")
+
+    model_config = {"env_prefix": "VERA_MEDIA_"}
+
+
 class BrokerSettings(BaseSettings):
     """Trading broker configuration."""
 
@@ -380,6 +399,7 @@ class Settings(BaseSettings):
     codebase_indexer: CodebaseIndexerSettings = Field(default_factory=CodebaseIndexerSettings)
     meeting: MeetingSettings = Field(default_factory=MeetingSettings)
     broker: BrokerSettings = Field(default_factory=BrokerSettings)
+    media: MediaSettings = Field(default_factory=MediaSettings)
     debug: bool = Field(False, description="Enable debug logging")
     data_dir: Path = Field(Path("data"), description="Data storage directory")
 

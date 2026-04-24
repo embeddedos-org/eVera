@@ -197,6 +197,19 @@ DEFAULT_RULES: dict[str, PolicyAction] = {
     "wellness.*": PolicyAction.ALLOW,
     # Digest — all safe (read/write own data only)
     "digest.*": PolicyAction.ALLOW,
+    # Media factory — generation/editing is safe, uploads need confirmation
+    "media_factory.generate_image": PolicyAction.ALLOW,
+    "media_factory.edit_image": PolicyAction.ALLOW,
+    "media_factory.add_text_overlay": PolicyAction.ALLOW,
+    "media_factory.remove_background": PolicyAction.ALLOW,
+    "media_factory.generate_voiceover": PolicyAction.ALLOW,
+    "media_factory.assemble_video": PolicyAction.ALLOW,
+    "media_factory.add_subtitles": PolicyAction.ALLOW,
+    "media_factory.add_background_music": PolicyAction.ALLOW,
+    "media_factory.upload_youtube": PolicyAction.CONFIRM,
+    "media_factory.upload_instagram": PolicyAction.CONFIRM,
+    "media_factory.upload_tiktok": PolicyAction.CONFIRM,
+    "media_factory.create_reel": PolicyAction.CONFIRM,
 }
 
 

@@ -59,8 +59,15 @@ trading = [
     "alpaca-trade-api>=3.0",
     "ib_insync>=0.9.86",
 ]
+media = [
+    "moviepy>=2.0",
+    "Pillow>=10.0",
+    "rembg>=2.0",
+    "google-api-python-client>=2.0",
+    "google-auth-oauthlib>=1.0",
+]
 all = [
-    "vera[voice,browser,trading]",
+    "vera[voice,browser,trading,media]",
 ]
 dev = [
     "pytest>=8.0",

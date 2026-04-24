@@ -10,7 +10,7 @@ Welcome to the eVera documentation. eVera is a voice-first multi-agent AI assist
 |----------|-------------|
 | [Getting Started](getting_started.md) | Installation, first run, and basic configuration |
 | [Architecture](architecture.md) | System architecture, component overview, data flow |
-| [Agents](agents.md) | All 23+ agents with tools, descriptions, and examples |
+| [Agents](agents.md) | All 24+ agents with tools, descriptions, and examples |
 | [API Reference](api_reference.md) | REST, WebSocket, and SSE endpoint documentation |
 | [Security](security.md) | Safety policies, PII detection, sandboxing |
 | [Configuration](configuration.md) | All environment variables with defaults |
@@ -52,8 +52,8 @@ python docs/generate_diagrams.py
 
 | Metric | Value |
 |--------|-------|
-| Agents | 23+ (extensible via plugins) |
-| Tools | 171+ |
+| Agents | 24+ (extensible via plugins) |
+| Tools | 183+ |
 | API Endpoints | 20+ |
 | Test Cases | 489 |
 | Supported Languages | 19 |

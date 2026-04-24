@@ -11,8 +11,8 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/v0.8.0-release-blue?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Agents-23+-blue?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Tools-171+-green?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Agents-24+-blue?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Tools-183+-green?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Python-3.11+-yellow?style=for-the-badge&logo=python" />
   <img src="https://img.shields.io/badge/Electron-28+-9feaf9?style=for-the-badge&logo=electron" />
   <img src="https://img.shields.io/badge/React_Native-0.73-61dafb?style=for-the-badge&logo=react" />
@@ -58,7 +58,7 @@ python main.py --mode server                         # Open http://localhost:800
 ### 🎙️ Voice Control — 3 Modes
 Always-on listening, wake word detection, or push-to-talk. Supports 19 languages with auto spell-correction.
 
-### 🤖 23+ Specialized AI Agents — 165+ Tools
+### 🤖 24+ Specialized AI Agents — 183+ Tools
 
 #### Core Agents (always loaded)
 
@@ -82,6 +82,7 @@ Always-on listening, wake word detection, or push-to-talk. Supports 19 languages
 | 🌍 Language Tutor | 5 | Language lessons, vocabulary, grammar, pronunciation, quizzes (16+ languages) |
 | 🗺️ Codebase Indexer | 4 | **Project indexing, architecture analysis, definition extraction, related files** |
 | 📝 Meeting | 3 | **Extract action items, parse meeting notes, create tasks from transcripts** |
+| 🎨 Media Factory | 12 | **Image generation (Pollinations/DALL-E), photo editing, video assembly, subtitles, voiceovers, YouTube/Instagram/TikTok upload** |
 | 📊 Diagram | 4 | **Call graphs, class diagrams, flowcharts, export to SVG/PNG/PDF** |
 
 #### Conditional Agents (enabled via config)
@@ -92,6 +93,7 @@ Always-on listening, wake word detection, or push-to-talk. Supports 19 languages
 | 💼 Job Hunter | 12 | `VERA_JOB_ENABLED` | Autonomous job search, resume matching, auto-apply, application tracking |
 | 🎫 Jira | 7 | `VERA_JIRA_ENABLED` | **Tickets, sprints, create/update issues, JQL search, comments** |
 | 🚀 Work Pilot | 3 | `VERA_JIRA_ENABLED` | **Autonomous ticket→branch→code→PR→Jira workflow** |
+|| 🎨 Media Factory | 12 | `VERA_MEDIA_ENABLED` | Image gen, video assembly, subtitles, YouTube/Instagram/TikTok upload |
 
 ### 💻 Full System Control (v0.5.0+)
 - 🖱️ **Mouse** — click, move, drag, scroll at any screen coordinates

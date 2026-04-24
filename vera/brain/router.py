@@ -194,17 +194,30 @@ INTENT_AGENT_MAP: dict[str, str] = {
     "bookmark": "browser",
     "download": "browser",
     # Content creation
-    "video": "content_creator",
-    "content": "content_creator",
     "video_script": "content_creator",
-    "youtube_video": "content_creator",
-    "tiktok": "content_creator",
-    "reel": "content_creator",
+    "content": "content_creator",
     "marketing": "content_creator",
     "seo": "content_creator",
-    "thumbnail": "content_creator",
-    "publish": "content_creator",
     "schedule_post": "content_creator",
+    # Media factory — image gen, video assembly, upload
+    "generate_image": "media_factory",
+    "create_reel": "media_factory",
+    "edit_image": "media_factory",
+    "edit_photo": "media_factory",
+    "remove_background": "media_factory",
+    "voiceover": "media_factory",
+    "subtitle": "media_factory",
+    "upload_youtube": "media_factory",
+    "upload_instagram": "media_factory",
+    "assemble_video": "media_factory",
+    "make_video": "media_factory",
+    "animated": "media_factory",
+    "reel": "media_factory",
+    "thumbnail": "media_factory",
+    "video": "media_factory",
+    "tiktok": "media_factory",
+    "youtube_video": "media_factory",
+    "publish": "media_factory",
     # Finance
     "balance": "finance",
     "bank": "finance",
@@ -605,6 +618,7 @@ Available agents and their domains:
 - coder: reading, writing, editing code files, searching codebases, VS Code integration
 - browser: web browsing, navigating websites, filling forms, logging in, social media posting, web automation
 - content_creator: video creation, social media scheduling, content scripts, SEO optimization, marketing
+- media_factory: image generation, photo editing, video assembly, subtitles, voiceovers, YouTube/Instagram/TikTok upload, reel creation
 - finance: bank accounts, balances, transactions, spending analysis, budgets
 - job_hunter: job searching, applications, resume, career, hiring
 - planner: daily/weekly/monthly planning, goal setting, priority scoring, Eisenhower matrix, reviews
@@ -785,5 +799,6 @@ class TierRouter:
             "meeting": ModelTier.SPECIALIST,
             "diagram": ModelTier.SPECIALIST,
             "work_pilot": ModelTier.STRATEGIST,
+            "media_factory": ModelTier.SPECIALIST,
         }
         return tier_map.get(agent_name, ModelTier.EXECUTOR)
