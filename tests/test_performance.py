@@ -16,6 +16,7 @@ import pytest
 def _allow_tmp_path_in_coder(tmp_path):
     """Ensure tmp_path is in ALLOWED_ROOTS for coder tools in CI."""
     from vera.brain.agents import coder
+
     original = list(coder.ALLOWED_ROOTS)
     coder.ALLOWED_ROOTS.append(tmp_path.resolve())
     yield

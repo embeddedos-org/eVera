@@ -8,11 +8,13 @@ from unittest.mock import patch
 
 import pytest
 
+
 # Fixture to patch ALLOWED_ROOTS so tmp_path works in CI
 @pytest.fixture(autouse=True)
 def _allow_tmp_path_in_coder(tmp_path):
     """Ensure tmp_path is in ALLOWED_ROOTS for coder/operator tools in CI."""
     from vera.brain.agents import coder
+
     original = list(coder.ALLOWED_ROOTS)
     coder.ALLOWED_ROOTS.append(tmp_path.resolve())
     yield
