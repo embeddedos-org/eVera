@@ -22,9 +22,6 @@ const VeraListener = (function () {
     let _supported = false;
 
     // Callbacks
-    let _onTranscript = null; // (text: string) => void
-    let _onStateChange = null; // (state: "idle"|"listening"|"wake_listening"|"processing") => void
-    let _onWakeWord = null; // () => void
     let _onTranscript = null;
     let _onStateChange = null;
     let _onWakeWord = null;

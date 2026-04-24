@@ -283,6 +283,31 @@ html, body {
     color: var(--text-primary);
 }
 
+/* Model selector */
+.model-selector {
+    background: var(--bg-glass);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 18px;
+    cursor: pointer;
+    outline: none;
+    backdrop-filter: blur(10px);
+    transition: border-color var(--transition-fast);
+    max-width: 180px;
+}
+
+.model-selector:focus {
+    border-color: var(--accent);
+}
+
+.model-selector option,
+.model-selector optgroup {
+    background: #1a1d2e;
+    color: var(--text-primary);
+}
+
 /* === Main Content === */
 
 .main-content {

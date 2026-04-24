@@ -10,10 +10,37 @@ Each settings group (LLM, Voice, Memory, Safety, Server) uses a prefix
 
 from __future__ import annotations
 
+import os
+import sys
 from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
+
+
+def _resolve_env_file() -> str:
+    """Resolve the .env file path, handling PyInstaller frozen exes."""
+    if getattr(sys, "frozen", False):
+        # Running as PyInstaller bundle — check _MEIPASS first, then exe dir
+        meipass = Path(getattr(sys, "_MEIPASS", "."))
+        exe_dir = Path(sys.executable).parent
+        # Prefer user's .env next to the exe (editable), fall back to bundled
+        for candidate in [exe_dir / ".env", meipass / ".env", meipass / ".env.example"]:
+            if candidate.is_file():
+                return str(candidate)
+        return str(exe_dir / ".env")
+    return ".env"
+
+
+def _resolve_data_dir() -> Path:
+    """Resolve the data directory, using %APPDATA%/eVera in production."""
+    if getattr(sys, "frozen", False):
+        if sys.platform == "win32":
+            appdata = os.environ.get("APPDATA", "")
+            if appdata:
+                return Path(appdata) / "eVera" / "data"
+        return Path(sys.executable).parent / "data"
+    return Path("data")
 
 
 class LLMSettings(BaseSettings):
@@ -22,14 +49,6 @@ class LLMSettings(BaseSettings):
     Controls which language model providers are available and their
     connection parameters. Supports Ollama (local), OpenAI, and
     Google Gemini with configurable fallback order.
-
-    @param ollama_url: Base URL for local Ollama API server.
-    @param ollama_model: Default model name for Ollama inference.
-    @param openai_api_key: API key for OpenAI (optional).
-    @param openai_model: Default OpenAI model identifier.
-    @param gemini_api_key: API key for Google Gemini (optional).
-    @param gemini_model: Default Gemini model identifier.
-    @param fallback_order: Provider priority list for automatic fallback.
     """
 
     ollama_url: str = Field("http://localhost:11434", description="Ollama API URL")
@@ -38,6 +57,14 @@ class LLMSettings(BaseSettings):
     openai_model: str = Field("gpt-4o-mini", description="Default OpenAI model")
     gemini_api_key: str | None = Field(None, description="Google Gemini API key")
     gemini_model: str = Field("gemini/gemini-2.0-flash", description="Default Gemini model")
+    # Phase 1: Additional providers
+    anthropic_api_key: str | None = Field(None, description="Anthropic API key")
+    anthropic_model: str = Field("claude-sonnet-4-20250514", description="Default Anthropic model")
+    mistral_api_key: str | None = Field(None, description="Mistral API key")
+    deepseek_api_key: str | None = Field(None, description="DeepSeek API key")
+    groq_api_key: str | None = Field(None, description="Groq API key")
+    together_api_key: str | None = Field(None, description="Together AI API key")
+    perplexity_api_key: str | None = Field(None, description="Perplexity API key")
     fallback_order: list[str] = Field(
         default=["ollama", "openai", "gemini"],
         description="Provider fallback order",
@@ -47,20 +74,7 @@ class LLMSettings(BaseSettings):
 
 
 class VoiceSettings(BaseSettings):
-    """Voice input/output configuration.
-
-    Controls speech-to-text (faster-whisper), text-to-speech (pyttsx3),
-    and voice activity detection parameters.
-
-    @param stt_model: Whisper model size (tiny/base/small/medium/large).
-    @param stt_device: Compute device for STT inference (cpu/cuda).
-    @param stt_compute_type: Quantization level for STT model.
-    @param tts_rate: Speaking rate in words per minute.
-    @param vad_aggressiveness: VAD sensitivity level 0-3 (higher = more aggressive).
-    @param vad_trailing_silence_ms: Silence duration before speech endpoint.
-    @param sample_rate: Audio sample rate in Hz.
-    @param chunk_duration_ms: Audio chunk size for VAD processing.
-    """
+    """Voice input/output configuration."""
 
     stt_model: str = Field("small", description="faster-whisper model size")
     stt_device: str = Field("cpu", description="STT compute device")
@@ -127,18 +141,7 @@ class JobHunterSettings(BaseSettings):
 
 
 class MemorySettings(BaseSettings):
-    """Memory subsystem configuration.
-
-    Configures paths and parameters for the 4-layer memory system:
-    Working (conversation buffer), Episodic (FAISS vectors),
-    Semantic (key-value facts), and Secure (Fernet-encrypted vault).
-
-    @param faiss_index_path: File path for the FAISS vector index.
-    @param embedding_model: sentence-transformers model name for embeddings.
-    @param semantic_store_path: JSON file path for semantic memory.
-    @param secure_vault_path: Encrypted vault file path.
-    @param working_memory_max_turns: Max conversation turns to retain.
-    """
+    """Memory subsystem configuration."""
 
     faiss_index_path: Path = Field(Path("data/faiss_index"), description="FAISS index storage path")
     embedding_model: str = Field("all-MiniLM-L6-v2", description="Sentence-transformers model")
@@ -153,16 +156,7 @@ class MemorySettings(BaseSettings):
 
 
 class SafetySettings(BaseSettings):
-    """Safety policy configuration.
-
-    Defines lists of actions categorized by risk level:
-    allowed (no confirmation), confirm (user approval needed),
-    and denied (always blocked).
-
-    @param allowed_actions: Actions that execute without confirmation.
-    @param confirm_actions: Actions requiring explicit user approval.
-    @param denied_actions: Actions that are always blocked.
-    """
+    """Safety policy configuration."""
 
     allowed_actions: list[str] = Field(
         default=["chat", "check_mood", "suggest_activity", "tell_joke", "get_time"],
@@ -201,16 +195,7 @@ class SafetySettings(BaseSettings):
 
 
 class ServerSettings(BaseSettings):
-    """FastAPI server configuration.
-
-    Controls the HTTP server binding, CORS policy, and authentication.
-
-    @param host: IP address to bind (127.0.0.1 for local-only, 0.0.0.0 for network).
-    @param port: TCP port for the FastAPI server.
-    @param cors_origins: List of allowed CORS origins.
-    @param api_key: Bearer token for API authentication (empty = disabled).
-    @param webhook_secret: Shared secret for TradingView webhook verification.
-    """
+    """FastAPI server configuration."""
 
     host: str = Field(
         "127.0.0.1",
@@ -368,19 +353,7 @@ class BrokerSettings(BaseSettings):
 
 
 class Settings(BaseSettings):
-    """Root settings — aggregates all configuration groups.
-
-    Loads configuration from environment variables with the VERA_ prefix
-    and from a `.env` file. Supports nested delimiter `__` for sub-settings.
-
-    @param llm: LLM provider settings.
-    @param voice: Voice I/O settings.
-    @param memory: Memory subsystem settings.
-    @param safety: Safety policy settings.
-    @param server: FastAPI server settings.
-    @param debug: Enable verbose debug logging.
-    @param data_dir: Root directory for persistent data storage.
-    """
+    """Root settings — aggregates all configuration groups."""
 
     llm: LLMSettings = Field(default_factory=LLMSettings)
     voice: VoiceSettings = Field(default_factory=VoiceSettings)
@@ -401,13 +374,22 @@ class Settings(BaseSettings):
     broker: BrokerSettings = Field(default_factory=BrokerSettings)
     media: MediaSettings = Field(default_factory=MediaSettings)
     debug: bool = Field(False, description="Enable debug logging")
-    data_dir: Path = Field(Path("data"), description="Data storage directory")
+    data_dir: Path = Field(default_factory=_resolve_data_dir, description="Data storage directory")
 
-    model_config = {"env_prefix": "VERA_", "env_file": ".env", "env_nested_delimiter": "__"}
+    model_config = {"env_prefix": "VERA_", "env_file": _resolve_env_file(), "env_nested_delimiter": "__", "extra": "ignore"}
 
     def ensure_data_dirs(self) -> None:
         """Create data directories if they don't exist."""
-        self.data_dir.mkdir(parents=True, exist_ok=True)
+        dirs = [
+            self.data_dir,
+            self.data_dir / "faiss_index",
+            self.data_dir / "media",
+            self.data_dir / "diagrams",
+            self.data_dir / "knowledge",
+            self.data_dir / "job_profile",
+        ]
+        for d in dirs:
+            d.mkdir(parents=True, exist_ok=True)
         self.memory.faiss_index_path.parent.mkdir(parents=True, exist_ok=True)
 
 

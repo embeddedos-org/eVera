@@ -18,3 +18,9 @@ MagicMock/
 
 # Executables
 *.exe
+
+node_modules/
+*.pyc
+__pycache__/
+.env
+

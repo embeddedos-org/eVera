@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
+import os
 import sys
 
 from config import settings
@@ -15,6 +16,11 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 logger = logging.getLogger("vera")
+
+
+def _is_electron() -> bool:
+    """Detect if running inside Electron wrapper."""
+    return os.environ.get("VERA_ELECTRON") == "1" or getattr(sys, "frozen", False)
 
 
 async def voice_loop() -> None:
@@ -164,9 +170,6 @@ async def text_loop() -> None:
 
 async def start_server(host: str, port: int) -> None:
     """Start the FastAPI server."""
-    import threading
-    import webbrowser
-
     import uvicorn
 
     from vera.app import create_app
@@ -175,16 +178,20 @@ async def start_server(host: str, port: int) -> None:
     brain = VeraBrain()
     app = create_app(brain)
 
-    # Auto-open browser after server starts
-    def open_browser():
-        import time
+    # Auto-open browser only when NOT running inside Electron or frozen exe
+    if not _is_electron():
+        import threading
+        import webbrowser
 
-        time.sleep(2)
-        url = f"http://{'localhost' if host in ('0.0.0.0', '127.0.0.1') else host}:{port}"
-        print(f"🌐 Opening {url} in browser...")
-        webbrowser.open(url)
+        def open_browser():
+            import time
 
-    threading.Thread(target=open_browser, daemon=True).start()
+            time.sleep(2)
+            url = f"http://{'localhost' if host in ('0.0.0.0', '127.0.0.1') else host}:{port}"
+            print(f"🌐 Opening {url} in browser...")
+            webbrowser.open(url)
+
+        threading.Thread(target=open_browser, daemon=True).start()
 
     config = uvicorn.Config(app, host=host, port=port, log_level="info")
     server = uvicorn.Server(config)
@@ -231,6 +238,9 @@ async def run_all(host: str, port: int) -> None:
 
 
 def main() -> None:
+    # Ensure data directories exist on startup
+    settings.ensure_data_dirs()
+
     parser = argparse.ArgumentParser(
         description="Vera — Voice-first multi-agent AI assistant",
         formatter_class=argparse.RawDescriptionHelpFormatter,
