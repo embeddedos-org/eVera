@@ -2,6 +2,69 @@
 
 All notable changes to eVera are documented here.
 
+## [0.9.0] — 2026-04-24
+
+### 🎭 3D Holographic Avatar (Three.js)
+- **Full replacement** of 2D canvas face with Three.js WebGL 3D animated humanoid avatar
+- **Procedural geometry** — SphereGeometry head, tapered CylinderGeometry torso, neck, segmented arms (shoulder → upper arm → elbow → forearm → hand → 5 fingers per hand)
+- **Facial features** — Eye spheres with pupils + highlights, TorusGeometry brow ridges, BufferGeometry mouth arc with dynamic morph (smile/frown/open/zigzag)
+- **Custom HolographicMaterial (GLSL ShaderMaterial)** — fresnel rim glow, circuit-line UV grid with pulsing traces, energy wave traveling up the body, wireframe overlay at 8% opacity
+- **200-particle aura** — Points with orbital motion, additive blending, color-matched to expression
+- **8 expressions** with morph targets — idle, listening, thinking, speaking, happy, sad, excited, error
+- **8 gesture animations** auto-triggered by expression:
+  - `thinking` → chin stroke (right hand to chin, head tilt)
+  - `happy` → wave (right arm raised, hand oscillating)
+  - `excited` → thumbs up (right hand raised)
+  - `speaking` → open palms (both arms out, palms up)
+  - `listening` → hands clasped (both hands together at center)
+  - `error` → defensive (both hands raised, head shake oscillation)
+  - `sad` → droop (arms lowered, head down)
+  - `idle` → rest (arms at sides, subtle sway)
+- **Idle animations** — breathing (torso Y-scale), head micro-bob, head micro-rotation, shoulder sway, finger micro-curl
+- **Blink system** — same 2-6s random interval, 4-state eye scale animation
+- **Speaking sync** — `setSpeakAmplitude()` drives mouth morph with sinusoidal oscillation
+- **API 100% backward compatible** — `init()`, `setExpression()`, `getExpression()`, `setSpeakAmplitude()`, `destroy()`, `EXPRESSIONS` — zero changes needed in app.js
+
+### 🛡️ Production Hardening
+- **WebGL detection** — `_isWebGLAvailable()` check with graceful 2D canvas fallback
+- **Three.js CDN guard** — `typeof THREE === "undefined"` check at init + local fallback file
+- **Memory leak fix** — Pre-allocated error/normal eye materials; eliminated per-frame `new THREE.MeshBasicMaterial()` allocation
+- **Blink timer cleanup** — `_blinkTimeoutId` tracked and `clearTimeout()` in destroy
+- **ResizeObserver cleanup** — `_resizeObserver.disconnect()` in destroy
+- **Page Visibility API** — Animation loop pauses when tab hidden, resumes when visible (saves GPU/battery)
+- **FPS monitoring** — Detects <30fps, auto-reduces particle count from 200→50 for low-end devices
+- **Error boundaries** — try/catch around `init()` and every animation frame
+- **Destroy guards** — `_destroyed` + `_initialized` flags prevent post-destroy crashes and double-init
+- **Input validation** — Type checks + `isFinite()` + sanitization on `setExpression()` and `setSpeakAmplitude()`
+- **WebGL context loss handling** — `webglcontextlost`/`webglcontextrestored` event handlers
+- **Shared geometry instances** — Arms reuse geometry objects between left/right sides
+
+### 🔒 Security
+- **Content Security Policy** — `<meta http-equiv="Content-Security-Policy">` restricting script-src, style-src, connect-src, img-src, font-src, media-src, worker-src
+- **X-Content-Type-Options** — `nosniff` meta tag preventing MIME sniffing attacks
+- **Referrer-Policy** — `strict-origin-when-cross-origin` for privacy
+- **CDN crossorigin** — `crossorigin="anonymous"` + `referrerpolicy="no-referrer"` on Three.js script tag
+- **CDN fallback** — If CDN fails → synchronous `document.write` loads `/static/lib/three.min.js`
+- **Local Three.js copy** — Bundled fallback at `vera/static/lib/three.min.js`
+
+### 🎨 CSS Updates
+- `.face-glow-ring`: 180×180px circle → 280×350px rounded rectangle (`border-radius: 20px`)
+- `#faceCanvas`: `width: 100%; height: 100%; border-radius: 20px; overflow: hidden`
+- Gradient border ring adapted from circle to rounded rectangle
+- Responsive breakpoints updated (900px: 200×250px, 600px: 160×200px)
+
+### 📁 Files Changed
+- `vera/static/face.js` — Full replacement (~600 lines)
+- `vera/static/index.html` — Three.js CDN + fallback, canvas→div, CSP headers
+- `vera/static/style.css` — Rounded rect viewport, responsive breakpoints
+- `vera/static/lib/three.min.js` — New local CDN fallback (678KB)
+
+### 📊 Stats
+- 24+ agents, 183+ tools (unchanged)
+- Frontend now uses Three.js WebGL for avatar rendering
+
+---
+
 ## [0.8.0] — 2026-04-22
 
 ### 🏷️ Full Rebrand: eSri → eVera

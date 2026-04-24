@@ -311,15 +311,15 @@ html, body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 24px;
-    gap: 12px;
+    padding: 20px 24px;
+    gap: 10px;
     flex-shrink: 0;
 }
 
 .face-glow-ring {
-    width: 180px;
-    height: 180px;
-    border-radius: 50%;
+    width: 280px;
+    height: 350px;
+    border-radius: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -335,7 +335,7 @@ html, body {
     content: '';
     position: absolute;
     inset: -4px;
-    border-radius: 50%;
+    border-radius: 22px;
     border: 2px solid transparent;
     background: linear-gradient(135deg, rgba(108, 123, 255, 0.3), transparent, rgba(167, 139, 250, 0.2)) border-box;
     -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
@@ -350,7 +350,10 @@ html, body {
 }
 
 #faceCanvas {
-    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+    border-radius: 20px;
+    overflow: hidden;
 }
 
 .waveform-container {
@@ -1339,8 +1342,8 @@ html, body {
     }
 
     .face-glow-ring {
-        width: 140px;
-        height: 140px;
+        width: 200px;
+        height: 250px;
     }
 
     .message {
@@ -1383,8 +1386,8 @@ html, body {
     }
 
     .face-glow-ring {
-        width: 110px;
-        height: 110px;
+        width: 160px;
+        height: 200px;
     }
 
     .waveform-container {

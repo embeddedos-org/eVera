@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vera"
-version = "0.8.0"
-description = "Voice-first multi-agent AI assistant with 23+ agents, 165+ tools, glassmorphism UI, Electron desktop app, React Native mobile, and office automation"
+version = "0.9.0"
+description = "Voice-first multi-agent AI assistant with 24+ agents, 183+ tools, 3D holographic avatar, glassmorphism UI, Electron desktop app, React Native mobile, and office automation"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"

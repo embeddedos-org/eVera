@@ -8,6 +8,9 @@
     <meta name="theme-color" content="#0a0e1a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdn.jsdelivr.net/npm/three@0.162.0/ https://cdn.jsdelivr.net/npm/mermaid@11/ 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss:; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; worker-src 'self' blob:;">
+    <meta name="X-Content-Type-Options" content="nosniff">
+    <meta name="Referrer-Policy" content="strict-origin-when-cross-origin">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -60,7 +63,7 @@
                 <!-- Face Panel -->
                 <div class="glass-panel face-panel">
                     <div class="face-glow-ring" id="faceGlowRing">
-                        <canvas id="faceCanvas"></canvas>
+                        <div id="faceCanvas"></div>
                     </div>
                     <div class="waveform-container">
                         <canvas id="waveformCanvas"></canvas>
@@ -214,6 +217,15 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.162.0/three.min.js"
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"></script>
+    <script>
+        if (typeof THREE === "undefined") {
+            console.warn("[Vera] Three.js CDN failed, loading local fallback");
+            document.write('<script src="/static/lib/three.min.js"><\/script>');
+        }
+    </script>
     <script src="/static/face.js"></script>
     <script src="/static/waveform.js"></script>
     <script src="/static/listener.js"></script>

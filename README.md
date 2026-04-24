@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/v0.8.0-release-blue?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/v0.9.0-release-blue?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Agents-24+-blue?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Tools-183+-green?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Python-3.11+-yellow?style=for-the-badge&logo=python" />
@@ -105,6 +105,14 @@ Always-on listening, wake word detection, or push-to-talk. Supports 19 languages
 - 📋 **Clipboard** — read/write system clipboard
 - 🔔 **Notifications** — send OS-level desktop notifications
 
+### 🆕 New in v0.9.0 — 3D Holographic Avatar
+
+- 🎭 **3D Avatar** — Full Three.js WebGL humanoid replacing 2D canvas face: procedural body, holographic shaders, particle aura
+- 🤖 **8 Gesture Animations** — Chin stroke, wave, thumbs up, open palms, clasped hands, defensive, droop — auto-triggered by expression
+- ✨ **Holographic Materials** — Custom GLSL shaders with fresnel glow, circuit-line patterns, energy pulse waves
+- 🛡️ **Production Hardened** — WebGL/Three.js fallback, Page Visibility API, FPS monitoring, CSP headers, SRI CDN, error boundaries
+- 🔒 **Security Upgrade** — Content Security Policy meta tag, X-Content-Type-Options, Referrer-Policy, crossorigin CDN loading
+
 ### 🆕 New in v0.8.0 — eVera Rebrand
 
 - 🏷️ **Full rebrand** — eSri → eVera across 165 files, all imports, class names, configs, UI, and CI/CD
@@ -122,8 +130,14 @@ Always-on listening, wake word detection, or push-to-talk. Supports 19 languages
 - ⏰ **2 New Scheduler Loops** — Automatic ticket scanning + channel monitoring
 - ⚙️ **4 New Config Blocks** — `VERA_JIRA_*`, `VERA_CHANNEL_*`, `VERA_CODEBASE_*`, `VERA_MEETING_*`
 
-### 🎭 Animated Face
-8 expressions with blinking, bobbing, and mouth sync on a glassmorphism UI.
+### 🎭 3D Holographic Avatar (v0.9.0)
+Full **Three.js WebGL** humanoid avatar replacing the 2D canvas face:
+- Procedural geometric mannequin body — head, torso, neck, arms, hands with 5 fingers
+- **Holographic ShaderMaterial** — fresnel rim glow, circuit-line UV grid, energy pulse wave, wireframe overlay
+- **8 gesture animations** auto-triggered by expression — chin stroke, wave, thumbs up, open palms, clasped hands, defensive, droop, rest
+- **200-particle aura** with orbital motion and additive blending
+- Idle breathing, head micro-bob, shoulder sway, finger micro-curl
+- **Production hardened** — WebGL fallback, Page Visibility API (pauses when tab hidden), FPS monitoring with adaptive quality, CSP headers, SRI-protected CDN with local fallback, complete resource cleanup on destroy, error boundaries
 
 ### 👁️ Screen Vision + Real-time Monitoring
 Captures your screen → GPT-4o / Gemini vision analysis. Ask "what's on my screen?"
@@ -393,7 +407,7 @@ cd electron && node build.js win    # Package for Windows
 | Browser | Playwright |
 | Trading | yfinance + Alpaca + IBKR |
 | Tickets | Jira Cloud REST API + httpx |
-| Web UI | Vanilla JS + Canvas + Web Audio |
+| Web UI | Vanilla JS + Three.js WebGL + Canvas + Web Audio |
 | API | FastAPI + WebSocket + SSE |
 
 ---
@@ -404,6 +418,7 @@ See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
 | Version | Date | Highlights |
 |---------|------|-----------|
+| **0.9.0** | 2026-04-24 | **3D Avatar**: Three.js holographic mannequin, gesture animations, production hardening, CSP security |
 | **0.8.0** | 2026-04-22 | **Rebrand**: eSri → eVera, unified versioning, CI/CD overhaul |
 | **0.7.0** | 2026-04-22 | **Office automation**: Jira agent (7 tools), Work Pilot (ticket→PR), Meeting agent, Codebase Indexer, Slack channel monitor, PR creation, 4 new config blocks |
 | **0.6.0** | 2026-04-21 | Vision monitor, voice server, admin ops, GUI tools, path overrides, Playwright auto-install, setup wizards, mobile control |

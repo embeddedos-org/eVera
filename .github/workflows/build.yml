@@ -16,7 +16,7 @@ env:
   NODE_VERSION: '20'
 
 jobs:
-  # ─── Pre-flight: Lint + Test ──────────────────────────────────
+  # ─── Pre-flight: Lint + Test + Frontend ──────────────────────
   preflight:
     name: ✅ Pre-flight checks
     runs-on: ubuntu-latest
@@ -39,6 +39,17 @@ jobs:
 
       - name: Test
         run: pytest tests/ -v -m "not slow" --tb=short
+
+      - name: Verify frontend assets
+        run: |
+          test -f vera/static/face.js
+          test -f vera/static/app.js
+          test -f vera/static/index.html
+          test -f vera/static/lib/three.min.js
+          grep -q "Content-Security-Policy" vera/static/index.html
+          grep -q "setExpression," vera/static/face.js
+          grep -q "setSpeakAmplitude," vera/static/face.js
+          echo "✅ Frontend validation passed"
 
   # ─── Desktop (Electron) ─────────────────────────────────────
   build-desktop:
@@ -241,10 +252,18 @@ jobs:
             artifacts/**/*.deb
             artifacts/**/*.apk
           body: |
-            ## What's Changed
+            ## 🚀 eVera ${{ github.ref_name }}
+
+            ### What's Changed
             ${{ steps.changelog.outputs.CHANGES }}
 
-            ## 📥 Download & Install
+            ### ✨ Highlights
+            - 🎭 3D Holographic Avatar with Three.js WebGL
+            - 🤖 8 gesture animations auto-triggered by expression
+            - 🛡️ Production hardened with WebGL fallback, CSP, FPS monitoring
+            - 🔒 Content Security Policy, SRI CDN loading, local fallback
+
+            ### 📥 Download & Install
 
             | Platform | Download | Install |
             |----------|----------|---------|

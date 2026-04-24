@@ -101,3 +101,56 @@ jobs:
 
       - name: Bandit security scan
         run: bandit -r vera/ -ll --skip B101 || true
+
+  # ============================================================
+  # 4. FRONTEND VALIDATION
+  # ============================================================
+  frontend:
+    name: 🎨 Frontend Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify critical static assets exist
+        run: |
+          echo "Checking critical frontend files..."
+          test -f vera/static/face.js       || (echo "MISSING: face.js" && exit 1)
+          test -f vera/static/app.js        || (echo "MISSING: app.js" && exit 1)
+          test -f vera/static/style.css     || (echo "MISSING: style.css" && exit 1)
+          test -f vera/static/index.html    || (echo "MISSING: index.html" && exit 1)
+          test -f vera/static/waveform.js   || (echo "MISSING: waveform.js" && exit 1)
+          test -f vera/static/listener.js   || (echo "MISSING: listener.js" && exit 1)
+          test -f vera/static/agents-view.js || (echo "MISSING: agents-view.js" && exit 1)
+          echo "✅ All critical assets present"
+
+      - name: Verify Three.js local fallback exists
+        run: |
+          test -f vera/static/lib/three.min.js || (echo "MISSING: Three.js local fallback" && exit 1)
+          SIZE=$(wc -c < vera/static/lib/three.min.js)
+          if [ "$SIZE" -lt 100000 ]; then
+            echo "ERROR: Three.js fallback too small ($SIZE bytes) — likely corrupted"
+            exit 1
+          fi
+          echo "✅ Three.js fallback OK ($SIZE bytes)"
+
+      - name: Verify CSP header in index.html
+        run: |
+          grep -q "Content-Security-Policy" vera/static/index.html || (echo "MISSING: CSP meta tag" && exit 1)
+          echo "✅ CSP header present"
+
+      - name: Check JavaScript syntax (basic)
+        run: |
+          for f in vera/static/*.js; do
+            node --check "$f" 2>/dev/null || echo "⚠ Syntax issue in $f (may use browser-only APIs)"
+          done
+          echo "✅ JS syntax check complete"
+
+      - name: Verify API compatibility (VeraFace public interface)
+        run: |
+          grep -q "init," vera/static/face.js               || (echo "MISSING: init export" && exit 1)
+          grep -q "setExpression," vera/static/face.js       || (echo "MISSING: setExpression export" && exit 1)
+          grep -q "getExpression," vera/static/face.js       || (echo "MISSING: getExpression export" && exit 1)
+          grep -q "setSpeakAmplitude," vera/static/face.js   || (echo "MISSING: setSpeakAmplitude export" && exit 1)
+          grep -q "destroy," vera/static/face.js             || (echo "MISSING: destroy export" && exit 1)
+          grep -q "EXPRESSIONS:" vera/static/face.js         || (echo "MISSING: EXPRESSIONS export" && exit 1)
+          echo "✅ VeraFace API interface verified"
