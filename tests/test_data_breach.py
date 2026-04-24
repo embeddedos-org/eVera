@@ -6,6 +6,7 @@ and all sensitive operations are protected.
 
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
 
 import pytest
@@ -486,6 +487,10 @@ class TestAuditLogging:
 class TestEncryptedStorage:
     """Verify sensitive data is encrypted at rest."""
 
+    @pytest.mark.skipif(
+        not importlib.util.find_spec("cryptography"),
+        reason="cryptography package not installed",
+    )
     def test_secure_vault_encrypts(self):
         import tempfile
 

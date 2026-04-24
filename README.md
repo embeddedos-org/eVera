@@ -12,7 +12,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/v0.8.0-release-blue?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Agents-23+-blue?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Tools-165+-green?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Tools-171+-green?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Python-3.11+-yellow?style=for-the-badge&logo=python" />
   <img src="https://img.shields.io/badge/Electron-28+-9feaf9?style=for-the-badge&logo=electron" />
   <img src="https://img.shields.io/badge/React_Native-0.73-61dafb?style=for-the-badge&logo=react" />
@@ -82,6 +82,7 @@ Always-on listening, wake word detection, or push-to-talk. Supports 19 languages
 | 🌍 Language Tutor | 5 | Language lessons, vocabulary, grammar, pronunciation, quizzes (16+ languages) |
 | 🗺️ Codebase Indexer | 4 | **Project indexing, architecture analysis, definition extraction, related files** |
 | 📝 Meeting | 3 | **Extract action items, parse meeting notes, create tasks from transcripts** |
+| 📊 Diagram | 4 | **Call graphs, class diagrams, flowcharts, export to SVG/PNG/PDF** |
 
 #### Conditional Agents (enabled via config)
 
@@ -311,11 +312,27 @@ VERA_MEETING_AUTO_CREATE_TODOS=true
 
 ---
 
-## 🧪 Testing — 200+ Tests
+## 🔒 Security
+
+eVera includes multiple security layers to prevent misuse and protect sensitive data:
+
+| Layer | Description |
+|-------|------------|
+| **Policy Engine** | Rule-based ALLOW/CONFIRM/DENY per agent.tool pattern (`vera/safety/policy.py`) |
+| **Path Sandboxing** | All file operations validated against ALLOWED_ROOTS and BLOCKED_PATHS |
+| **PII Detection** | Real-time PII scanning with auto-redaction before LLM calls |
+| **RBAC** | Role-based access control (admin/user/viewer) with API key auth |
+| **Command Blocking** | 50+ dangerous shell patterns blocked (rm -rf, format, dd, etc.) |
+| **Injection Prevention** | PowerShell/AppleScript input escaping, shlex parsing for sudo |
+| **Audit Logging** | Every tool execution and elevated action logged with timestamps |
+
+---
+
+## 🧪 Testing — 489 Tests
 
 ```bash
 python verify.py                    # Pre-push verification (all checks)
-pytest tests/ -v                    # All tests
+pytest tests/ -v                    # All tests (489 pass, 1 skip)
 pytest tests/ --cov=vera            # With coverage
 ruff check . && ruff format .       # Lint
 ```

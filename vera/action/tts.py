@@ -69,7 +69,7 @@ class LocalTTSEngine:
 
     async def speak(self, text: str) -> None:
         if not self._engine:
-            print(f"🔊 {text}")
+            logger.info("🔊 %s", text)
             return
         self._interrupted = False
         self._speaking = True

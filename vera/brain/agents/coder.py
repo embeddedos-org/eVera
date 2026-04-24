@@ -36,6 +36,16 @@ BLOCKED_PATHS = [
     ".env",
     ".env.local",
     ".env.production",
+    ".kube",
+    ".docker",
+    ".npmrc",
+    ".pypirc",
+    ".netrc",
+    ".bash_history",
+    ".zsh_history",
+    ".git/config",
+    ".pem",
+    ".key",
 ]
 
 
@@ -230,6 +240,11 @@ class SearchInFilesTool(Tool):
             return {"status": "error", "message": "No search pattern provided"}
 
         dir_path = Path(directory).expanduser()
+
+        safe, reason = _is_path_safe(dir_path)
+        if not safe:
+            return {"status": "denied", "message": f"Blocked: {reason}"}
+
         if not dir_path.exists():
             return {"status": "error", "message": f"Directory not found: {dir_path}"}
 
@@ -291,6 +306,10 @@ class OpenInVSCodeTool(Tool):
 
         if not path_str:
             return {"status": "error", "message": "No path provided"}
+
+        safe, reason = _is_path_safe(Path(path_str).expanduser())
+        if not safe:
+            return {"status": "denied", "message": f"Blocked: {reason}"}
 
         try:
             cmd = ["code"]

@@ -15,24 +15,25 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from config import settings as _broker_settings
 from vera.brain.agents.base import Tool
 
 logger = logging.getLogger(__name__)
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "data"
 
-# --- Config from environment ---
+# --- Config from Pydantic settings ---
 
-ALPACA_API_KEY = os.getenv("VERA_ALPACA_API_KEY", "")
-ALPACA_SECRET_KEY = os.getenv("VERA_ALPACA_SECRET_KEY", "")
-ALPACA_PAPER = os.getenv("VERA_ALPACA_PAPER", "true").lower() == "true"
+ALPACA_API_KEY = _broker_settings.broker.alpaca_api_key
+ALPACA_SECRET_KEY = _broker_settings.broker.alpaca_secret_key
+ALPACA_PAPER = _broker_settings.broker.alpaca_paper
 
-IBKR_HOST = os.getenv("VERA_IBKR_HOST", "127.0.0.1")
-IBKR_PORT = int(os.getenv("VERA_IBKR_PORT", "7497"))  # 7497=paper, 7496=live
-IBKR_CLIENT_ID = int(os.getenv("VERA_IBKR_CLIENT_ID", "1"))
+IBKR_HOST = _broker_settings.broker.ibkr_host
+IBKR_PORT = _broker_settings.broker.ibkr_port
+IBKR_CLIENT_ID = _broker_settings.broker.ibkr_client_id
 
 # Safety: auto-trade threshold (in dollars). Orders above this need confirmation.
-AUTO_TRADE_LIMIT = float(os.getenv("VERA_AUTO_TRADE_LIMIT", "500"))
+AUTO_TRADE_LIMIT = _broker_settings.broker.auto_trade_limit
 
 SYSTEM = platform.system()
 
@@ -448,7 +449,7 @@ class BrokerAppAutomationTool(Tool):
 
             try:
                 if SYSTEM == "Windows":
-                    subprocess.Popen(["start", exe], shell=True)
+                    subprocess.Popen(["cmd", "/c", "start", exe])
                 elif SYSTEM == "Darwin":
                     subprocess.Popen(["open", "-a", exe])
                 else:

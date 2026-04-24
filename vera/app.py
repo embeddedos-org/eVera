@@ -106,8 +106,7 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
             path = request.url.path
             if path not in ("/", "/health") and not path.startswith("/static"):
                 auth_header = request.headers.get("Authorization", "")
-                query_key = request.query_params.get("api_key", "")
-                if auth_header != f"Bearer {settings.server.api_key}" and query_key != settings.server.api_key:
+                if auth_header != f"Bearer {settings.server.api_key}":
                     return JSONResponse(
                         status_code=401,
                         content={"detail": "Invalid or missing API key"},
@@ -790,6 +789,7 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         """Return file tree for a given path."""
         from config import settings
         from vera.brain.agents.codebase_indexer import _build_tree
+        from vera.brain.agents.coder import _is_path_safe
 
         raw_path = request.query_params.get("path", ".")
         project = Path(raw_path).resolve()
@@ -797,6 +797,10 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
             project = Path(settings.codebase_indexer.default_project_path).resolve()
         if not project.is_dir():
             raise HTTPException(status_code=404, detail=f"Directory not found: {project}")
+
+        safe, reason = _is_path_safe(project)
+        if not safe:
+            raise HTTPException(status_code=403, detail=f"Forbidden: {reason}")
 
         tree = _build_tree(project, max_depth=4)
         return JSONResponse({"tree": tree, "root": str(project)})
@@ -806,12 +810,18 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         """Return file content, language, definitions, and complexity."""
         from vera.brain.agents.code_analysis import compute_complexity
         from vera.brain.agents.codebase_indexer import _extract_definitions
+        from vera.brain.agents.coder import _is_path_safe
 
         file_path = request.query_params.get("path", "")
         if not file_path:
             raise HTTPException(status_code=400, detail="path query parameter required")
 
         fp = Path(file_path).resolve()
+
+        safe, reason = _is_path_safe(fp)
+        if not safe:
+            raise HTTPException(status_code=403, detail=f"Forbidden: {reason}")
+
         if not fp.is_file():
             raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
 

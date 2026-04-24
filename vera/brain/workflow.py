@@ -177,8 +177,10 @@ class WorkflowEngine:
                     if step.step_type == "condition":
                         target = result.get("next_step")
                         if target:
-                            # Skip steps not on the chosen path
-                            pass
+                            raise NotImplementedError(
+                                f"Condition jump to '{target}' not yet implemented — "
+                                "workflow condition branching requires step graph traversal"
+                            )
                 except Exception as e:
                     step.status = "failed"
                     step.error = str(e)

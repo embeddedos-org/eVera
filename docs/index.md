@@ -10,14 +10,14 @@ Welcome to the eVera documentation. eVera is a voice-first multi-agent AI assist
 |----------|-------------|
 | [Getting Started](getting_started.md) | Installation, first run, and basic configuration |
 | [Architecture](architecture.md) | System architecture, component overview, data flow |
-| [Agents](agents.md) | All 10 agents with tools, descriptions, and examples |
+| [Agents](agents.md) | All 23+ agents with tools, descriptions, and examples |
 | [API Reference](api_reference.md) | REST, WebSocket, and SSE endpoint documentation |
 | [Security](security.md) | Safety policies, PII detection, sandboxing |
 | [Configuration](configuration.md) | All environment variables with defaults |
 | [Development](development.md) | Building from source, testing, contributing |
 | [FAQ](faq.md) | Common questions and troubleshooting |
 | [Diagrams](diagrams.md) | 7 Mermaid architecture diagrams |
-| [Release Notes v0.5.0](release_notes_v0.5.0.md) | What's new in the latest release |
+| [Release Notes v0.8.0](release_notes_v0.8.0.md) | What's new in the latest release |
 
 ---
 
@@ -52,15 +52,15 @@ python docs/generate_diagrams.py
 
 | Metric | Value |
 |--------|-------|
-| Agents | 10+ (extensible via plugins) |
-| Tools | 90+ |
+| Agents | 23+ (extensible via plugins) |
+| Tools | 171+ |
 | API Endpoints | 20+ |
-| Test Cases | 200+ |
+| Test Cases | 489 |
 | Supported Languages | 19 |
 | Crew Strategies | 4 (sequential, parallel, hierarchical, debate) |
 | Memory Layers | 4 (working, episodic, semantic, secure) |
 | LLM Tiers | 4 (regex, local, cloud specialist, cloud strategist) |
-| Platforms | Windows, macOS, Linux |
+| Platforms | Windows, macOS, Linux, Android, iOS |
 
 ---
 

@@ -1,4 +1,4 @@
-"""eVera v0.5.1 — End-to-End Validation Suite.
+"""eVera v0.8.0 — End-to-End Validation Suite.
 
 Validates every agent, tool, service, and subsystem without external dependencies.
 Uses mocking for LLM providers, brokers, and external APIs.
@@ -415,7 +415,7 @@ endpoints = [
 for path, method in endpoints:
     check(f"Endpoint {method} {path}", path in app_src)
 
-check("API version is 0.5.1", '"0.5.1"' in app_src)
+check("API version is 0.8.0", '"0.8.0"' in app_src)
 check("HTTP auth middleware present", "api_key_middleware" in app_src)
 check("WebSocket auth present", "ws_api_key" in app_src or "api_key" in app_src)
 check("JSONResponse imported", "JSONResponse" in app_src)

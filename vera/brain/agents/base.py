@@ -110,8 +110,7 @@ class Tool:
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         """Execute the tool. Override in concrete implementations."""
-        logger.info("Tool '%s' executed with args: %s", self.name, kwargs)
-        return {"status": "stub", "tool": self.name, "args": kwargs}
+        raise NotImplementedError(f"Tool '{self.name}' must implement execute()")
 
     def to_openai_schema(self) -> dict[str, Any]:
         """Convert to OpenAI function calling schema."""
@@ -203,7 +202,7 @@ class BaseAgent(abc.ABC):
         try:
             _agent_status_queue.put_nowait(event)
         except Exception:
-            pass
+            logger.debug("Agent status queue full, dropping event for %s", self.name)
 
     async def run(self, state: VeraState) -> VeraState:
         """Execute the agent with native function calling + regex fallback.
@@ -254,11 +253,26 @@ class BaseAgent(abc.ABC):
                         if tool is None:
                             tool_result = {"error": f"Unknown tool: {tc.name}"}
                         else:
-                            try:
-                                tool_result = await tool.execute(**tc.arguments)
-                            except Exception as e:
-                                logger.warning("Tool '%s' failed: %s", tc.name, e)
-                                tool_result = {"error": str(e)}
+                            # Policy check before execution
+                            from vera.safety.policy import PolicyAction, PolicyService
+
+                            policy = PolicyService()
+                            decision = policy.check(self.name, tc.name, tc.arguments)
+                            if decision.action == PolicyAction.DENY:
+                                tool_result = {"error": f"Policy denied: {decision.reason}"}
+                            elif decision.action == PolicyAction.CONFIRM:
+                                logger.info("Policy requires confirmation for %s.%s", self.name, tc.name)
+                                try:
+                                    tool_result = await tool.execute(**tc.arguments)
+                                except Exception as e:
+                                    logger.warning("Tool '%s' failed: %s", tc.name, e)
+                                    tool_result = {"error": str(e)}
+                            else:
+                                try:
+                                    tool_result = await tool.execute(**tc.arguments)
+                                except Exception as e:
+                                    logger.warning("Tool '%s' failed: %s", tc.name, e)
+                                    tool_result = {"error": str(e)}
 
                         all_tool_results.append({"tool": tc.name, "result": tool_result})
                         tool_outputs.append(

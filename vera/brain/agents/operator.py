@@ -254,10 +254,31 @@ class ExecuteScriptTool(Tool):
             "bootrec",
             "Remove-Item C:\\",
             "Remove-Item -Recurse -Force C:\\",
+            "powershell -encodedcommand",
+            "certutil -urlcache",
+            "bitsadmin",
+            "mshta",
+            "wscript",
+            "cscript",
+            "taskkill /f",
+            "net user",
+            "net localgroup",
+            "schtasks",
+            "Start-Process",
+            "|python",
+            "|perl",
+            "|ruby",
+            "|node",
         ]
-        lower_cmd = command.lower().replace(" ", "")
+        # Normalize whitespace: tabs, Unicode whitespace, Windows ^ escape
+        import unicodedata
+
+        normalized_cmd = command.lower()
+        normalized_cmd = normalized_cmd.replace("\t", " ").replace("^", "")
+        normalized_cmd = "".join(" " if unicodedata.category(c).startswith("Z") else c for c in normalized_cmd)
+        lower_cmd = normalized_cmd.replace(" ", "")
         for d in dangerous_patterns:
-            if d.replace(" ", "") in lower_cmd:
+            if d.replace(" ", "").lower() in lower_cmd:
                 return {
                     "status": "denied",
                     "message": "Blocked potentially dangerous command pattern. Ask the user to run it manually.",
@@ -265,11 +286,10 @@ class ExecuteScriptTool(Tool):
 
         # Block shell metacharacter injection for non-shell languages
         if language in ("python", "powershell"):
-            # Check for obvious injection attempts
             shell_chars = [";", "&&", "||", "`", "$("]
             for char in shell_chars:
-                if char in command and language == "python":
-                    return {"status": "denied", "message": f"Suspicious character '{char}' in Python command"}
+                if char in command:
+                    return {"status": "denied", "message": f"Suspicious character '{char}' in {language} command"}
 
         try:
             import shlex
@@ -396,14 +416,19 @@ class ElevatedScriptTool(Tool):
         # Execute with elevation
         try:
             if SYSTEM in ("Linux", "Darwin"):
+                import shlex as _shlex
+
                 result = subprocess.run(
-                    ["sudo", "-S"] + command.split(),
+                    ["sudo", "-S"] + _shlex.split(command),
                     capture_output=True,
                     text=True,
                     timeout=60,
                 )
             else:
-                ps_cmd = f'Start-Process -FilePath "cmd.exe" -ArgumentList "/c {command}" -Verb RunAs -Wait -PassThru'
+                escaped_cmd = command.replace('"', '`"').replace("'", "`'")
+                ps_cmd = (
+                    f'Start-Process -FilePath "cmd.exe" -ArgumentList "/c {escaped_cmd}" -Verb RunAs -Wait -PassThru'
+                )
                 result = subprocess.run(
                     ["powershell", "-NoProfile", "-Command", ps_cmd],
                     capture_output=True,
@@ -665,6 +690,8 @@ class ManageFilesTool(Tool):
         )
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
+        from vera.brain.agents.coder import _is_path_safe
+
         action = kwargs.get("action", "").lower()
         path_str = kwargs.get("path", "")
         dest_str = kwargs.get("destination", "")
@@ -673,6 +700,16 @@ class ManageFilesTool(Tool):
             return {"status": "error", "message": "No path provided"}
 
         path = Path(path_str).expanduser()
+
+        # Path safety check for mutating actions
+        if action in ("copy", "move", "delete", "mkdir"):
+            safe, reason = _is_path_safe(path)
+            if not safe:
+                return {"status": "denied", "message": f"Blocked: {reason}"}
+            if dest_str:
+                dest_safe, dest_reason = _is_path_safe(Path(dest_str).expanduser())
+                if not dest_safe:
+                    return {"status": "denied", "message": f"Blocked destination: {dest_reason}"}
 
         try:
             if action == "list":
@@ -803,15 +840,16 @@ class TypeTextTool(Tool):
                     tmp_path = f.name
                 ps_cmd = (
                     f"Add-Type -AssemblyName System.Windows.Forms; "
-                    f"$text = Get-Content -Raw '{tmp_path}'; "
+                    f"$text = Get-Content -Raw '{tmp_path.replace(chr(39), chr(39) + chr(39))}'; "
                     f"[System.Windows.Forms.SendKeys]::SendWait($text); "
-                    f"Remove-Item '{tmp_path}'"
+                    f"Remove-Item '{tmp_path.replace(chr(39), chr(39) + chr(39))}'"
                 )
                 subprocess.run(["powershell", "-NoProfile", "-Command", ps_cmd], timeout=10)
                 return {"status": "success", "typed": text[:50]}
             elif SYSTEM == "Darwin":
+                escaped_text = text.replace("\\", "\\\\").replace('"', '\\"')
                 subprocess.run(
-                    ["osascript", "-e", f'tell application "System Events" to keystroke "{text.replace(chr(34), "")}"'],
+                    ["osascript", "-e", f'tell application "System Events" to keystroke "{escaped_text}"'],
                     timeout=10,
                 )
                 return {"status": "success", "typed": text[:50]}
@@ -1030,9 +1068,10 @@ class WindowManageTool(Tool):
                     return {"status": "success", "windows": [a.strip() for a in result.stdout.split(",")][:30]}
                 if not title:
                     return {"status": "error", "message": "Window title required"}
+                escaped_title = title.replace("\\", "\\\\").replace('"', '\\"')
                 scripts = {
-                    "focus": f'tell application "{title}" to activate',
-                    "close": f'tell application "{title}" to close first window',
+                    "focus": f'tell application "{escaped_title}" to activate',
+                    "close": f'tell application "{escaped_title}" to close first window',
                 }
                 if action in scripts:
                     subprocess.run(["osascript", "-e", scripts[action]], timeout=10)
@@ -1115,8 +1154,13 @@ class ProcessManagerTool(Tool):
                     p.terminate()
                     killed.append({"pid": int(pid), "name": p.name()})
                 elif name:
+                    if len(name) < 4:
+                        return {
+                            "status": "error",
+                            "message": "Process name must be at least 4 characters to avoid accidental kills",
+                        }
                     for p in psutil.process_iter(["pid", "name"]):
-                        if name.lower() in p.info["name"].lower():
+                        if p.info["name"].lower() == name.lower():
                             p.terminate()
                             killed.append({"pid": p.info["pid"], "name": p.info["name"]})
                 else:
@@ -1375,12 +1419,17 @@ class NotificationTool(Tool):
         if not message:
             return {"status": "error", "message": "No message provided"}
         try:
+            safe_title = title.replace('"', "'").replace("`", "'").replace("$", "")
+            safe_message = message.replace('"', "'").replace("`", "'").replace("$", "")
             if SYSTEM == "Windows":
-                ps = f'Add-Type -AssemblyName System.Windows.Forms; $n = New-Object System.Windows.Forms.NotifyIcon; $n.Icon = [System.Drawing.SystemIcons]::Information; $n.Visible = $true; $n.ShowBalloonTip(5000, "{title}", "{message}", [System.Windows.Forms.ToolTipIcon]::Info)'
+                ps = f'Add-Type -AssemblyName System.Windows.Forms; $n = New-Object System.Windows.Forms.NotifyIcon; $n.Icon = [System.Drawing.SystemIcons]::Information; $n.Visible = $true; $n.ShowBalloonTip(5000, "{safe_title}", "{safe_message}", [System.Windows.Forms.ToolTipIcon]::Info)'
                 subprocess.run(["powershell", "-NoProfile", "-Command", ps], timeout=10)
             elif SYSTEM == "Darwin":
+                escaped_title = safe_title.replace("\\", "\\\\").replace('"', '\\"')
+                escaped_msg = safe_message.replace("\\", "\\\\").replace('"', '\\"')
                 subprocess.run(
-                    ["osascript", "-e", f'display notification "{message}" with title "{title}"'], timeout=10
+                    ["osascript", "-e", f'display notification "{escaped_msg}" with title "{escaped_title}"'],
+                    timeout=10,
                 )
             else:
                 subprocess.run(["notify-send", title, message], timeout=10)
@@ -1392,7 +1441,7 @@ class NotificationTool(Tool):
 class OperatorAgent(BaseAgent):
     """Controls PC operations, file management, GUI automation, and system admin.
 
-    The Operator is the most tool-rich agent with 20 tools spanning:
+    The Operator is the most tool-rich agent with 26 tools spanning:
     - App launching (cross-platform app maps)
     - Shell command execution (with dangerous pattern blocking)
     - File operations (copy, move, delete, list, mkdir)

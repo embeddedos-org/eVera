@@ -89,8 +89,8 @@ except Exception as e:
 PLUGIN_INTENTS: dict[str, str] = {}
 try:
     PLUGIN_INTENTS = _pm.get_intents()
-except Exception:
-    pass
+except Exception as e:
+    logger.warning("Failed to load plugin intents: %s", e)
 
 
 def get_agent(name: str) -> BaseAgent | None:

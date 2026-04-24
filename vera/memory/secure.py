@@ -40,7 +40,10 @@ class SecureVault:
                         key_path.write_bytes(new_key)
                         logger.info("Generated new vault key at %s", key_path)
         except ImportError:
-            logger.warning("cryptography not installed; secure vault disabled (plaintext fallback)")
+            logger.critical(
+                "cryptography package not installed — SecureVault running in PLAINTEXT mode! "
+                "Install with: pip install cryptography"
+            )
 
     def store(self, key: str, value: str) -> None:
         self._data[key] = value
@@ -83,5 +86,5 @@ class SecureVault:
                 self._data = json.loads(raw)
             logger.info("Loaded %d entries from secure vault", len(self._data))
         except Exception:
-            logger.warning("Failed to decrypt vault — starting fresh")
+            logger.error("Failed to decrypt vault at %s — starting fresh", self._vault_path)
             self._data = {}

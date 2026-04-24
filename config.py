@@ -334,6 +334,20 @@ class MeetingSettings(BaseSettings):
     model_config = {"env_prefix": "VERA_MEETING_"}
 
 
+class BrokerSettings(BaseSettings):
+    """Trading broker configuration."""
+
+    alpaca_api_key: str = Field("", description="Alpaca API key")
+    alpaca_secret_key: str = Field("", description="Alpaca secret key")
+    alpaca_paper: bool = Field(True, description="Use Alpaca paper trading")
+    ibkr_host: str = Field("127.0.0.1", description="IBKR Gateway host")
+    ibkr_port: int = Field(7497, description="IBKR Gateway port (7497=paper, 7496=live)")
+    ibkr_client_id: int = Field(1, description="IBKR client ID")
+    auto_trade_limit: float = Field(500.0, description="Auto-trade threshold in dollars")
+
+    model_config = {"env_prefix": "VERA_"}
+
+
 class Settings(BaseSettings):
     """Root settings — aggregates all configuration groups.
 
@@ -365,6 +379,7 @@ class Settings(BaseSettings):
     channel_monitor: ChannelMonitorSettings = Field(default_factory=ChannelMonitorSettings)
     codebase_indexer: CodebaseIndexerSettings = Field(default_factory=CodebaseIndexerSettings)
     meeting: MeetingSettings = Field(default_factory=MeetingSettings)
+    broker: BrokerSettings = Field(default_factory=BrokerSettings)
     debug: bool = Field(False, description="Enable debug logging")
     data_dir: Path = Field(Path("data"), description="Data storage directory")
 

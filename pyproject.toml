@@ -50,6 +50,7 @@ voice = [
     "webrtcvad>=2.0.10",
     "numpy>=1.24",
     "pyttsx3>=2.90",
+    "edge-tts>=6.1",
 ]
 browser = [
     "playwright>=1.40",

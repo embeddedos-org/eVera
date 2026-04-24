@@ -27,7 +27,7 @@ async def emit_pipeline_event(node: str, status: str, **data) -> None:
     try:
         _agent_status_queue.put_nowait(event)
     except Exception:
-        pass
+        logger.debug("Agent status queue full, dropping event: %s/%s", node, status)
 
 
 class EventType(str, Enum):

@@ -84,6 +84,7 @@ DEFAULT_RULES: dict[str, PolicyAction] = {
     "operator.screenshot": PolicyAction.ALLOW,
     "operator.take_screenshot": PolicyAction.ALLOW,
     "operator.execute_script": PolicyAction.CONFIRM,
+    "operator.elevated_script": PolicyAction.CONFIRM,
     "operator.manage_files": PolicyAction.CONFIRM,
     "operator.type_text": PolicyAction.CONFIRM,
     # Operator — mouse & GUI (low risk)

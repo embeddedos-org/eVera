@@ -180,7 +180,7 @@ def correct_spelling(text: str) -> str:
     for wrong, right in VOICE_CORRECTIONS.items():
         corrected = re.sub(r"\b" + re.escape(wrong) + r"\b", right, corrected, flags=re.I)
 
-    # Fuzzy match each word against command veraboulary
+    # Fuzzy match each word against command vocabulary
     words = corrected.split()
     fixed_words = []
     for word in words:

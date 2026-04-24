@@ -88,7 +88,8 @@ class RBACManager:
         if users_file.exists():
             try:
                 self._users = json.loads(users_file.read_text())
-            except Exception:
+            except Exception as e:
+                logger.error("Failed to load users file: %s", e)
                 self._users = {}
 
     def _save_users(self) -> None:
@@ -202,7 +203,8 @@ class RBACManager:
         try:
             entries = json.loads(audit_file.read_text())
             return entries[-limit:]
-        except Exception:
+        except Exception as e:
+            logger.error("Failed to read audit log: %s", e)
             return []
 
     def _audit(self, action: str, username: str, details: dict) -> None:
@@ -212,8 +214,8 @@ class RBACManager:
         if audit_file.exists():
             try:
                 entries = json.loads(audit_file.read_text())
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error("Failed to parse audit log for append: %s", e)
 
         entries.append(
             {

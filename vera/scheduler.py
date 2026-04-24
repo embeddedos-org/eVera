@@ -40,7 +40,7 @@ class ProactiveScheduler:
         try:
             self._notification_handlers.remove(handler)
         except ValueError:
-            pass
+            logger.debug("Notification handler not found during removal")
 
     async def start(self) -> None:
         """Start all background check loops."""
@@ -235,7 +235,7 @@ class ProactiveScheduler:
                 except Exception:
                     continue
         except ImportError:
-            pass
+            logger.warning("yfinance not installed; stock alerts disabled")
 
     # --- Daily briefing ---
 
@@ -268,8 +268,8 @@ class ProactiveScheduler:
                         parts.append(f"  • {e.get('time', '??')} — {e['title']}")
                 else:
                     parts.append("📅 No events today — free day!")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("Failed to load calendar for briefing: %s", e)
 
         # Pending todos
         todos_path = DATA_DIR / "todos.json"
@@ -281,8 +281,8 @@ class ProactiveScheduler:
                     parts.append(f"\n✅ {len(pending)} todo(s) pending:")
                     for t in pending[:5]:
                         parts.append(f"  • {t['text']}")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("Failed to load todos for briefing: %s", e)
 
         # Pending reminders
         reminders_path = DATA_DIR / "reminders.json"
@@ -292,8 +292,10 @@ class ProactiveScheduler:
                 active = [r for r in reminders if not r.get("dismissed")]
                 if active:
                     parts.append(f"\n⏰ {len(active)} active reminder(s)")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("Failed to load reminders for briefing: %s", e)
+
+        parts.append
 
         parts.append("\nLet me know how I can help today! 💪")
 

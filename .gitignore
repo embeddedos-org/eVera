@@ -1,61 +1,20 @@
+# Data and secrets
+data/
+.env
+*.key
+*.db
+
 # Python
 __pycache__/
-*.py[cod]
-*$py.class
+*.pyc
 *.egg-info/
-*.egg
-dist/
-build/
-# Keep vera.spec - needed for PyInstaller builds
-
-# Virtual environments
 .venv/
 venv/
-env/
+dist/
+build/
 
-# Environment
-.env
-
-# Data (user-specific)
-data/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# Electron
-electron/node_modules/
-electron/dist/
-electron/out/
-electron/package-lock.json
-
-# Mobile
-mobile/node_modules/
-mobile/android/build/
-mobile/android/app/build/
-mobile/ios/build/
-mobile/ios/Pods/
-mobile/package-lock.json
-
-# Docs generated
-docs/html/
-docs/latex/
-docs/images/*.png
-
-# Coverage
-htmlcov/
-.coverage
-coverage.xml
-
-# Misc
-*.log
-*.bak
-*.tmp
+# Test artifacts
 MagicMock/
+
+# Executables
+*.exe

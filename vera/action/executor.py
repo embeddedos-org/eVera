@@ -77,6 +77,7 @@ class ToolExecutor:
 
     async def _set_timer(self, duration_seconds: int = 60, label: str = "Timer") -> dict:
         """Set a timer (stub — in production, use asyncio.sleep + notification)."""
+        logger.warning("_set_timer is a stub — not yet implemented in production")
         return {
             "status": "timer_set",
             "duration_seconds": duration_seconds,
@@ -95,6 +96,7 @@ class ToolExecutor:
 
     async def _open_app(self, app_name: str = "") -> dict:
         """Open an application (stub)."""
+        logger.warning("_open_app is a stub — use OperatorAgent.open_application instead")
         return {
             "status": "stub",
             "message": f"Would open application: {app_name}",

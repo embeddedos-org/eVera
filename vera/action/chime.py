@@ -48,4 +48,4 @@ async def play_activation_chime() -> None:
         logger.debug("Activation chime played")
     except Exception as e:
         logger.debug("Chime playback failed (%s), using fallback", e)
-        print("🔔")
+        logger.info("🔔")
