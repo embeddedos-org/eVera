@@ -44,3 +44,6 @@ playwright>=1.40.0
 
 # Streaming TTS
 edge-tts>=6.1.0
+
+# Image processing (media factory)
+Pillow>=10.0.0

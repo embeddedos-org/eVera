@@ -7,8 +7,19 @@ Run with: pytest tests/test_performance.py -v
 from __future__ import annotations
 
 import time
+from pathlib import Path
 
 import pytest
+
+
+@pytest.fixture(autouse=True)
+def _allow_tmp_path_in_coder(tmp_path):
+    """Ensure tmp_path is in ALLOWED_ROOTS for coder tools in CI."""
+    from vera.brain.agents import coder
+    original = list(coder.ALLOWED_ROOTS)
+    coder.ALLOWED_ROOTS.append(tmp_path.resolve())
+    yield
+    coder.ALLOWED_ROOTS[:] = original
 
 
 class TestResponseTime:
