@@ -10,6 +10,9 @@ license: "MIT"
 
 ## Product Reference
 
+![Figure: eVera System Architecture — ReAct agent with RAG and 3D avatar rendering](images/architecture.png)
+
+
 **Version 0.9.0**
 
 **By Srikanth Patchava & EmbeddedOS Contributors**
