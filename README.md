@@ -35,6 +35,8 @@
 
 ## 📥 Quick Install
 
+[![Book](https://github.com/embeddedos-org/eVera/actions/workflows/book-build.yml/badge.svg)](https://github.com/embeddedos-org/eVera/actions/workflows/book-build.yml)
+
 ### Desktop App (Recommended — one-click, no Python needed)
 
 | Platform | Download | Install |
