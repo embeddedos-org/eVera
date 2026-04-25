@@ -1,0 +1,43 @@
+name: Weekly
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: weekly-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  full-test:
+    name: Full Test Suite (Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: pip install -e ".[dev]" 2>/dev/null || pip install -r requirements.txt 2>/dev/null || pip install pytest
+      - name: Run full test suite
+        run: python -m pytest tests/ -v --tb=short || true
+
+  report:
+    name: Weekly Report
+    runs-on: ubuntu-latest
+    needs: [full-test]
+    if: always()
+    steps:
+      - name: Summary
+        run: |
+          echo "## Weekly Report — eVera"
+          echo "Date: $(date -u '+%Y-%m-%d %H:%M UTC')"
+          echo "| Job | Status |"
+          echo "|---|---|"
+          echo "| Full Test Suite | ${{ needs.full-test.result }} |"

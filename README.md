@@ -10,6 +10,8 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/embeddedos-org/eVera/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/embeddedos-org/eVera/ci.yml?style=for-the-badge&label=CI" alt="CI"></a>
+  <a href="https://github.com/embeddedos-org/eVera/actions/workflows/codeql.yml"><img src="https://img.shields.io/github/actions/workflow/status/embeddedos-org/eVera/codeql.yml?style=for-the-badge&label=CodeQL" alt="CodeQL"></a>
   <img src="https://img.shields.io/badge/v0.9.0-release-blue?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Agents-24+-blue?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Tools-183+-green?style=for-the-badge" />
@@ -478,3 +480,15 @@ MIT — see [LICENSE](LICENSE) for details.
   <b>Built with ❤️ by Srikanth Patchava</b><br>
   <i>eVera — Your AI assistant that actually does things.</i>
 </p>
+
+## Security
+
+Please see [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
+
+## Contributing
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+
+
+---
+Part of the [EmbeddedOS Organization](https://embeddedos-org.github.io).
