@@ -367,6 +367,9 @@ Agents are divided into two categories:
 
 Every agent follows a standard lifecycle:
 
+![Figure: eVera ReAct Agent Loop — think, plan, execute tool, observe, respond cycle](images/agent-loop.png)
+
+
 ```
 REGISTERED -> LOADED -> IDLE <-> ACTIVE -> SUSPENDED -> UNLOADED
      |                   |        |         |
@@ -2628,6 +2631,9 @@ If the avatar animations are choppy:
 ```
 Error: Failed to connect to Alpaca API
 ```
+
+![Figure: eVera RAG Pipeline — query embedding, vector search, retrieval, augmented generation](images/rag-pipeline.png)
+
 
 **Solution:**
 
