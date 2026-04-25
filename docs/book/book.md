@@ -22,7 +22,7 @@ license: "MIT"
 
 *Licensed under the MIT License*
 
-*Python 3.11+ · Electron 28+ · React Native 0.73*
+*Python 3.11+ · Electron 28+ · React [@yao2022] Native 0.73*
 
 *Windows · macOS · Linux · Android · iOS*
 
@@ -263,7 +263,7 @@ VeraBrain is the central intelligence of eVera. It is built on two key technolog
 - **FastAPI** — High-performance async Python web framework that exposes REST
   endpoints, WebSocket connections, and Server-Sent Events (SSE) streams.
 
-- **LangGraph** — Graph-based agent orchestration framework from LangChain that
+- **LangGraph** — Graph-based agent orchestration framework from LangChain [@langchain] that
   manages the flow of conversations through specialized agents, tool execution,
   and memory retrieval.
 
@@ -342,7 +342,7 @@ initiative without user prompting:
 12. **Energy Tracker** — Logs energy levels at configured intervals
 13. **Burnout Prevention** — Analyzes work patterns for overwork signals
 14. **Goal Progress** — Reviews goal completion weekly
-15. **Memory Consolidation** — Moves working memory to long-term storage nightly
+15. **Memory Consolidation** — Moves working memory to long-term storag [@lewis2020]e nightly
 
 ---
 
@@ -909,7 +909,7 @@ errors. It uses language-specific dictionaries and contextual analysis:
 ## 5.1 Overview
 
 Version 0.9.0 introduces a production-hardened 3D holographic avatar rendered in
-the web UI using Three.js and WebGL. The avatar provides visual feedback during
+the web UI using Three.js [@threejs] and WebGL. The avatar provides visual feedback during
 conversations, displaying gestures, expressions, and ambient effects.
 
 ## 5.2 Technical Stack
@@ -2706,3 +2706,8 @@ Error: Failed to connect to Alpaca API
 project repository at github.com/embeddedos-org/eVera.*
 
 *Copyright 2026 Srikanth Patchava and EmbeddedOS Contributors. MIT License.*
+
+## References
+
+::: {#refs}
+:::
