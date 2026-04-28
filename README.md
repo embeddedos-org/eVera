@@ -12,9 +12,9 @@
 <p align="center">
   <a href="https://github.com/embeddedos-org/eVera/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/embeddedos-org/eVera/ci.yml?style=for-the-badge&label=CI" alt="CI"></a>
   <a href="https://github.com/embeddedos-org/eVera/actions/workflows/codeql.yml"><img src="https://img.shields.io/github/actions/workflow/status/embeddedos-org/eVera/codeql.yml?style=for-the-badge&label=CodeQL" alt="CodeQL"></a>
-  <img src="https://img.shields.io/badge/v0.9.0-release-blue?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Agents-24+-blue?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Tools-183+-green?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/v1.0.0-release-blue?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Agents-43+-blue?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Tools-278+-green?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Python-3.11+-yellow?style=for-the-badge&logo=python" />
   <img src="https://img.shields.io/badge/Electron-28+-9feaf9?style=for-the-badge&logo=electron" />
   <img src="https://img.shields.io/badge/React_Native-0.73-61dafb?style=for-the-badge&logo=react" />
@@ -368,14 +368,111 @@ eVera includes multiple security layers to prevent misuse and protect sensitive 
 
 ---
 
-## 🧪 Testing — 524+ Tests
+## 🧪 Testing — 600+ Tests
 
 ```bash
 python verify.py                    # Pre-push verification (all checks)
-pytest tests/ -v                    # All tests (524+ pass)
+pytest tests/ -v                    # All tests (600+ pass)
 pytest tests/ --cov=vera            # With coverage
 ruff check . && ruff format .       # Lint
+python test_api_e2e.py              # E2E API integration tests (26 endpoints)
 ```
+
+---
+
+## 🚀 Deployment
+
+### Server Modes
+
+```bash
+python main.py --mode server        # REST API + WebSocket (default port 8000)
+python main.py --mode cli            # Voice-only CLI loop (mic → STT → brain → TTS)
+python main.py --mode both           # Server + voice simultaneously
+python main.py --mode text           # Text-only CLI (no mic needed)
+python main.py --mode server --port 8001  # Custom port
+```
+
+### Staging Deployment
+
+1. **Install dependencies and configure:**
+   ```bash
+   git clone https://github.com/embeddedos-org/eVera.git && cd eVera
+   python -m venv .venv && source .venv/bin/activate
+   pip install -r requirements.txt
+   cp .env.example .env              # Fill in API keys
+   ```
+
+2. **Start the staging server:**
+   ```bash
+   python main.py --mode server --port 8001
+   ```
+
+3. **Run integration tests:**
+   ```bash
+   # In a second terminal:
+   python test_api_e2e.py            # 26 endpoint tests (uses TestClient, no live server needed)
+   pytest tests/ -v -m "not slow"    # Full test suite
+   ```
+
+4. **Verify live endpoints:**
+   ```bash
+   curl http://localhost:8001/health           # {"status": "ok"}
+   curl http://localhost:8001/status           # Version, agents, scheduler loops
+   curl http://localhost:8001/agents           # 19+ registered agents
+   curl -X POST http://localhost:8001/chat \
+     -H "Content-Type: application/json" \
+     -d '{"transcript": "Hello Vera!"}'        # Chat response
+   ```
+
+### Production Deployment
+
+1. **Set environment variables** (see `.env.example` for all 20+ config sections):
+   ```bash
+   export VERA_SERVER_HOST=0.0.0.0           # Bind to all interfaces
+   export VERA_SERVER_PORT=8000
+   export VERA_SERVER_API_KEY=your-secret    # Enable API authentication
+   export VERA_LLM_OPENAI_API_KEY=sk-...    # At least one LLM provider
+   ```
+
+2. **Start with production settings:**
+   ```bash
+   python main.py --mode server --host 0.0.0.0 --port 8000
+   ```
+
+3. **Health monitoring:**
+   - `GET /health` — returns `{"status": "ok"}`
+   - `GET /status` — returns version, agent count, active scheduler loops, memory stats
+   - `GET /agents` — lists all registered agents with descriptions
+   - `GET /models/health` — checks all configured LLM providers
+
+### Desktop App Build
+
+```bash
+python deploy.py --desktop           # Electron + PyInstaller (current platform)
+python deploy.py --desktop --platform win   # Windows .exe
+python deploy.py --desktop --platform mac   # macOS .dmg
+python deploy.py --desktop --platform linux # Linux .AppImage
+```
+
+### Mobile App Build
+
+```bash
+python deploy.py --mobile            # Android APK + iOS IPA
+python deploy.py --android-only      # Android only
+python deploy.py --ios-only           # iOS only (requires macOS + Xcode)
+```
+
+### CI/CD Pipeline
+
+Pushing to `master` triggers 3 GitHub Actions workflows:
+
+| Workflow | Jobs | What It Checks |
+|----------|------|---------|
+| **eVera CI** | Lint, Format, Security, Tests (4 matrix), Frontend | Ruff, Bandit, pytest on Python 3.11+3.12 × Ubuntu+Windows, static assets |
+| **CodeQL** | Static analysis | SAST security scanning |
+| **OSSF Scorecard** | Supply chain | OpenSSF security best practices |
+
+Tagging `v*` (e.g., `v1.0.0`) triggers the **Build & Release** workflow which builds Desktop (Win/Mac/Linux) + Android + iOS and creates a GitHub Release.
 
 ---
 
@@ -422,6 +519,7 @@ See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
 | Version | Date | Highlights |
 |---------|------|-----------|
+| **1.0.0** | 2026-04-28 | **Production ready**: 52 gaps fixed, 43 agents, 278+ tools, conditional scheduler, keyword routing fixes, safety policies, 100% changeset coverage |
 | **0.9.0** | 2026-04-24 | **3D Avatar**: Three.js holographic mannequin, gesture animations, production hardening, CSP security |
 | **0.8.0** | 2026-04-22 | **Rebrand**: eSri → eVera, unified versioning, CI/CD overhaul |
 | **0.7.0** | 2026-04-22 | **Office automation**: Jira agent (7 tools), Work Pilot (ticket→PR), Meeting agent, Codebase Indexer, Slack channel monitor, PR creation, 4 new config blocks |
