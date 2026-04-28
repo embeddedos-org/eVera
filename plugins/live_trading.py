@@ -425,3 +425,23 @@ class LiveTradingAgent(BaseAgent):
             RunStrategyTool(),
             RiskCheckTool(),
         ]
+
+
+# Plugin registration exports
+PLUGIN_AGENTS = [LiveTradingAgent]
+
+PLUGIN_INTENTS = {
+    "ibkr": "live_trader",
+    "interactive brokers": "live_trader",
+    "tradestation": "live_trader",
+    "schwab": "live_trader",
+    "thinkorswim": "live_trader",
+    "broker": "live_trader",
+    "live trade": "live_trader",
+    "paper trade": "live_trader",
+    "algo": "live_trader",
+    "backtest": "live_trader",
+    "regime": "live_trader",
+    "dca": "live_trader",
+    "risk check": "live_trader",
+}

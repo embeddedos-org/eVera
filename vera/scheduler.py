@@ -44,6 +44,8 @@ class ProactiveScheduler:
 
     async def start(self) -> None:
         """Start all background check loops."""
+        from config import settings
+
         self._running = True
         self._tasks = [
             asyncio.create_task(self._reminder_loop()),
@@ -53,15 +55,24 @@ class ProactiveScheduler:
             asyncio.create_task(self._scheduled_tasks_loop()),
             asyncio.create_task(self._content_publisher_loop()),
             asyncio.create_task(self._spending_alert_loop()),
-            asyncio.create_task(self._job_scan_loop()),
-            asyncio.create_task(self._morning_plan_loop()),
-            asyncio.create_task(self._break_reminder_loop()),
-            asyncio.create_task(self._digest_loop()),
-            asyncio.create_task(self._daily_review_reminder_loop()),
-            asyncio.create_task(self._mood_check_loop()),
-            asyncio.create_task(self._ticket_scan_loop()),
-            asyncio.create_task(self._channel_monitor_loop()),
         ]
+        # Conditionally start loops based on settings
+        if settings.job_hunter.enabled:
+            self._tasks.append(asyncio.create_task(self._job_scan_loop()))
+        if settings.planner.enabled:
+            self._tasks.append(asyncio.create_task(self._morning_plan_loop()))
+        if settings.wellness.enabled:
+            self._tasks.append(asyncio.create_task(self._break_reminder_loop()))
+        if settings.digest.enabled:
+            self._tasks.append(asyncio.create_task(self._digest_loop()))
+        if settings.planner.enabled:
+            self._tasks.append(asyncio.create_task(self._daily_review_reminder_loop()))
+        if settings.emotional.enabled:
+            self._tasks.append(asyncio.create_task(self._mood_check_loop()))
+        if settings.jira.enabled:
+            self._tasks.append(asyncio.create_task(self._ticket_scan_loop()))
+        if settings.channel_monitor.enabled:
+            self._tasks.append(asyncio.create_task(self._channel_monitor_loop()))
         logger.info("Proactive scheduler started with %d check loops", len(self._tasks))
 
     async def stop(self) -> None:

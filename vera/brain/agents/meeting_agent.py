@@ -189,24 +189,27 @@ class CreateTasksFromMeetingTool(Tool):
             todos_path.write_text(json.dumps(todos, indent=2, default=str))
 
         # Create Jira tickets if enabled
-        if settings.meeting.auto_create_tickets and settings.jira.enabled:
-            try:
-                from vera.brain.agents.jira_agent import CreateTicketTool
+        if settings.meeting.auto_create_tickets:
+            if not settings.jira.enabled:
+                logger.info("Jira tickets requested but Jira is not configured — skipping")
+            else:
+                try:
+                    from vera.brain.agents.jira_agent import CreateTicketTool
 
-                ticket_tool = CreateTicketTool()
+                    ticket_tool = CreateTicketTool()
 
-                for item in action_items:
-                    result = await ticket_tool.execute(
-                        summary=item.get("task", "Meeting action item"),
-                        description=f"From meeting notes. Assignee: {item.get('assignee', 'unassigned')}. Deadline: {item.get('deadline', 'none')}.",
-                        priority={"high": "High", "medium": "Medium", "low": "Low"}.get(
-                            item.get("priority", "medium"), "Medium"
-                        ),
-                    )
-                    if result.get("status") == "success":
-                        jira_tickets_created += 1
-            except Exception as e:
-                logger.warning("Failed to create Jira tickets from meeting: %s", e)
+                    for item in action_items:
+                        result = await ticket_tool.execute(
+                            summary=item.get("task", "Meeting action item"),
+                            description=f"From meeting notes. Assignee: {item.get('assignee', 'unassigned')}. Deadline: {item.get('deadline', 'none')}.",
+                            priority={"high": "High", "medium": "Medium", "low": "Low"}.get(
+                                item.get("priority", "medium"), "Medium"
+                            ),
+                        )
+                        if result.get("status") == "success":
+                            jira_tickets_created += 1
+                except Exception as e:
+                    logger.warning("Failed to create Jira tickets from meeting: %s", e)
 
         return {
             "status": "success",

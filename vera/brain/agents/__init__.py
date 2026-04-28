@@ -81,6 +81,7 @@ if _settings.media.enabled:
     AGENT_REGISTRY["media_factory"] = MediaFactoryAgent()
 
 # Load plugins
+_pm = None
 try:
     from vera.brain.plugins import get_plugin_manager
 
@@ -94,7 +95,8 @@ except Exception as e:
 
 PLUGIN_INTENTS: dict[str, str] = {}
 try:
-    PLUGIN_INTENTS = _pm.get_intents()
+    if _pm is not None:
+        PLUGIN_INTENTS = _pm.get_intents()
 except Exception as e:
     logger.warning("Failed to load plugin intents: %s", e)
 

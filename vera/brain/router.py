@@ -84,11 +84,11 @@ TIER0_PATTERNS: list[tuple[re.Pattern, str, str, str]] = [
 # Intent → Agent mapping for LLM classification
 INTENT_AGENT_MAP: dict[str, str] = {
     "schedule": "life_manager",
-    "calendar": "life_manager",
+    "calendar": "calendar",
     "email": "life_manager",
     "reminder": "life_manager",
     "todo": "life_manager",
-    "meeting": "life_manager",
+    "meeting": "meeting",
     "appointment": "life_manager",
     "light": "home_controller",
     "thermostat": "home_controller",
@@ -96,7 +96,8 @@ INTENT_AGENT_MAP: dict[str, str] = {
     "lock": "home_controller",
     "security": "home_controller",
     "media": "home_controller",
-    "music": "home_controller",
+    "music": "music",
+    "media_player": "home_controller",
     "speaker": "home_controller",
     "play": "home_controller",
     "search": "researcher",
@@ -110,7 +111,7 @@ INTENT_AGENT_MAP: dict[str, str] = {
     "write": "writer",
     "draft": "writer",
     "edit": "writer",
-    "translate": "writer",
+    "translate": "translation",
     "format": "writer",
     "compose": "writer",
     "proofread": "writer",
@@ -123,7 +124,7 @@ INTENT_AGENT_MAP: dict[str, str] = {
     "file": "operator",
     "folder": "operator",
     "screenshot": "operator",
-    "automate": "operator",
+    "automate": "automation",
     "command": "operator",
     "terminal": "operator",
     "market": "income",
@@ -294,12 +295,9 @@ INTENT_AGENT_MAP: dict[str, str] = {
     "tradestation": "live_trader",
     "schwab": "live_trader",
     "thinkorswim": "live_trader",
-    "broker": "live_trader",
     "live trade": "live_trader",
     "paper trade": "live_trader",
-    "algo": "live_trader",
     "backtest": "live_trader",
-    "strategy": "live_trader",
     "regime": "live_trader",
     "dca": "live_trader",
     "risk check": "live_trader",
@@ -411,13 +409,12 @@ KEYWORD_PATTERNS: list[tuple[re.Pattern, str, str]] = [
         "search",
     ),
     (re.compile(r"\b(?:summarize|summary\s+of|explain|what\s+is|who\s+is|define)\b", re.I), "researcher", "summarize"),
-    # Writer
+    # Writer (translate pattern moved after language_tutor translate)
     (
         re.compile(r"\b(?:write|draft|compose)\s+(?:a\s+)?(?:letter|blog|post|article|essay|report|note)\b", re.I),
         "writer",
         "write",
     ),
-    (re.compile(r"\b(?:translate)\s+", re.I), "writer", "translate"),
     (re.compile(r"\b(?:proofread|edit|revise|rewrite)\b", re.I), "writer", "edit"),
     # Income / Stocks
     (re.compile(r"\b(?:stock|market|invest|portfolio|crypto|bitcoin|trading)\b", re.I), "income", "market"),
@@ -681,14 +678,18 @@ class TierRouter:
                     confidence=0.75,
                 )
 
-        # Fall back to simple word matching against INTENT_AGENT_MAP
+        # Fall back to simple word matching against INTENT_AGENT_MAP + PLUGIN_INTENTS
+        from vera.brain.agents import PLUGIN_INTENTS
+
+        combined_intents = {**INTENT_AGENT_MAP, **PLUGIN_INTENTS}
+
         words = re.findall(r"\b\w+\b", lower)
         scores: dict[str, int] = {}
         matched_intent: dict[str, str] = {}
 
         for word in words:
-            if word in INTENT_AGENT_MAP:
-                agent = INTENT_AGENT_MAP[word]
+            if word in combined_intents:
+                agent = combined_intents[word]
                 scores[agent] = scores.get(agent, 0) + 1
                 matched_intent[agent] = word
 
@@ -786,6 +787,9 @@ class TierRouter:
             "operator": ModelTier.SPECIALIST,
             "income": ModelTier.STRATEGIST,
             "companion": ModelTier.EXECUTOR,
+            "coder": ModelTier.SPECIALIST,
+            "git": ModelTier.SPECIALIST,
+            "browser": ModelTier.SPECIALIST,
             "content_creator": ModelTier.SPECIALIST,
             "finance": ModelTier.SPECIALIST,
             "live_trader": ModelTier.STRATEGIST,
@@ -800,5 +804,9 @@ class TierRouter:
             "diagram": ModelTier.SPECIALIST,
             "work_pilot": ModelTier.STRATEGIST,
             "media_factory": ModelTier.SPECIALIST,
+            "calendar": ModelTier.SPECIALIST,
+            "music": ModelTier.EXECUTOR,
+            "translation": ModelTier.SPECIALIST,
+            "automation": ModelTier.SPECIALIST,
         }
         return tier_map.get(agent_name, ModelTier.EXECUTOR)

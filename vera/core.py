@@ -239,8 +239,16 @@ class VeraBrain:
 
         @return Dictionary with status, memory stats, LLM usage, and semantic facts.
         """
+        from vera.brain.agents import AGENT_REGISTRY
+
         return {
             "status": "running",
+            "version": __import__("vera").__version__,
+            "agents": {
+                "names": list(AGENT_REGISTRY.keys()),
+                "count": len(AGENT_REGISTRY),
+            },
+            "scheduler_loops": len([t for t in self.scheduler._tasks if not t.done()]),
             "memory": self.memory_vault.get_stats(),
             "llm_usage": self.provider_manager.get_usage(),
             "memory_facts": self.memory_vault.semantic.get_all(),

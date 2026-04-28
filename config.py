@@ -322,7 +322,7 @@ class MeetingSettings(BaseSettings):
 class MediaSettings(BaseSettings):
     """Media factory agent configuration — image gen, video assembly, social upload."""
 
-    enabled: bool = Field(True, description="Enable media factory agent")
+    enabled: bool = Field(False, description="Enable media factory agent")
     dalle_api_key: str = Field("", description="OpenAI DALL-E API key for premium image generation")
     youtube_client_secrets_path: str = Field("", description="Path to YouTube OAuth client_secret.json")
     youtube_credentials_path: str = Field(
@@ -338,6 +338,28 @@ class MediaSettings(BaseSettings):
     model_config = {"env_prefix": "VERA_MEDIA_"}
 
 
+class SpotifySettings(BaseSettings):
+    """Spotify integration configuration."""
+
+    enabled: bool = Field(False, description="Enable Spotify integration")
+    client_id: str = Field("", description="Spotify OAuth client ID")
+    client_secret: str = Field("", description="Spotify OAuth client secret")
+    redirect_uri: str = Field("http://localhost:8888/callback", description="Spotify OAuth redirect URI")
+
+    model_config = {"env_prefix": "VERA_SPOTIFY_"}
+
+
+class SSHSettings(BaseSettings):
+    """SSH remote execution configuration."""
+
+    enabled: bool = Field(False, description="Enable SSH remote execution")
+    default_host: str = Field("", description="Default SSH host")
+    default_user: str = Field("", description="Default SSH username")
+    key_path: str = Field("~/.ssh/id_rsa", description="SSH private key path")
+
+    model_config = {"env_prefix": "VERA_SSH_"}
+
+
 class BrokerSettings(BaseSettings):
     """Trading broker configuration."""
 
@@ -349,7 +371,7 @@ class BrokerSettings(BaseSettings):
     ibkr_client_id: int = Field(1, description="IBKR client ID")
     auto_trade_limit: float = Field(500.0, description="Auto-trade threshold in dollars")
 
-    model_config = {"env_prefix": "VERA_"}
+    model_config = {"env_prefix": "VERA_BROKER_"}
 
 
 class Settings(BaseSettings):
@@ -373,6 +395,8 @@ class Settings(BaseSettings):
     meeting: MeetingSettings = Field(default_factory=MeetingSettings)
     broker: BrokerSettings = Field(default_factory=BrokerSettings)
     media: MediaSettings = Field(default_factory=MediaSettings)
+    spotify: SpotifySettings = Field(default_factory=SpotifySettings)
+    ssh: SSHSettings = Field(default_factory=SSHSettings)
     debug: bool = Field(False, description="Enable debug logging")
     data_dir: Path = Field(default_factory=_resolve_data_dir, description="Data storage directory")
 
@@ -392,6 +416,8 @@ class Settings(BaseSettings):
             self.data_dir / "diagrams",
             self.data_dir / "knowledge",
             self.data_dir / "job_profile",
+            self.data_dir / "workflows",
+            self.data_dir / "admin",
         ]
         for d in dirs:
             d.mkdir(parents=True, exist_ok=True)

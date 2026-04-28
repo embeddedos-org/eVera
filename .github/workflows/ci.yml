@@ -62,7 +62,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r requirements.txt || true
+          pip install -r requirements.txt
           pip install pytest pytest-asyncio pytest-cov httpx ruff
 
       - name: Run tests
@@ -97,10 +97,10 @@ jobs:
         run: pip install safety bandit
 
       - name: Check dependencies for vulnerabilities
-        run: safety check -r requirements.txt || true
+        run: safety check -r requirements.txt
 
       - name: Bandit security scan
-        run: bandit -r vera/ -ll --skip B101 || true
+        run: bandit -r vera/ -ll --skip B101
 
   # ============================================================
   # 4. FRONTEND VALIDATION

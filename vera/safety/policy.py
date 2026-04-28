@@ -210,6 +210,19 @@ DEFAULT_RULES: dict[str, PolicyAction] = {
     "media_factory.upload_instagram": PolicyAction.CONFIRM,
     "media_factory.upload_tiktok": PolicyAction.CONFIRM,
     "media_factory.create_reel": PolicyAction.CONFIRM,
+    # Work pilot — autonomous work needs confirmation
+    "work_pilot.start_work_on_ticket": PolicyAction.CONFIRM,
+    "work_pilot.complete_work_item": PolicyAction.CONFIRM,
+    "work_pilot.create_pr": PolicyAction.CONFIRM,
+    "work_pilot.*": PolicyAction.CONFIRM,
+    # Language tutor — all safe (educational)
+    "language_tutor.*": PolicyAction.ALLOW,
+    # Diagram — all safe (read-only visualization)
+    "diagram.*": PolicyAction.ALLOW,
+    # Codebase indexer — all safe (read-only analysis)
+    "codebase_indexer.*": PolicyAction.ALLOW,
+    # Meeting — all safe (note processing)
+    "meeting.*": PolicyAction.ALLOW,
 }
 
 

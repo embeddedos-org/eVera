@@ -85,7 +85,7 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
     app = FastAPI(
         title="Vera API",
         description="Voice-first multi-agent AI assistant",
-        version="0.6.0",
+        version="1.0.0",
         lifespan=lifespan,
     )
 

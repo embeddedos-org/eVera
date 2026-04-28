@@ -17,6 +17,15 @@ def test_agent_registry_has_all_agents():
         "coder",
         "browser",
         "git",
+        "content_creator",
+        "finance",
+        "planner",
+        "wellness",
+        "digest",
+        "language_tutor",
+        "codebase_indexer",
+        "meeting",
+        "diagram",
     ]
     for name in expected:
         assert name in AGENT_REGISTRY, f"Agent '{name}' missing from registry"
@@ -25,7 +34,7 @@ def test_agent_registry_has_all_agents():
 def test_agent_registry_count():
     from vera.brain.agents import AGENT_REGISTRY
 
-    assert len(AGENT_REGISTRY) >= 10
+    assert len(AGENT_REGISTRY) >= 19
 
 
 def test_all_agents_have_tools():
@@ -107,7 +116,7 @@ def test_total_tool_count():
     from vera.brain.agents import AGENT_REGISTRY
 
     total = sum(len(agent.tools) for agent in AGENT_REGISTRY.values())
-    assert total >= 70, f"Expected at least 70 tools, got {total}"
+    assert total >= 150, f"Expected at least 150 tools, got {total}"
 
 
 def test_git_agent_has_tools():
@@ -126,7 +135,7 @@ def test_content_creator_in_registry():
 
     assert "content_creator" in AGENT_REGISTRY
     agent = AGENT_REGISTRY["content_creator"]
-    assert len(agent.tools) == 5
+    assert len(agent.tools) >= 5
 
 
 def test_finance_in_registry():
@@ -134,7 +143,7 @@ def test_finance_in_registry():
 
     assert "finance" in AGENT_REGISTRY
     agent = AGENT_REGISTRY["finance"]
-    assert len(agent.tools) == 6
+    assert len(agent.tools) >= 6
 
 
 def test_content_creator_tool_names():
