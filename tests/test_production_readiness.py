@@ -7,7 +7,6 @@ safety policy additions, get_status() enhancement, and live_trading plugin expor
 
 from __future__ import annotations
 
-import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -15,7 +14,6 @@ import pytest
 from vera.brain.router import INTENT_AGENT_MAP, KEYWORD_PATTERNS, TierRouter
 from vera.providers.models import ModelTier
 from vera.safety.policy import PolicyAction, PolicyService
-
 
 # ─── Fixtures ─────────────────────────────────────────────────
 
@@ -711,11 +709,12 @@ class TestGetStatusEnhanced:
         brain_mock.memory_vault.semantic.get_all.return_value = {}
         brain_mock.scheduler._tasks = []
 
-        from vera.core import VeraBrain
-
         # Test that the method signature includes version in its return
         # by checking the source code structure
         import inspect
+
+        from vera.core import VeraBrain
+
         source = inspect.getsource(VeraBrain.get_status)
         assert "version" in source
         assert "agents" in source
