@@ -14,7 +14,7 @@ jobs:
   # 1. LINT & FORMAT CHECK
   # ============================================================
   lint:
-    name: 🧹 Lint & Format
+    name: "\U0001f9f9 Lint & Format"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,10 +34,10 @@ jobs:
         run: ruff format --check .
 
   # ============================================================
-  # 2. TEST
+  # 2. TEST (Matrix: Python x OS)
   # ============================================================
   test:
-    name: 🧪 Test (Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    name: "\U0001f9ea Test (Python ${{ matrix.python-version }}, ${{ matrix.os }})"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -59,31 +59,57 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
           restore-keys: ${{ runner.os }}-pip-
 
-      - name: Install dependencies
+      - name: Install core dependencies
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest pytest-asyncio pytest-cov httpx ruff
+
+      - name: Install new agent dependencies
+        run: |
+          pip install pandas openpyxl matplotlib seaborn scikit-learn duckdb \
+                      psutil pyperclip PyPDF2 reportlab deep-translator langdetect \
+                      python-pptx speedtest-cli paramiko trimesh 2>/dev/null || true
 
       - name: Run tests
         run: pytest tests/ -v -m "not slow" --tb=short
 
       - name: Run tests with coverage
         if: matrix.python-version == '3.12' && matrix.os == 'ubuntu-latest'
-        run: pytest tests/ --cov=vera --cov-report=xml --cov-report=term -m "not slow"
+        run: |
+          pytest tests/ \
+            --cov=vera \
+            --cov-branch \
+            --cov-report=xml:coverage.xml \
+            --cov-report=term-missing \
+            -m "not slow" \
+            --tb=short
 
-      - name: Upload coverage
+      - name: Upload coverage to Codecov
         if: matrix.python-version == '3.12' && matrix.os == 'ubuntu-latest'
         uses: codecov/codecov-action@v4
         with:
           file: coverage.xml
+          flags: unittests
           fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Test summary
+        if: always() && matrix.python-version == '3.12' && matrix.os == 'ubuntu-latest'
+        run: |
+          echo "## \U0001f9ea Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Python: ${{ matrix.python-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- OS: ${{ matrix.os }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Agents: 43+" >> $GITHUB_STEP_SUMMARY
+          echo "- Tools: 278+" >> $GITHUB_STEP_SUMMARY
 
   # ============================================================
   # 3. SECURITY SCAN
   # ============================================================
   security:
-    name: 🔒 Security Scan
+    name: "\U0001f512 Security Scan"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -106,7 +132,7 @@ jobs:
   # 4. FRONTEND VALIDATION
   # ============================================================
   frontend:
-    name: 🎨 Frontend Validation
+    name: "\U0001f3a8 Frontend Validation"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -121,29 +147,29 @@ jobs:
           test -f vera/static/waveform.js   || (echo "MISSING: waveform.js" && exit 1)
           test -f vera/static/listener.js   || (echo "MISSING: listener.js" && exit 1)
           test -f vera/static/agents-view.js || (echo "MISSING: agents-view.js" && exit 1)
-          echo "✅ All critical assets present"
+          echo "All critical assets present"
 
       - name: Verify Three.js local fallback exists
         run: |
           test -f vera/static/lib/three.min.js || (echo "MISSING: Three.js local fallback" && exit 1)
           SIZE=$(wc -c < vera/static/lib/three.min.js)
           if [ "$SIZE" -lt 100000 ]; then
-            echo "ERROR: Three.js fallback too small ($SIZE bytes) — likely corrupted"
+            echo "ERROR: Three.js fallback too small ($SIZE bytes)"
             exit 1
           fi
-          echo "✅ Three.js fallback OK ($SIZE bytes)"
+          echo "Three.js fallback OK ($SIZE bytes)"
 
       - name: Verify CSP header in index.html
         run: |
           grep -q "Content-Security-Policy" vera/static/index.html || (echo "MISSING: CSP meta tag" && exit 1)
-          echo "✅ CSP header present"
+          echo "CSP header present"
 
       - name: Check JavaScript syntax (basic)
         run: |
           for f in vera/static/*.js; do
-            node --check "$f" 2>/dev/null || echo "⚠ Syntax issue in $f (may use browser-only APIs)"
+            node --check "$f" 2>/dev/null || echo "Syntax issue in $f (may use browser-only APIs)"
           done
-          echo "✅ JS syntax check complete"
+          echo "JS syntax check complete"
 
       - name: Verify API compatibility (VeraFace public interface)
         run: |
@@ -153,4 +179,4 @@ jobs:
           grep -q "setSpeakAmplitude," vera/static/face.js   || (echo "MISSING: setSpeakAmplitude export" && exit 1)
           grep -q "destroy," vera/static/face.js             || (echo "MISSING: destroy export" && exit 1)
           grep -q "EXPRESSIONS:" vera/static/face.js         || (echo "MISSING: EXPRESSIONS export" && exit 1)
-          echo "✅ VeraFace API interface verified"
+          echo "VeraFace API interface verified"

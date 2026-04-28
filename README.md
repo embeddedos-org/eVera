@@ -12,6 +12,8 @@
 <p align="center">
   <a href="https://github.com/embeddedos-org/eVera/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/embeddedos-org/eVera/ci.yml?style=for-the-badge&label=CI" alt="CI"></a>
   <a href="https://github.com/embeddedos-org/eVera/actions/workflows/codeql.yml"><img src="https://img.shields.io/github/actions/workflow/status/embeddedos-org/eVera/codeql.yml?style=for-the-badge&label=CodeQL" alt="CodeQL"></a>
+  <a href="https://github.com/embeddedos-org/eVera/actions/workflows/test-coverage.yml"><img src="https://img.shields.io/github/actions/workflow/status/embeddedos-org/eVera/test-coverage.yml?style=for-the-badge&label=Tests" alt="Tests"></a>
+  <a href="https://codecov.io/gh/embeddedos-org/eVera"><img src="https://img.shields.io/codecov/c/github/embeddedos-org/eVera?style=for-the-badge&logo=codecov&label=Coverage" alt="Coverage"></a>
   <img src="https://img.shields.io/badge/v1.0.0-release-blue?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Agents-43+-blue?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Tools-278+-green?style=for-the-badge" />
@@ -28,10 +30,38 @@
   <img src="https://img.shields.io/badge/Android-✅-3DDC84?style=flat-square&logo=android&logoColor=white" />
   <img src="https://img.shields.io/badge/iOS-✅-000000?style=flat-square&logo=ios" />
   <img src="https://img.shields.io/badge/Security-Hardened-brightgreen?style=flat-square&logo=shield" />
+  <img src="https://img.shields.io/badge/Tests-113_New-brightgreen?style=flat-square&logo=pytest" />
+  <img src="https://img.shields.io/badge/Coverage-Tracked-blue?style=flat-square&logo=codecov" />
+  <a href="https://github.com/embeddedos-org/eVera/actions/workflows/benchmarks.yml"><img src="https://img.shields.io/github/actions/workflow/status/embeddedos-org/eVera/benchmarks.yml?style=flat-square&label=Benchmarks&logo=speedtest" alt="Benchmarks" /></a>
+  <a href="https://github.com/embeddedos-org/eVera/actions/workflows/docker-build.yml"><img src="https://img.shields.io/github/actions/workflow/status/embeddedos-org/eVera/docker-build.yml?style=flat-square&label=Docker&logo=docker" alt="Docker" /></a>
   <img src="https://img.shields.io/badge/CI-Passing-brightgreen?style=flat-square&logo=github-actions" />
 </p>
 
 ---
+
+## ⚡ Performance Benchmarks
+
+eVera enforces strict performance budgets on every CI run. All 43 agents and 278+ tools are benchmarked.
+
+| Metric | Budget | What It Measures |
+|--------|--------|-----------------|
+| Agent instantiation | < 50ms | Time to create any agent instance |
+| Schema generation | < 0.5ms/tool | OpenAI function-calling schema per tool |
+| Tier 0 routing | < 0.1ms | Regex-based instant classification |
+| Keyword routing | < 1.0ms | Full keyword classification across 43 agents |
+| Keyword throughput | > 10K ops/sec | Sustained routing throughput |
+| Pure-logic tools | < 5ms | Tools with no I/O (hash, playlist, template) |
+| SQLite tools | < 20ms | Database queries, schema, optimization |
+| 3D model generation | < 30ms | OBJ mesh generation (cube, sphere) |
+| Full pipeline (mock) | < 100ms | agent.run() with mocked LLM |
+| Parallel 10 tools | < 50ms | 10 tools executing concurrently |
+| Memory footprint | < 1 MB | Total registry memory usage |
+| Registry load | < 2 sec | Loading all 43 agents + plugins |
+
+Run benchmarks locally:
+```bash
+pytest tests/test_benchmarks.py -v -s
+```
 
 ## 📥 Quick Install
 
@@ -160,6 +190,80 @@ API auth, PII redaction, path sandboxing, command blocking, encrypted credential
 Sentiment analysis (keyword + LLM hybrid), mood tracking, pattern detection, proactive empathy notifications.
 
 ---
+
+## 🐳 Docker Deployment
+
+### Quick Start (one command)
+```bash
+# Clone and start (includes Ollama local LLM)
+git clone https://github.com/embeddedos-org/eVera.git && cd eVera
+docker compose up -d
+# Open http://localhost:8000
+```
+
+### Build & Run
+```bash
+# Build image
+docker compose build
+
+# Start all services (eVera + Ollama)
+docker compose up -d
+
+# View logs
+docker compose logs -f vera
+
+# Stop
+docker compose down
+```
+
+### Docker Architecture
+```
+┌───────────────────────────────────────────────────┐
+│            Docker Compose Stack              │
+├────────────────────────┬──────────────────────────┤
+│   eVera Server         │   Ollama LLM           │
+│   ────────────────   │   ────────────────── │
+│   Python 3.12          │   llama3.2 (default)   │
+│   FastAPI + WebSocket   │   GPU acceleration     │
+│   43 Agents / 278 Tools │   Auto model pull      │
+│   Port: 8000            │   Port: 11434          │
+└────────────────────────┴──────────────────────────┘
+         │ vera-data volume      │ ollama-models volume
+```
+
+### Available Commands
+```bash
+make help          # Show all commands
+make up            # Start all services
+make down          # Stop all services
+make logs          # Tail eVera logs
+make test          # Run tests in container
+make bench         # Run benchmarks in container
+make shell         # Open shell in container
+make health        # Check service health
+make pull-model    # Pull Ollama model
+make prod-up       # Start in production mode
+make clean         # Remove everything
+```
+
+### Production Deployment
+```bash
+# Set required env vars
+export VERA_SERVER_API_KEY="your-secure-key"
+export VERA_LLM_OPENAI_API_KEY="sk-..."
+
+# Start with production overrides (GPU, resource limits, logging)
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+### Container Modes
+```bash
+docker run evera server     # Web UI + REST API (default)
+docker run evera text       # Text-only CLI mode
+docker run -it evera shell  # Interactive shell
+docker run evera test       # Run test suite
+docker run evera benchmark  # Run performance benchmarks
+```
 
 ## 🏗️ Architecture
 
@@ -368,111 +472,20 @@ eVera includes multiple security layers to prevent misuse and protect sensitive 
 
 ---
 
-## 🧪 Testing — 600+ Tests
+## 🧪 Testing — 650+ Tests
 
 ```bash
 python verify.py                    # Pre-push verification (all checks)
-pytest tests/ -v                    # All tests (600+ pass)
+pytest tests/ -v
+
+# Run only new agent tests
+pytest tests/test_new_agents_registry.py tests/test_new_agents_tools.py tests/test_new_agents_routing.py -v
+
+# Run performance benchmarks
+pytest tests/test_benchmarks.py -v -s                    # All tests (524+ pass)
 pytest tests/ --cov=vera            # With coverage
 ruff check . && ruff format .       # Lint
-python test_api_e2e.py              # E2E API integration tests (26 endpoints)
 ```
-
----
-
-## 🚀 Deployment
-
-### Server Modes
-
-```bash
-python main.py --mode server        # REST API + WebSocket (default port 8000)
-python main.py --mode cli            # Voice-only CLI loop (mic → STT → brain → TTS)
-python main.py --mode both           # Server + voice simultaneously
-python main.py --mode text           # Text-only CLI (no mic needed)
-python main.py --mode server --port 8001  # Custom port
-```
-
-### Staging Deployment
-
-1. **Install dependencies and configure:**
-   ```bash
-   git clone https://github.com/embeddedos-org/eVera.git && cd eVera
-   python -m venv .venv && source .venv/bin/activate
-   pip install -r requirements.txt
-   cp .env.example .env              # Fill in API keys
-   ```
-
-2. **Start the staging server:**
-   ```bash
-   python main.py --mode server --port 8001
-   ```
-
-3. **Run integration tests:**
-   ```bash
-   # In a second terminal:
-   python test_api_e2e.py            # 26 endpoint tests (uses TestClient, no live server needed)
-   pytest tests/ -v -m "not slow"    # Full test suite
-   ```
-
-4. **Verify live endpoints:**
-   ```bash
-   curl http://localhost:8001/health           # {"status": "ok"}
-   curl http://localhost:8001/status           # Version, agents, scheduler loops
-   curl http://localhost:8001/agents           # 19+ registered agents
-   curl -X POST http://localhost:8001/chat \
-     -H "Content-Type: application/json" \
-     -d '{"transcript": "Hello Vera!"}'        # Chat response
-   ```
-
-### Production Deployment
-
-1. **Set environment variables** (see `.env.example` for all 20+ config sections):
-   ```bash
-   export VERA_SERVER_HOST=0.0.0.0           # Bind to all interfaces
-   export VERA_SERVER_PORT=8000
-   export VERA_SERVER_API_KEY=your-secret    # Enable API authentication
-   export VERA_LLM_OPENAI_API_KEY=sk-...    # At least one LLM provider
-   ```
-
-2. **Start with production settings:**
-   ```bash
-   python main.py --mode server --host 0.0.0.0 --port 8000
-   ```
-
-3. **Health monitoring:**
-   - `GET /health` — returns `{"status": "ok"}`
-   - `GET /status` — returns version, agent count, active scheduler loops, memory stats
-   - `GET /agents` — lists all registered agents with descriptions
-   - `GET /models/health` — checks all configured LLM providers
-
-### Desktop App Build
-
-```bash
-python deploy.py --desktop           # Electron + PyInstaller (current platform)
-python deploy.py --desktop --platform win   # Windows .exe
-python deploy.py --desktop --platform mac   # macOS .dmg
-python deploy.py --desktop --platform linux # Linux .AppImage
-```
-
-### Mobile App Build
-
-```bash
-python deploy.py --mobile            # Android APK + iOS IPA
-python deploy.py --android-only      # Android only
-python deploy.py --ios-only           # iOS only (requires macOS + Xcode)
-```
-
-### CI/CD Pipeline
-
-Pushing to `master` triggers 3 GitHub Actions workflows:
-
-| Workflow | Jobs | What It Checks |
-|----------|------|---------|
-| **eVera CI** | Lint, Format, Security, Tests (4 matrix), Frontend | Ruff, Bandit, pytest on Python 3.11+3.12 × Ubuntu+Windows, static assets |
-| **CodeQL** | Static analysis | SAST security scanning |
-| **OSSF Scorecard** | Supply chain | OpenSSF security best practices |
-
-Tagging `v*` (e.g., `v1.0.0`) triggers the **Build & Release** workflow which builds Desktop (Win/Mac/Linux) + Android + iOS and creates a GitHub Release.
 
 ---
 
@@ -519,7 +532,6 @@ See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
 | Version | Date | Highlights |
 |---------|------|-----------|
-| **1.0.0** | 2026-04-28 | **Production ready**: 52 gaps fixed, 43 agents, 278+ tools, conditional scheduler, keyword routing fixes, safety policies, 100% changeset coverage |
 | **0.9.0** | 2026-04-24 | **3D Avatar**: Three.js holographic mannequin, gesture animations, production hardening, CSP security |
 | **0.8.0** | 2026-04-22 | **Rebrand**: eSri → eVera, unified versioning, CI/CD overhaul |
 | **0.7.0** | 2026-04-22 | **Office automation**: Jira agent (7 tools), Work Pilot (ticket→PR), Meeting agent, Codebase Indexer, Slack channel monitor, PR creation, 4 new config blocks |

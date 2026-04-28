@@ -1,4 +1,4 @@
-"""Agent registry — singleton access to all Vera agents + plugins."""
+"""Agent registry -- singleton access to all Vera agents + plugins."""
 
 from __future__ import annotations
 
@@ -25,9 +25,31 @@ from vera.brain.agents.researcher import ResearcherAgent
 from vera.brain.agents.wellness import WellnessAgent
 from vera.brain.agents.writer import WriterAgent
 
+# === NEW POWER AGENTS (v1.0) ===
+from vera.brain.agents.music_agent import MusicAgent
+from vera.brain.agents.data_analyst import DataAnalystAgent
+from vera.brain.agents.computer_use_agent import ComputerUseAgent
+from vera.brain.agents.devops_agent import DevOpsAgent
+from vera.brain.agents.cybersecurity_agent import CyberSecurityAgent
+from vera.brain.agents.travel_agent import TravelAgent
+from vera.brain.agents.shopping_agent import ShoppingAgent
+from vera.brain.agents.social_media_agent import SocialMediaAgent
+from vera.brain.agents.education_agent import EducationAgent
+from vera.brain.agents.database_agent import DatabaseAgent
+from vera.brain.agents.translation_agent import TranslationAgent
+from vera.brain.agents.presentation_agent import PresentationAgent
+from vera.brain.agents.automation_agent import AutomationAgent
+from vera.brain.agents.calendar_agent import CalendarAgent
+from vera.brain.agents.network_agent import NetworkAgent
+from vera.brain.agents.pdf_agent import PDFAgent
+from vera.brain.agents.spreadsheet_agent import SpreadsheetAgent
+from vera.brain.agents.api_agent import APIAgent
+from vera.brain.agents.threed_agent import ThreeDAgent
+
 logger = logging.getLogger(__name__)
 
 AGENT_REGISTRY: dict[str, BaseAgent] = {
+    # === ORIGINAL AGENTS ===
     "life_manager": LifeManagerAgent(),
     "home_controller": HomeControllerAgent(),
     "researcher": ResearcherAgent(),
@@ -47,6 +69,26 @@ AGENT_REGISTRY: dict[str, BaseAgent] = {
     "codebase_indexer": CodebaseIndexerAgent(),
     "meeting": MeetingAgent(),
     "diagram": DiagramAgent(),
+    # === NEW POWER AGENTS (v1.0) — 20 agents, 110+ tools ===
+    "music": MusicAgent(),
+    "data_analyst": DataAnalystAgent(),
+    "computer_use": ComputerUseAgent(),
+    "devops": DevOpsAgent(),
+    "cybersecurity": CyberSecurityAgent(),
+    "travel": TravelAgent(),
+    "shopping": ShoppingAgent(),
+    "social_media": SocialMediaAgent(),
+    "education": EducationAgent(),
+    "database": DatabaseAgent(),
+    "translation": TranslationAgent(),
+    "presentation": PresentationAgent(),
+    "automation": AutomationAgent(),
+    "calendar": CalendarAgent(),
+    "network": NetworkAgent(),
+    "pdf": PDFAgent(),
+    "spreadsheet": SpreadsheetAgent(),
+    "api": APIAgent(),
+    "threed": ThreeDAgent(),
 }
 
 # Conditionally register mobile controller
@@ -100,16 +142,13 @@ try:
 except Exception as e:
     logger.warning("Failed to load plugin intents: %s", e)
 
-
 def get_agent(name: str) -> BaseAgent | None:
     """Get an agent by name."""
     return AGENT_REGISTRY.get(name)
 
-
 def list_agents() -> list[str]:
     """List all registered agent names."""
     return list(AGENT_REGISTRY.keys())
-
 
 def reload_plugins() -> dict[str, BaseAgent]:
     """Reload all plugins and return new agents."""
@@ -120,6 +159,5 @@ def reload_plugins() -> dict[str, BaseAgent]:
     AGENT_REGISTRY.update(new_agents)
     PLUGIN_INTENTS.update(pm.get_intents())
     return new_agents
-
 
 __all__ = ["AGENT_REGISTRY", "PLUGIN_INTENTS", "get_agent", "list_agents", "reload_plugins", "BaseAgent"]

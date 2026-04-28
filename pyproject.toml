@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "vera"
 version = "1.0.0"
-description = "Voice-first multi-agent AI assistant with 24+ agents, 183+ tools, 3D holographic avatar, glassmorphism UI, Electron desktop app, React Native mobile, and office automation"
+description = "Voice-first multi-agent AI assistant with 43+ agents, 278+ tools, 3D holographic avatar, glassmorphism UI, Electron desktop app, React Native mobile, and office automation"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
@@ -106,3 +106,27 @@ include = ["vera*"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
 ignore = ["E501", "E741", "F401", "F841", "UP042"]
+
+
+[tool.coverage.run]
+source = ["vera"]
+branch = true
+omit = [
+    "tests/*",
+    "scripts/*",
+    "setup_vera.py",
+    "build_backend.py",
+    "deploy.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+precision = 2
+fail_under = 50
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__",
+    "raise NotImplementedError",
+    "except ImportError",
+]

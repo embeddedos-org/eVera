@@ -84,11 +84,11 @@ TIER0_PATTERNS: list[tuple[re.Pattern, str, str, str]] = [
 # Intent → Agent mapping for LLM classification
 INTENT_AGENT_MAP: dict[str, str] = {
     "schedule": "life_manager",
-    "calendar": "calendar",
+    "calendar": "life_manager",
     "email": "life_manager",
     "reminder": "life_manager",
     "todo": "life_manager",
-    "meeting": "meeting",
+    "meeting": "life_manager",
     "appointment": "life_manager",
     "light": "home_controller",
     "thermostat": "home_controller",
@@ -96,8 +96,7 @@ INTENT_AGENT_MAP: dict[str, str] = {
     "lock": "home_controller",
     "security": "home_controller",
     "media": "home_controller",
-    "music": "music",
-    "media_player": "home_controller",
+    "music": "home_controller",
     "speaker": "home_controller",
     "play": "home_controller",
     "search": "researcher",
@@ -111,7 +110,7 @@ INTENT_AGENT_MAP: dict[str, str] = {
     "write": "writer",
     "draft": "writer",
     "edit": "writer",
-    "translate": "translation",
+    "translate": "writer",
     "format": "writer",
     "compose": "writer",
     "proofread": "writer",
@@ -124,7 +123,7 @@ INTENT_AGENT_MAP: dict[str, str] = {
     "file": "operator",
     "folder": "operator",
     "screenshot": "operator",
-    "automate": "automation",
+    "automate": "operator",
     "command": "operator",
     "terminal": "operator",
     "market": "income",
@@ -295,9 +294,12 @@ INTENT_AGENT_MAP: dict[str, str] = {
     "tradestation": "live_trader",
     "schwab": "live_trader",
     "thinkorswim": "live_trader",
+    "broker": "live_trader",
     "live trade": "live_trader",
     "paper trade": "live_trader",
+    "algo": "live_trader",
     "backtest": "live_trader",
+    "strategy": "live_trader",
     "regime": "live_trader",
     "dca": "live_trader",
     "risk check": "live_trader",
@@ -333,6 +335,44 @@ INTENT_AGENT_MAP: dict[str, str] = {
     # Git additions
     "pr": "git",
     "pull_request": "git",
+    # === NEW POWER AGENTS (v1.0) ===
+    "spotify": "music", "playlist": "music", "dj": "music", "podcast": "music",
+    "lyrics": "music", "song": "music", "album": "music", "track": "music",
+    "analyze": "data_analyst", "dataset": "data_analyst", "csv": "data_analyst",
+    "excel": "data_analyst", "chart": "data_analyst", "statistics": "data_analyst",
+    "histogram": "data_analyst", "correlation": "data_analyst", "ml": "data_analyst",
+    "train_model": "data_analyst",
+    "mouse": "computer_use", "click": "computer_use", "keyboard": "computer_use",
+    "clipboard": "computer_use", "ocr": "computer_use", "window": "computer_use",
+    "docker": "devops", "kubernetes": "devops", "k8s": "devops", "deploy": "devops",
+    "container": "devops", "nginx": "devops", "ssh": "devops", "pipeline": "devops",
+    "server": "devops", "cpu": "devops",
+    "port_scan": "cybersecurity", "ssl": "cybersecurity", "vulnerability": "cybersecurity",
+    "hash": "cybersecurity", "dns": "cybersecurity", "encrypt": "cybersecurity",
+    "flight": "travel", "hotel": "travel", "travel": "travel", "trip": "travel",
+    "vacation": "travel", "itinerary": "travel", "currency": "travel", "weather": "travel",
+    "packing": "travel",
+    "shop": "shopping", "price": "shopping", "deal": "shopping", "coupon": "shopping",
+    "wishlist": "shopping", "product": "shopping", "discount": "shopping", "amazon": "shopping",
+    "hashtag": "social_media", "caption": "social_media", "followers": "social_media",
+    "trending": "social_media", "viral": "social_media",
+    "flashcard": "education", "quiz": "education", "study": "education",
+    "homework": "education", "exam": "education", "tutoring": "education",
+    "sql": "database", "database": "database", "table": "database",
+    "migration": "database", "schema": "database", "backup_db": "database",
+    "translate": "translation", "translation": "translation", "dictionary": "translation",
+    "definition": "translation",
+    "slides": "presentation", "presentation": "presentation", "powerpoint": "presentation",
+    "pptx": "presentation", "pitch": "presentation", "deck": "presentation",
+    "automation": "automation", "cron": "automation", "webhook": "automation",
+    "trigger": "automation", "ifttt": "automation",
+    "calendar": "calendar", "event": "calendar", "availability": "calendar",
+    "ping": "network", "traceroute": "network", "speedtest": "network",
+    "bandwidth": "network", "whois": "network",
+    "pdf": "pdf", "merge_pdf": "pdf",
+    "spreadsheet": "spreadsheet", "formula": "spreadsheet", "vlookup": "spreadsheet",
+    "api": "api", "endpoint": "api", "rest": "api", "swagger": "api", "curl": "api",
+    "3d": "threed", "mesh": "threed", "obj": "threed", "stl": "threed",
 }
 
 # Extended keyword patterns for offline classification (regex → agent, intent)
@@ -409,12 +449,13 @@ KEYWORD_PATTERNS: list[tuple[re.Pattern, str, str]] = [
         "search",
     ),
     (re.compile(r"\b(?:summarize|summary\s+of|explain|what\s+is|who\s+is|define)\b", re.I), "researcher", "summarize"),
-    # Writer (translate pattern moved after language_tutor translate)
+    # Writer
     (
         re.compile(r"\b(?:write|draft|compose)\s+(?:a\s+)?(?:letter|blog|post|article|essay|report|note)\b", re.I),
         "writer",
         "write",
     ),
+    (re.compile(r"\b(?:translate)\s+", re.I), "writer", "translate"),
     (re.compile(r"\b(?:proofread|edit|revise|rewrite)\b", re.I), "writer", "edit"),
     # Income / Stocks
     (re.compile(r"\b(?:stock|market|invest|portfolio|crypto|bitcoin|trading)\b", re.I), "income", "market"),
@@ -628,6 +669,25 @@ Available agents and their domains:
 - diagram: code visualization, call graphs, class diagrams, flowcharts, architecture diagrams
 - meeting: meeting notes parsing, action item extraction, transcript processing
 - work_pilot: autonomous work pipeline, start work on ticket, ticket-to-PR workflow
+- music: Spotify control, YouTube music, lyrics, playlists, podcasts, DJ mixing, audio analysis
+- data_analyst: data analysis, CSV/Excel, charts, statistics, ML training, SQL queries, pivot tables
+- computer_use: GUI automation, screenshots, mouse/keyboard control, OCR, clipboard, window management
+- devops: Docker, Kubernetes, CI/CD, cloud deployment, system monitoring, SSH, Nginx
+- cybersecurity: port scanning, SSL checks, password analysis, hashing, network scanning, vulnerability detection
+- travel: flight/hotel search, currency conversion, weather, packing lists, itinerary planning
+- shopping: product search, price comparison, deals, wish lists, product reviews
+- social_media: social media posting, hashtags, content calendar, trend analysis, captions
+- education: flashcards, quizzes, learning paths, Pomodoro timer, study notes
+- database: SQLite queries, schema inspection, migrations, query optimization, backups
+- translation: multi-language translation, language detection, dictionary lookup
+- presentation: PowerPoint slides, pitch decks, templates, PDF export
+- automation: workflow automation, cron jobs, file watchers, webhooks, IFTTT-like triggers
+- calendar: calendar events, scheduling, availability checking
+- network: ping, traceroute, speed test, network info, WHOIS lookup
+- pdf: PDF reading, merging, splitting, creation, metadata
+- spreadsheet: Excel/CSV creation, reading, formulas, format conversion
+- api: HTTP API requests, OpenAPI docs, load testing, request collections
+- threed: 3D model generation, scene building, format conversion
 
 Respond with ONLY a JSON object (no markdown):
 {"intent": "<intent>", "agent": "<agent_name>", "confidence": <0.0-1.0>}
@@ -678,18 +738,14 @@ class TierRouter:
                     confidence=0.75,
                 )
 
-        # Fall back to simple word matching against INTENT_AGENT_MAP + PLUGIN_INTENTS
-        from vera.brain.agents import PLUGIN_INTENTS
-
-        combined_intents = {**INTENT_AGENT_MAP, **PLUGIN_INTENTS}
-
+        # Fall back to simple word matching against INTENT_AGENT_MAP
         words = re.findall(r"\b\w+\b", lower)
         scores: dict[str, int] = {}
         matched_intent: dict[str, str] = {}
 
         for word in words:
-            if word in combined_intents:
-                agent = combined_intents[word]
+            if word in INTENT_AGENT_MAP:
+                agent = INTENT_AGENT_MAP[word]
                 scores[agent] = scores.get(agent, 0) + 1
                 matched_intent[agent] = word
 
@@ -787,9 +843,6 @@ class TierRouter:
             "operator": ModelTier.SPECIALIST,
             "income": ModelTier.STRATEGIST,
             "companion": ModelTier.EXECUTOR,
-            "coder": ModelTier.SPECIALIST,
-            "git": ModelTier.SPECIALIST,
-            "browser": ModelTier.SPECIALIST,
             "content_creator": ModelTier.SPECIALIST,
             "finance": ModelTier.SPECIALIST,
             "live_trader": ModelTier.STRATEGIST,
@@ -804,9 +857,15 @@ class TierRouter:
             "diagram": ModelTier.SPECIALIST,
             "work_pilot": ModelTier.STRATEGIST,
             "media_factory": ModelTier.SPECIALIST,
-            "calendar": ModelTier.SPECIALIST,
-            "music": ModelTier.EXECUTOR,
-            "translation": ModelTier.SPECIALIST,
-            "automation": ModelTier.SPECIALIST,
+            "music": ModelTier.EXECUTOR, "data_analyst": ModelTier.SPECIALIST,
+            "computer_use": ModelTier.SPECIALIST, "devops": ModelTier.SPECIALIST,
+            "cybersecurity": ModelTier.SPECIALIST, "travel": ModelTier.SPECIALIST,
+            "shopping": ModelTier.SPECIALIST, "social_media": ModelTier.SPECIALIST,
+            "education": ModelTier.EXECUTOR, "database": ModelTier.SPECIALIST,
+            "translation": ModelTier.EXECUTOR, "presentation": ModelTier.SPECIALIST,
+            "automation": ModelTier.SPECIALIST, "calendar": ModelTier.EXECUTOR,
+            "network": ModelTier.SPECIALIST, "pdf": ModelTier.EXECUTOR,
+            "spreadsheet": ModelTier.EXECUTOR, "api": ModelTier.SPECIALIST,
+            "threed": ModelTier.SPECIALIST,
         }
         return tier_map.get(agent_name, ModelTier.EXECUTOR)
