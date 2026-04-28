@@ -52,7 +52,7 @@ class RAGPipeline:
 
             model_name = settings.memory.embedding_model
             self._embedder = SentenceTransformer(model_name)
-            self._dimension = self._embedder.get_embedding_dimension()
+            self._dimension = self._embedder.get_sentence_embedding_dimension()
         except ImportError:
             logger.warning("sentence-transformers not installed; knowledge base disabled")
             self._loaded = True

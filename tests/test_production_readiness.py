@@ -315,9 +315,7 @@ class TestKeywordPatternOrder:
         """Generic 'translate' should NOT hit writer via KEYWORD_PATTERNS (pattern was removed)."""
         # Verify no translate pattern exists for writer in KEYWORD_PATTERNS
         writer_translate_patterns = [
-            (p, agent, intent)
-            for p, agent, intent in KEYWORD_PATTERNS
-            if agent == "writer" and intent == "translate"
+            (p, agent, intent) for p, agent, intent in KEYWORD_PATTERNS if agent == "writer" and intent == "translate"
         ]
         assert len(writer_translate_patterns) == 0
 
@@ -589,11 +587,14 @@ class TestMeetingAgentJiraGuard:
                 "summary": "Test meeting",
             }
 
-            with patch(
-                "vera.brain.agents.meeting_agent.ExtractActionItemsTool.execute",
-                new_callable=AsyncMock,
-                return_value=fake_extraction,
-            ), patch("config.settings") as mock_settings:
+            with (
+                patch(
+                    "vera.brain.agents.meeting_agent.ExtractActionItemsTool.execute",
+                    new_callable=AsyncMock,
+                    return_value=fake_extraction,
+                ),
+                patch("config.settings") as mock_settings,
+            ):
                 mock_settings.meeting.auto_create_todos = False
                 mock_settings.meeting.auto_create_tickets = True
                 mock_settings.jira.enabled = False
@@ -629,13 +630,17 @@ class TestMeetingAgentJiraGuard:
 
             mock_ticket_tool = AsyncMock(return_value={"status": "success", "key": "PROJ-1"})
 
-            with patch(
-                "vera.brain.agents.meeting_agent.ExtractActionItemsTool.execute",
-                new_callable=AsyncMock,
-                return_value=fake_extraction,
-            ), patch("config.settings") as mock_settings, patch(
-                "vera.brain.agents.jira_agent.CreateTicketTool.execute",
-                mock_ticket_tool,
+            with (
+                patch(
+                    "vera.brain.agents.meeting_agent.ExtractActionItemsTool.execute",
+                    new_callable=AsyncMock,
+                    return_value=fake_extraction,
+                ),
+                patch("config.settings") as mock_settings,
+                patch(
+                    "vera.brain.agents.jira_agent.CreateTicketTool.execute",
+                    mock_ticket_tool,
+                ),
             ):
                 mock_settings.meeting.auto_create_todos = False
                 mock_settings.meeting.auto_create_tickets = True
@@ -669,14 +674,18 @@ class TestMeetingAgentJiraGuard:
                 "summary": "Deployment review",
             }
 
-            with patch(
-                "vera.brain.agents.meeting_agent.ExtractActionItemsTool.execute",
-                new_callable=AsyncMock,
-                return_value=fake_extraction,
-            ), patch("config.settings") as mock_settings, patch(
-                "vera.brain.agents.jira_agent.CreateTicketTool.execute",
-                new_callable=AsyncMock,
-                side_effect=ConnectionError("Jira API unreachable"),
+            with (
+                patch(
+                    "vera.brain.agents.meeting_agent.ExtractActionItemsTool.execute",
+                    new_callable=AsyncMock,
+                    return_value=fake_extraction,
+                ),
+                patch("config.settings") as mock_settings,
+                patch(
+                    "vera.brain.agents.jira_agent.CreateTicketTool.execute",
+                    new_callable=AsyncMock,
+                    side_effect=ConnectionError("Jira API unreachable"),
+                ),
             ):
                 mock_settings.meeting.auto_create_todos = False
                 mock_settings.meeting.auto_create_tickets = True
