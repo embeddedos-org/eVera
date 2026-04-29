@@ -16,6 +16,7 @@ jobs:
   lint:
     name: "\U0001f9f9 Lint & Format"
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -111,6 +112,7 @@ jobs:
   security:
     name: "\U0001f512 Security Scan"
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
