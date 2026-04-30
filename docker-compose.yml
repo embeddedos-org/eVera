@@ -1,0 +1,91 @@
+# ============================================================
+# eVera v1.0 — Docker Compose Stack
+# Usage:
+#   docker compose up -d              # Start all services
+#   docker compose up -d vera         # Start eVera only
+#   docker compose logs -f vera       # View logs
+#   docker compose exec vera python main.py --mode text
+# ============================================================
+
+services:
+  # ── eVera Server ──────────────────────────────────────────
+  vera:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: evera
+    restart: unless-stopped
+    ports:
+      - "${VERA_SERVER_PORT:-8000}:8000"
+    volumes:
+      - vera-data:/app/data
+      - ./.env:/app/.env:ro
+    environment:
+      - VERA_SERVER_HOST=0.0.0.0
+      - VERA_SERVER_PORT=8000
+      - VERA_LLM_OLLAMA_URL=http://ollama:11434
+      - VERA_LLM_OLLAMA_MODEL=${VERA_LLM_OLLAMA_MODEL:-llama3.2}
+      - VERA_LLM_OPENAI_API_KEY=${VERA_LLM_OPENAI_API_KEY:-}
+      - VERA_LLM_GEMINI_API_KEY=${VERA_LLM_GEMINI_API_KEY:-}
+      - VERA_LLM_ANTHROPIC_API_KEY=${VERA_LLM_ANTHROPIC_API_KEY:-}
+      - VERA_LLM_FALLBACK_ORDER=${VERA_LLM_FALLBACK_ORDER:-ollama,openai,gemini}
+    depends_on:
+      ollama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - evera-net
+
+  # ── Ollama (Local LLM) ───────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: evera-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        reservations:
+          memory: 4G
+    networks:
+      - evera-net
+
+  # ── Ollama Model Puller (one-shot init) ───────────────────
+  ollama-pull:
+    image: curlimages/curl:latest
+    container_name: evera-ollama-pull
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        echo "Pulling ${VERA_LLM_OLLAMA_MODEL:-llama3.2}..."
+        curl -s http://ollama:11434/api/pull -d "{\"name\": \"${VERA_LLM_OLLAMA_MODEL:-llama3.2}\"}"
+        echo "Model ready!"
+    networks:
+      - evera-net
+    restart: "no"
+
+volumes:
+  vera-data:
+    driver: local
+  ollama-models:
+    driver: local
+
+networks:
+  evera-net:
+    driver: bridge

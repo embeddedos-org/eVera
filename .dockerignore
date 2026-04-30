@@ -1,0 +1,64 @@
+# Git
+.git
+.github
+.gitattributes
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+.venv
+venv
+dist
+build
+*.egg
+
+# Data (mounted as volume)
+data/
+
+# Dev/test files
+.env
+*.key
+*.db
+MagicMock/
+htmlcov/
+coverage.xml
+.coverage
+test-results.xml
+benchmark-output.txt
+
+# Editors
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Electron/Mobile (not needed in server container)
+electron/
+mobile/
+extension/
+
+# Docs (keep README for reference)
+docs/
+CHANGELOG.md
+DISTRIBUTION.md
+RELEASE_NOTES_*.md
+SETUP_GUIDE.md
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+SECURITY.md
+CODEOWNERS
+
+# Build artifacts
+*.exe
+*.spec
+node_modules/
+
+# Temp
+*.tmp
+*.log
