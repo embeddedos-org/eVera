@@ -13,6 +13,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
 from collections.abc import Callable
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -92,13 +93,27 @@ class ProactiveScheduler:
             except Exception as e:
                 logger.warning("Notification handler failed: %s", e)
 
+    async def _run_with_metrics(self, loop_name: str, coro) -> None:
+        """Execute a coroutine and record scheduler metrics."""
+        from vera.monitoring import metrics
+
+        t0 = time.monotonic()
+        try:
+            await coro()
+            duration_ms = (time.monotonic() - t0) * 1000
+            metrics.record_scheduler_run(loop_name, success=True, duration_ms=duration_ms)
+        except Exception as e:
+            duration_ms = (time.monotonic() - t0) * 1000
+            metrics.record_scheduler_run(loop_name, success=False, duration_ms=duration_ms)
+            raise
+
     # --- Reminder checker ---
 
     async def _reminder_loop(self) -> None:
         """Check for due reminders every 30 seconds."""
         while self._running:
             try:
-                await self._check_reminders()
+                await self._run_with_metrics("reminder", self._check_reminders)
             except Exception as e:
                 logger.warning("Reminder check failed: %s", e)
             await asyncio.sleep(self._check_interval)
@@ -143,7 +158,7 @@ class ProactiveScheduler:
         """Check for upcoming calendar events every 5 minutes."""
         while self._running:
             try:
-                await self._check_upcoming_events()
+                await self._run_with_metrics("calendar", self._check_upcoming_events)
             except Exception as e:
                 logger.warning("Calendar check failed: %s", e)
             await asyncio.sleep(300)  # 5 minutes
@@ -194,9 +209,8 @@ class ProactiveScheduler:
         while self._running:
             try:
                 now = datetime.now()
-                # Only check during US market hours (9:30 AM - 4:00 PM ET, roughly)
                 if 9 <= now.hour <= 16:
-                    await self._check_stock_alerts()
+                    await self._run_with_metrics("stock_alert", self._check_stock_alerts)
             except Exception as e:
                 logger.warning("Stock alert check failed: %s", e)
             await asyncio.sleep(600)  # 10 minutes
@@ -325,7 +339,7 @@ class ProactiveScheduler:
         """Execute user-defined scheduled/recurring tasks every minute."""
         while self._running:
             try:
-                await self._check_scheduled_tasks()
+                await self._run_with_metrics("scheduled_tasks", self._check_scheduled_tasks)
             except Exception as e:
                 logger.warning("Scheduled tasks check failed: %s", e)
             await asyncio.sleep(60)
@@ -472,7 +486,7 @@ class ProactiveScheduler:
             return
 
         # Calculate this month's spending by category
-        month_start = datetime.now().replace(day=1).isoformat()
+        month_start = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
         monthly_txns = [t for t in transactions if t.get("date", "") >= month_start and t.get("amount", 0) < 0]
 
         by_category: dict[str, float] = {}

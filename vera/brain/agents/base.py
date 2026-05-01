@@ -213,7 +213,13 @@ class BaseAgent(abc.ABC):
         @param state: Current pipeline state with transcript and context.
         @return Updated state with agent_response, mood, and metadata.
         """
+        import time as _time
+
+        from vera.monitoring import metrics as mon_metrics
         from vera.providers.manager import ProviderManager
+
+        _agent_start = _time.monotonic()
+        _agent_error = False
 
         provider = ProviderManager()
         transcript = state.get("transcript", "")
@@ -350,6 +356,7 @@ class BaseAgent(abc.ABC):
                 await self._broadcast_status("done", progress=1)
 
         except Exception as e:
+            _agent_error = True
             logger.warning("Agent '%s' LLM failed: %s — trying offline response", self.name, e)
             offline = self.respond_offline(state)
             state["agent_response"] = offline
@@ -358,6 +365,9 @@ class BaseAgent(abc.ABC):
             state["metadata"]["tier_used"] = ModelTier.REFLEX
             state["metadata"]["offline_mode"] = True
             await self._broadcast_status("done", progress=1)
+        finally:
+            _agent_latency = (_time.monotonic() - _agent_start) * 1000
+            mon_metrics.record_agent_dispatch(self.name, _agent_latency, error=_agent_error)
 
         return state
 

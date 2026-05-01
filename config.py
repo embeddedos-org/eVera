@@ -374,6 +374,19 @@ class BrokerSettings(BaseSettings):
     model_config = {"env_prefix": "VERA_BROKER_"}
 
 
+class MonitoringSettings(BaseSettings):
+    """Production monitoring and alerting configuration."""
+
+    enabled: bool = Field(True, description="Enable production monitoring")
+    metrics_endpoint: bool = Field(True, description="Expose /metrics endpoint")
+    alert_error_rate_threshold: float = Field(0.1, description="HTTP 5xx error rate threshold (10%)")
+    alert_latency_threshold_ms: float = Field(5000.0, description="Average response latency threshold (ms)")
+    alert_scheduler_fail_threshold: int = Field(3, description="Consecutive scheduler failures before alert")
+    alert_check_interval_s: int = Field(60, description="Alert check interval (seconds)")
+
+    model_config = {"env_prefix": "VERA_MONITORING_"}
+
+
 class Settings(BaseSettings):
     """Root settings — aggregates all configuration groups."""
 
@@ -397,6 +410,7 @@ class Settings(BaseSettings):
     media: MediaSettings = Field(default_factory=MediaSettings)
     spotify: SpotifySettings = Field(default_factory=SpotifySettings)
     ssh: SSHSettings = Field(default_factory=SSHSettings)
+    monitoring: MonitoringSettings = Field(default_factory=MonitoringSettings)
     debug: bool = Field(False, description="Enable debug logging")
     data_dir: Path = Field(default_factory=_resolve_data_dir, description="Data storage directory")
 

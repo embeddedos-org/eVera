@@ -267,6 +267,17 @@ class ProviderManager:
                 return await self._call_model(messages, model_config, max_tokens, temperature, tools)
             except Exception as e:
                 logger.warning("Model %s failed: %s", model_config.model_name, e)
+                # Record LLM error for monitoring
+                from vera.monitoring import metrics as mon_metrics
+
+                mon_metrics.record_llm_call(
+                    provider=model_config.provider,
+                    model=model_config.model_name,
+                    tier=model_config.tier.name,
+                    tokens=0,
+                    latency_ms=0,
+                    error=True,
+                )
                 last_error = e
                 continue
 
@@ -346,6 +357,18 @@ class ProviderManager:
         tier_usage.prompt_tokens += usage.prompt_tokens
         tier_usage.completion_tokens += usage.completion_tokens
         tier_usage.call_count += 1
+
+        # Record metrics for monitoring
+        from vera.monitoring import metrics as mon_metrics
+
+        mon_metrics.record_llm_call(
+            provider=model_config.provider,
+            model=model_config.model_name,
+            tier=model_config.tier.name,
+            tokens=usage.total_tokens,
+            latency_ms=elapsed_ms,
+            error=False,
+        )
 
         logger.info(
             "LLM call: model=%s tier=%s tokens=%d latency=%.0fms tools=%s",

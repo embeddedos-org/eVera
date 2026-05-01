@@ -14,6 +14,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
@@ -27,6 +28,9 @@ from pydantic import BaseModel
 from config import settings
 from vera.brain.agents import AGENT_REGISTRY
 from vera.core import VeraBrain
+from vera.monitoring import metrics
+from vera.monitoring.alerts import AlertManager
+from vera.monitoring.health import deep_health_check
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +107,17 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         allow_headers=["*"],
     )
 
+    # --- Metrics middleware (before auth) ---
+
+    @app.middleware("http")
+    async def metrics_middleware(request: Request, call_next):
+        """Record request latency and status for all HTTP requests."""
+        t0 = time.monotonic()
+        response = await call_next(request)
+        latency_ms = (time.monotonic() - t0) * 1000
+        metrics.record_request(request.method, request.url.path, response.status_code, latency_ms)
+        return response
+
     # --- Authentication middleware ---
 
     @app.middleware("http")
@@ -110,7 +125,7 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         """Verify API key if configured. Skip for static files and health check."""
         if settings.server.api_key:
             path = request.url.path
-            if path not in ("/", "/health") and not path.startswith("/static"):
+            if path not in ("/", "/health", "/metrics", "/alerts") and not path.startswith("/static"):
                 auth_header = request.headers.get("Authorization", "")
                 if auth_header != f"Bearer {settings.server.api_key}":
                     return JSONResponse(
@@ -141,9 +156,29 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
 
     # --- REST endpoints ---
 
+    # --- Monitoring endpoints ---
+
+    # Initialize AlertManager
+    alert_manager = AlertManager(
+        metrics,
+        error_rate_threshold=settings.monitoring.alert_error_rate_threshold,
+        latency_threshold_ms=settings.monitoring.alert_latency_threshold_ms,
+        scheduler_fail_threshold=settings.monitoring.alert_scheduler_fail_threshold,
+    )
+    app.state.alert_manager = alert_manager
+
     @app.get("/health")
     async def health():
-        return {"status": "ok"}
+        return deep_health_check(brain_instance)
+
+    @app.get("/metrics")
+    async def metrics_endpoint():
+        return metrics.get_metrics()
+
+    @app.get("/alerts")
+    async def alerts_endpoint():
+        alert_manager.check()
+        return alert_manager.get_alerts(include_resolved=True)
 
     @app.post("/webhook/tradingview")
     async def tradingview_webhook(request: Request):
