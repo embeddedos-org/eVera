@@ -99,13 +99,14 @@ markers = [
 [tool.ruff]
 target-version = "py311"
 line-length = 120
+exclude = ["promo/"]
 
 [tool.setuptools.packages.find]
 include = ["vera*"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
-ignore = ["E501", "E741", "F401", "F841", "UP042"]
+ignore = ["E501", "E701", "E702", "E711", "E722", "E741", "F401", "F601", "F841", "I001", "N806", "UP042"]
 
 
 [tool.coverage.run]

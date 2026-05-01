@@ -8,19 +8,34 @@ from __future__ import annotations
 
 import pytest
 
-
 # ============================================================
 # Registry & Registration
 # ============================================================
+
 
 class TestNewAgentRegistry:
     """Verify all 20 new agents are in the registry."""
 
     NEW_AGENTS = [
-        "music", "data_analyst", "computer_use", "devops", "cybersecurity",
-        "travel", "shopping", "social_media", "education", "database",
-        "translation", "presentation", "automation", "calendar", "network",
-        "pdf", "spreadsheet", "api", "threed",
+        "music",
+        "data_analyst",
+        "computer_use",
+        "devops",
+        "cybersecurity",
+        "travel",
+        "shopping",
+        "social_media",
+        "education",
+        "database",
+        "translation",
+        "presentation",
+        "automation",
+        "calendar",
+        "network",
+        "pdf",
+        "spreadsheet",
+        "api",
+        "threed",
     ]
 
     def test_all_new_agents_registered(self):
@@ -90,6 +105,7 @@ class TestNewAgentRegistry:
 # Tool Counts Per Agent
 # ============================================================
 
+
 class TestNewAgentToolCounts:
     """Verify each new agent has the expected number of tools."""
 
@@ -121,23 +137,37 @@ class TestNewAgentToolCounts:
 
         agent = AGENT_REGISTRY[agent_name]
         actual = len(agent.tools)
-        assert actual == expected_count, (
-            f"Agent '{agent_name}' has {actual} tools, expected {expected_count}"
-        )
+        assert actual == expected_count, f"Agent '{agent_name}' has {actual} tools, expected {expected_count}"
 
 
 # ============================================================
 # OpenAI Function-Calling Schema
 # ============================================================
 
+
 class TestToolSchemas:
     """Verify all new agent tools produce valid OpenAI function-calling schemas."""
 
     NEW_AGENTS = [
-        "music", "data_analyst", "computer_use", "devops", "cybersecurity",
-        "travel", "shopping", "social_media", "education", "database",
-        "translation", "presentation", "automation", "calendar", "network",
-        "pdf", "spreadsheet", "api", "threed",
+        "music",
+        "data_analyst",
+        "computer_use",
+        "devops",
+        "cybersecurity",
+        "travel",
+        "shopping",
+        "social_media",
+        "education",
+        "database",
+        "translation",
+        "presentation",
+        "automation",
+        "calendar",
+        "network",
+        "pdf",
+        "spreadsheet",
+        "api",
+        "threed",
     ]
 
     @pytest.mark.parametrize("agent_name", NEW_AGENTS)
@@ -174,6 +204,7 @@ class TestToolSchemas:
 # ============================================================
 # Tool Name Verification
 # ============================================================
+
 
 class TestNewAgentToolNames:
     """Verify specific tool names are registered for each new agent."""

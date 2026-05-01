@@ -13,10 +13,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-
 # ============================================================
 # Music Agent Tools
 # ============================================================
+
 
 class TestMusicAgentTools:
     """Test music agent tools with mocked Spotify/YouTube."""
@@ -61,9 +61,9 @@ class TestMusicAgentTools:
         mock_resp.json.return_value = {"lyrics": "Imagine all the people..."}
 
         with patch("httpx.AsyncClient") as mock_client:
-            mock_client.return_value.__aenter__ = AsyncMock(return_value=MagicMock(
-                get=AsyncMock(return_value=mock_resp)
-            ))
+            mock_client.return_value.__aenter__ = AsyncMock(
+                return_value=MagicMock(get=AsyncMock(return_value=mock_resp))
+            )
             mock_client.return_value.__aexit__ = AsyncMock(return_value=False)
             result = await tool.execute(song="Imagine", artist="John Lennon")
             assert "status" in result
@@ -74,11 +74,7 @@ class TestMusicAgentTools:
 
         tool = PodcastDiscoveryTool()
         mock_resp = MagicMock()
-        mock_resp.json.return_value = {
-            "results": [
-                {"collectionName": "Test Podcast", "artistName": "Test Host"}
-            ]
-        }
+        mock_resp.json.return_value = {"results": [{"collectionName": "Test Podcast", "artistName": "Test Host"}]}
 
         with patch("httpx.AsyncClient") as mock_client:
             instance = MagicMock()
@@ -92,6 +88,7 @@ class TestMusicAgentTools:
 # ============================================================
 # Data Analyst Agent Tools
 # ============================================================
+
 
 class TestDataAnalystTools:
     """Test data analyst tools with temp CSV files."""
@@ -170,6 +167,7 @@ class TestDataAnalystTools:
 # Cybersecurity Agent Tools
 # ============================================================
 
+
 class TestCybersecurityTools:
     """Test security tools (no real network access)."""
 
@@ -207,6 +205,7 @@ class TestCybersecurityTools:
 
         tool = HashTool()
         import hashlib
+
         expected = hashlib.sha256(b"test").hexdigest()
         result = await tool.execute(action="verify", text="test", algorithm="sha256", expected=expected)
         assert result["status"] == "success"
@@ -235,6 +234,7 @@ class TestCybersecurityTools:
 # ============================================================
 # Travel Agent Tools
 # ============================================================
+
 
 class TestTravelTools:
     """Test travel tools with mocked APIs."""
@@ -284,11 +284,9 @@ class TestTravelTools:
         tool = WeatherTool()
         mock_resp = MagicMock()
         mock_resp.json.return_value = {
-            "current_condition": [{
-                "temp_C": "22", "temp_F": "72",
-                "weatherDesc": [{"value": "Sunny"}],
-                "humidity": "45"
-            }]
+            "current_condition": [
+                {"temp_C": "22", "temp_F": "72", "weatherDesc": [{"value": "Sunny"}], "humidity": "45"}
+            ]
         }
 
         with patch("httpx.AsyncClient") as mock_client:
@@ -306,6 +304,7 @@ class TestTravelTools:
 # Shopping Agent Tools
 # ============================================================
 
+
 class TestShoppingTools:
     """Test shopping tools with temp storage."""
 
@@ -320,6 +319,7 @@ class TestShoppingTools:
             tool = WishListTool()
             # We need to patch the internal Path usage
             import vera.brain.agents.shopping_agent as shop_mod
+
             original_path = Path
             # Just test the logic without patching
             result = await tool.execute(action="list")
@@ -329,6 +329,7 @@ class TestShoppingTools:
 # ============================================================
 # Education Agent Tools
 # ============================================================
+
 
 class TestEducationTools:
     """Test education tools with temp storage."""
@@ -370,24 +371,16 @@ class TestEducationTools:
         from vera.brain.agents.education_agent import FlashcardTool
 
         tool = FlashcardTool()
-        # Patch the data directory
-        with patch("vera.brain.agents.education_agent.Path") as mock_path:
-            deck_dir = tmp_path / "flashcards"
-            deck_dir.mkdir(parents=True, exist_ok=True)
-
-            # Create card directly using real path
-            deck_file = deck_dir / "test.json"
-
-            # Test create
-            tool2 = FlashcardTool()
-            # We test the underlying logic without file system
-            result = await tool2.execute(action="create", deck="test", front="Q", back="A")
-            assert "status" in result
+        # Test create — without mocking Path (causes issues with read_text)
+        tool2 = FlashcardTool()
+        result = await tool2.execute(action="create", deck="test", front="Q", back="A")
+        assert result["status"] == "success"
 
 
 # ============================================================
 # Database Agent Tools
 # ============================================================
+
 
 class TestDatabaseTools:
     """Test database tools with real SQLite."""
@@ -400,7 +393,9 @@ class TestDatabaseTools:
         tool = SQLiteTool()
 
         # Create table
-        result = await tool.execute(database=db_path, query="CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, age INTEGER)")
+        result = await tool.execute(
+            database=db_path, query="CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, age INTEGER)"
+        )
         assert result["status"] == "success"
 
         # Insert data
@@ -438,6 +433,7 @@ class TestDatabaseTools:
         conn = sqlite3.connect(db_path)
         conn.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT)")
         conn.execute("INSERT INTO users VALUES (1, 'Alice', 'alice@test.com')")
+        conn.commit()
         conn.close()
 
         tool = DatabaseInfoTool()
@@ -473,19 +469,18 @@ class TestDatabaseTools:
         conn.execute("CREATE TABLE t (id INTEGER)")
         conn.close()
 
+        # Ensure backup dir exists
+        (tmp_path / "backups").mkdir(exist_ok=True)
+
         tool = BackupTool()
-        # Patch backup dir to use tmp_path
-        with patch("vera.brain.agents.database_agent.Path") as mock_path:
-            backup_dir = tmp_path / "backups"
-            backup_dir.mkdir()
-            # Test the backup logic
-            result = await tool.execute(action="backup", database=str(db_path))
-            assert "status" in result
+        result = await tool.execute(action="backup", database=str(db_path))
+        assert "status" in result
 
 
 # ============================================================
 # Translation Agent Tools
 # ============================================================
+
 
 class TestTranslationTools:
     """Test translation tools with mocked APIs."""
@@ -514,11 +509,13 @@ class TestTranslationTools:
         tool = DictionaryTool()
         mock_resp = MagicMock()
         mock_resp.status_code = 200
-        mock_resp.json.return_value = [{
-            "word": "hello",
-            "phonetic": "/helo/",
-            "meanings": [{"partOfSpeech": "noun", "definitions": [{"definition": "A greeting"}]}],
-        }]
+        mock_resp.json.return_value = [
+            {
+                "word": "hello",
+                "phonetic": "/helo/",
+                "meanings": [{"partOfSpeech": "noun", "definitions": [{"definition": "A greeting"}]}],
+            }
+        ]
 
         with patch("httpx.AsyncClient") as mock_client:
             instance = MagicMock()
@@ -533,6 +530,7 @@ class TestTranslationTools:
 # ============================================================
 # Presentation Agent Tools
 # ============================================================
+
 
 class TestPresentationTools:
     """Test presentation tools."""
@@ -563,6 +561,7 @@ class TestPresentationTools:
 # Automation Agent Tools
 # ============================================================
 
+
 class TestAutomationTools:
     """Test automation tools with temp storage."""
 
@@ -580,6 +579,7 @@ class TestAutomationTools:
 # Calendar Agent Tools
 # ============================================================
 
+
 class TestCalendarTools:
     """Test calendar tools with temp storage."""
 
@@ -594,8 +594,7 @@ class TestCalendarTools:
         with patch("vera.brain.agents.calendar_agent.Path", return_value=cal_dir):
             create_tool = CreateEventTool()
             result = await create_tool.execute(
-                title="Team Meeting", date="2026-05-01", time="14:00",
-                duration_minutes=60, location="Room A"
+                title="Team Meeting", date="2026-05-01", time="14:00", duration_minutes=60, location="Room A"
             )
             assert result["status"] == "success"
             assert result["event"]["title"] == "Team Meeting"
@@ -623,6 +622,7 @@ class TestCalendarTools:
 # Network Agent Tools
 # ============================================================
 
+
 class TestNetworkTools:
     """Test network tools with mocked subprocess."""
 
@@ -632,7 +632,9 @@ class TestNetworkTools:
 
         tool = PingTool()
         mock_result = MagicMock()
-        mock_result.stdout = "PING 8.8.8.8: 64 bytes, time=10ms\n--- ping statistics ---\n4 packets transmitted, 4 received"
+        mock_result.stdout = (
+            "PING 8.8.8.8: 64 bytes, time=10ms\n--- ping statistics ---\n4 packets transmitted, 4 received"
+        )
         mock_result.returncode = 0
 
         with patch("subprocess.run", return_value=mock_result):
@@ -657,6 +659,7 @@ class TestNetworkTools:
 # ============================================================
 # Spreadsheet Agent Tools
 # ============================================================
+
 
 class TestSpreadsheetTools:
     """Test spreadsheet tools."""
@@ -694,6 +697,7 @@ class TestSpreadsheetTools:
 # ============================================================
 # API Agent Tools
 # ============================================================
+
 
 class TestAPIAgentTools:
     """Test API agent tools with mocked HTTP."""
@@ -735,6 +739,7 @@ class TestAPIAgentTools:
 # ============================================================
 # 3D Agent Tools
 # ============================================================
+
 
 class TestThreeDTools:
     """Test 3D model generation tools."""
@@ -782,10 +787,12 @@ class TestThreeDTools:
         from vera.brain.agents.threed_agent import SceneBuilderTool
 
         tool = SceneBuilderTool()
-        objects = json.dumps([
-            {"shape": "cube", "position": [0, 0, 0], "size": 1},
-            {"shape": "sphere", "position": [3, 0, 0], "size": 0.5},
-        ])
+        objects = json.dumps(
+            [
+                {"shape": "cube", "position": [0, 0, 0], "size": 1},
+                {"shape": "sphere", "position": [3, 0, 0], "size": 0.5},
+            ]
+        )
         out_path = str(tmp_path / "scene.json")
         result = await tool.execute(scene_name="test_scene", objects=objects, output=out_path)
         assert result["status"] == "success"
@@ -801,6 +808,7 @@ class TestThreeDTools:
 # ============================================================
 # Social Media Agent Tools
 # ============================================================
+
 
 class TestSocialMediaTools:
     """Test social media tools."""
@@ -828,6 +836,7 @@ class TestSocialMediaTools:
 # ============================================================
 # PDF Agent Tools
 # ============================================================
+
 
 class TestPDFTools:
     """Test PDF tools with real files."""
@@ -860,6 +869,7 @@ class TestPDFTools:
 # ============================================================
 # DevOps Agent Tools
 # ============================================================
+
 
 class TestDevOpsTools:
     """Test DevOps tools with mocked subprocess."""
@@ -922,6 +932,7 @@ class TestDevOpsTools:
 # ============================================================
 # Computer Use Agent Tools
 # ============================================================
+
 
 class TestComputerUseTools:
     """Test computer use tools with mocked pyautogui."""
