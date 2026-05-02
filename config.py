@@ -215,6 +215,37 @@ class ServerSettings(BaseSettings):
         description="Shared secret for TradingView webhook verification",
     )
 
+    # --- Network Zone Settings ---
+    zone_local_enabled: bool = Field(
+        True, description="Allow connections from localhost (127.0.0.1, ::1)"
+    )
+    zone_lan_enabled: bool = Field(
+        True, description="Allow connections from LAN (10.x, 172.16-31.x, 192.168.x)"
+    )
+    zone_www_enabled: bool = Field(
+        True, description="Allow connections from the public internet"
+    )
+    zone_lan_auth_required: bool = Field(
+        True, description="Require API key for LAN connections"
+    )
+    zone_www_auth_required: bool = Field(
+        True, description="Require API key for WWW connections"
+    )
+    zone_www_rate_limit_rpm: int = Field(
+        60, description="Rate limit for WWW zone: requests per minute per IP"
+    )
+    zone_www_rate_limit_burst: int = Field(
+        10, description="Rate limit for WWW zone: max burst requests per second"
+    )
+    zone_lan_cors_origins: list[str] = Field(
+        default=["http://192.168.*:*", "http://10.*:*", "http://172.16.*:*"],
+        description="Additional CORS origins allowed for LAN zone",
+    )
+    zone_www_blocked_paths: list[str] = Field(
+        default=["/admin/", "/api/code/"],
+        description="URL path prefixes blocked for WWW zone connections",
+    )
+
     model_config = {"env_prefix": "VERA_SERVER_"}
 
 

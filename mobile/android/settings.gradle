@@ -1,0 +1,5 @@
+rootProject.name = 'Vera'
+
+include ':app'
+include ':automotive'
+include ':wear'

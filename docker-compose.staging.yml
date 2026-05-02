@@ -1,0 +1,40 @@
+# ============================================================
+# eVera v1.0 — Staging Docker Compose Override
+# Usage: docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d
+#
+# Enables all three network zones (LOCAL/LAN/WWW) with
+# zone-specific access controls for E2E testing.
+# ============================================================
+
+services:
+  vera:
+    container_name: evera-staging
+    ports:
+      - "${VERA_SERVER_PORT:-8001}:8000"
+    environment:
+      - VERA_SERVER_HOST=0.0.0.0
+      - VERA_SERVER_PORT=8000
+      # Staging API key for zone testing
+      - VERA_SERVER_API_KEY=${VERA_SERVER_API_KEY:-staging-test-key-2026}
+      # Enable all three network zones
+      - VERA_SERVER_ZONE_LOCAL_ENABLED=true
+      - VERA_SERVER_ZONE_LAN_ENABLED=true
+      - VERA_SERVER_ZONE_WWW_ENABLED=true
+      # Auth requirements per zone
+      - VERA_SERVER_ZONE_LAN_AUTH_REQUIRED=true
+      - VERA_SERVER_ZONE_WWW_AUTH_REQUIRED=true
+      # Rate limiting for WWW zone (low limits for testing)
+      - VERA_SERVER_ZONE_WWW_RATE_LIMIT_RPM=30
+      - VERA_SERVER_ZONE_WWW_RATE_LIMIT_BURST=5
+      # Blocked paths for WWW zone
+      - VERA_SERVER_ZONE_WWW_BLOCKED_PATHS=["/admin/","/api/code/"]
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"

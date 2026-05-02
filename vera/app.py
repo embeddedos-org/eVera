@@ -31,6 +31,18 @@ from vera.core import VeraBrain
 from vera.monitoring import metrics
 from vera.monitoring.alerts import AlertManager
 from vera.monitoring.health import deep_health_check
+from vera.network_zones import (
+    NetworkZone,
+    check_zone_access,
+    check_ws_zone_access,
+    classify_ip,
+    classify_request,
+    build_zone_headers,
+    get_client_ip,
+    get_zone_status,
+    rate_limiter,
+    ZoneRateLimiter,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -118,21 +130,50 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         metrics.record_request(request.method, request.url.path, response.status_code, latency_ms)
         return response
 
-    # --- Authentication middleware ---
+    # --- Network Zone middleware (replaces simple API key check) ---
+
+    # Configure rate limiter from settings
+    rate_limiter.rpm = settings.server.zone_www_rate_limit_rpm
+    rate_limiter.burst = settings.server.zone_www_rate_limit_burst
 
     @app.middleware("http")
-    async def api_key_middleware(request: Request, call_next):
-        """Verify API key if configured. Skip for static files and health check."""
-        if settings.server.api_key:
-            path = request.url.path
-            if path not in ("/", "/health", "/metrics", "/alerts") and not path.startswith("/static"):
-                auth_header = request.headers.get("Authorization", "")
-                if auth_header != f"Bearer {settings.server.api_key}":
-                    return JSONResponse(
-                        status_code=401,
-                        content={"detail": "Invalid or missing API key"},
-                    )
-        return await call_next(request)
+    async def network_zone_middleware(request: Request, call_next):
+        """Classify request by network zone and enforce access policies.
+
+        Three zones: LOCAL (no auth), LAN (API key), WWW (API key + rate limit).
+        """
+        zone = classify_request(request)
+        ip = get_client_ip(request)
+
+        # Check if the zone is enabled
+        zone_enabled = {
+            NetworkZone.LOCAL: settings.server.zone_local_enabled,
+            NetworkZone.LAN: settings.server.zone_lan_enabled,
+            NetworkZone.WWW: settings.server.zone_www_enabled,
+        }
+        if not zone_enabled.get(zone, False):
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "detail": f"Connections from {zone.value} zone are disabled",
+                    "zone": zone.value,
+                },
+                headers=build_zone_headers(zone, ip),
+            )
+
+        # Run zone access check (auth, rate limiting, path restrictions)
+        denied = await check_zone_access(request, settings.server.api_key)
+        if denied:
+            return denied
+
+        response = await call_next(request)
+
+        # Add zone headers to all responses
+        headers = build_zone_headers(zone, ip)
+        for k, v in headers.items():
+            response.headers[k] = v
+
+        return response
 
     def verify_webhook_secret(request: Request):
         """Verify webhook secret for trading webhooks."""
@@ -179,6 +220,16 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
     async def alerts_endpoint():
         alert_manager.check()
         return alert_manager.get_alerts(include_resolved=True)
+
+    @app.get("/network/zones")
+    async def network_zones_endpoint(request: Request):
+        """Show network zone configuration and the caller's detected zone."""
+        zone = classify_request(request)
+        ip = get_client_ip(request)
+        status = get_zone_status()
+        status["your_zone"] = zone.value
+        status["your_ip"] = ip
+        return status
 
     @app.post("/webhook/tradingview")
     async def tradingview_webhook(request: Request):
@@ -685,12 +736,9 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
 
     @app.websocket("/ws")
     async def websocket_endpoint(websocket: WebSocket):
-        # Verify API key on WebSocket handshake
-        if settings.server.api_key:
-            ws_api_key = websocket.query_params.get("api_key", "")
-            if ws_api_key != settings.server.api_key:
-                await websocket.close(code=4001, reason="Invalid or missing API key")
-                return
+        # Network zone access check
+        if not await check_ws_zone_access(websocket, settings.server.api_key):
+            return
 
         await websocket.accept()
         session_id = f"ws-{id(websocket)}"
@@ -892,12 +940,9 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
             await websocket.close(code=4003, reason="Voice server not enabled")
             return
 
-        # Auth
-        if settings.server.api_key:
-            ws_api_key = websocket.query_params.get("api_key", "")
-            if ws_api_key != settings.server.api_key:
-                await websocket.close(code=4001, reason="Invalid API key")
-                return
+        # Network zone access check
+        if not await check_ws_zone_access(websocket, settings.server.api_key):
+            return
 
         await websocket.accept()
         session_id = f"voice-{id(websocket)}"
@@ -975,11 +1020,9 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
             await websocket.close(code=4003, reason="Mobile control not enabled")
             return
 
-        if settings.server.api_key:
-            ws_api_key = websocket.query_params.get("api_key", "")
-            if ws_api_key != settings.server.api_key:
-                await websocket.close(code=4001, reason="Invalid API key")
-                return
+        # Network zone access check
+        if not await check_ws_zone_access(websocket, settings.server.api_key):
+            return
 
         await websocket.accept()
         session_id = f"mobile-{id(websocket)}"

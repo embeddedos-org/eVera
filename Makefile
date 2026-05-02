@@ -52,6 +52,16 @@ prod-up: ## Start in production mode
 prod-down: ## Stop production
 	$(COMPOSE) -f docker-compose.yml -f docker-compose.prod.yml down
 
+staging-up: ## Start in staging mode (zone testing)
+	$(COMPOSE) -f docker-compose.yml -f docker-compose.staging.yml up -d
+	@echo "\neVera staging at http://localhost:$${VERA_SERVER_PORT:-8001}"
+
+staging-down: ## Stop staging
+	$(COMPOSE) -f docker-compose.yml -f docker-compose.staging.yml down
+
+staging-test: ## Run zone E2E tests against staging
+	python test_zones_e2e.py
+
 health: ## Check service health
 	@curl -sf http://localhost:$${VERA_SERVER_PORT:-8000}/health && echo "eVera: OK" || echo "eVera: DOWN"
 	@curl -sf http://localhost:11434/api/tags > /dev/null && echo "Ollama: OK" || echo "Ollama: DOWN"

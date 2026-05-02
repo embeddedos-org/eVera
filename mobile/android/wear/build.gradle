@@ -1,0 +1,70 @@
+apply plugin: "com.android.application"
+apply plugin: "kotlin-android"
+
+android {
+    namespace "com.patchava.vera.wear"
+    compileSdk rootProject.ext.compileSdkVersion
+
+    defaultConfig {
+        applicationId "com.patchava.vera.wear"
+        minSdk 26  // Wear OS 3.0+
+        targetSdk rootProject.ext.targetSdkVersion
+        versionCode 3
+        versionName "1.0.3"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+    }
+
+    buildFeatures {
+        compose true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.8"
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:${rootProject.ext.kotlinVersion}"
+    implementation "androidx.core:core-ktx:1.12.0"
+    implementation "androidx.activity:activity-compose:1.8.2"
+
+    // Wear OS Compose
+    implementation "androidx.wear.compose:compose-material:1.3.0"
+    implementation "androidx.wear.compose:compose-foundation:1.3.0"
+    implementation "androidx.wear.compose:compose-navigation:1.3.0"
+
+    // Wear Tiles
+    implementation "androidx.wear.tiles:tiles:1.3.0"
+    implementation "androidx.wear.tiles:tiles-material:1.3.0"
+
+    // Wearable Data Layer
+    implementation "com.google.android.gms:play-services-wearable:18.1.0"
+
+    // Compose
+    implementation platform("androidx.compose:compose-bom:2024.02.00")
+    implementation "androidx.compose.ui:ui"
+    implementation "androidx.compose.material:material-icons-extended"
+
+    // Networking
+    implementation "com.squareup.okhttp3:okhttp:4.12.0"
+    implementation "org.json:json:20231013"
+
+    // Lifecycle
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.7.0"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0"
+}

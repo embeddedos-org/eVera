@@ -119,9 +119,9 @@ jobs:
             electron/dist/*.deb
           if-no-files-found: warn
 
-  # ─── Mobile Android (APK) ───────────────────────────────────
+  # ─── Mobile Android (Phone + Auto + Wear APKs) ─────────────
   build-android:
-    name: 📱 Android APK
+    name: 📱 Android APKs (Phone + Auto + Wear)
     needs: [preflight]
     if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-latest
@@ -141,60 +141,37 @@ jobs:
         working-directory: mobile
         run: npm install
 
-      - name: Generate Android project
-        working-directory: mobile
-        run: |
-          npx --yes @react-native-community/cli@latest init VeraMobileTemp --skip-install --skip-git-init 2>/dev/null || true
-          # Find android dir in any nesting depth
-          ANDROID_DIR=$(find VeraMobileTemp -maxdepth 3 -type d -name "android" | head -1)
-          if [ -n "$ANDROID_DIR" ]; then
-            cp -r "$ANDROID_DIR" ./
-            echo "✅ Android project found at $ANDROID_DIR"
-          else
-            echo "⚠️ React Native template failed — creating minimal Gradle wrapper"
-            mkdir -p android/app/src/main/java/com/veramobile
-            # Create minimal Android build files
-            cat > android/build.gradle << 'GRADLE'
-            buildscript {
-                ext { buildToolsVersion = "34.0.0"; minSdkVersion = 23; compileSdkVersion = 34; targetSdkVersion = 34 }
-                repositories { google(); mavenCentral() }
-                dependencies { classpath("com.android.tools.build:gradle:8.2.2") }
-            }
-            allprojects { repositories { google(); mavenCentral() } }
-          GRADLE
-            cat > android/app/build.gradle << 'APP'
-            apply plugin: "com.android.application"
-            android {
-                compileSdk rootProject.ext.compileSdkVersion
-                namespace "com.veramobile"
-                defaultConfig { applicationId "com.veramobile"; minSdk rootProject.ext.minSdkVersion; targetSdk rootProject.ext.targetSdkVersion; versionCode 1; versionName "1.0.3" }
-                buildTypes { release { minifyEnabled false } }
-            }
-          APP
-            cat > android/settings.gradle << 'SETTINGS'
-            rootProject.name = 'VeraMobile'
-            include ':app'
-          SETTINGS
-            cat > android/gradle/wrapper/gradle-wrapper.properties << 'WRAPPER'
-            distributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip
-          WRAPPER
-            mkdir -p android/gradle/wrapper
-            # Download gradle wrapper
-            cd android && gradle wrapper --gradle-version 8.6 2>/dev/null || true
-          fi
-          rm -rf VeraMobileTemp
-
-      - name: Build release APK
+      - name: Setup Gradle wrapper
         working-directory: mobile/android
         run: |
+          if [ ! -f "gradlew" ]; then
+            gradle wrapper --gradle-version 8.6
+          fi
           chmod +x gradlew
-          ./gradlew assembleRelease
 
-      - name: Upload APK
+      - name: Build all Android modules
+        working-directory: mobile/android
+        run: ./gradlew :app:assembleRelease :automotive:assembleRelease :wear:assembleRelease
+
+      - name: Upload Phone APK
         uses: actions/upload-artifact@v4
         with:
-          name: android-apk
+          name: android-phone-apk
           path: mobile/android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
+
+      - name: Upload Android Auto APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-auto-apk
+          path: mobile/android/automotive/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
+
+      - name: Upload Wear OS APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-wear-apk
+          path: mobile/android/wear/build/outputs/apk/release/*.apk
           if-no-files-found: warn
 
   # ─── Mobile iOS (IPA) ──────────────────────────────────────
@@ -328,6 +305,8 @@ jobs:
             | **macOS** | `Vera-*.dmg` | Open DMG → drag to Applications |
             | **Linux** | `Vera-*.AppImage` | `chmod +x Vera-*.AppImage && ./Vera-*.AppImage` |
             | **Android** | `Vera-*.apk` | Enable unknown sources → install APK |
+            | **Android Auto** | `Vera-Auto-*.apk` | Install on phone → connect to car |
+            | **Wear OS** | `Vera-Wear-*.apk` | Install on watch via Play Store or sideload |
 
             ## 🐍 From Source
             ```bash
