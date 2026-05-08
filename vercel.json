@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "echo 'eVera is a desktop AI assistant (Python + Electron + Docker). It is not deployed to Vercel. Use the Docker image, the PyPI wheel, or the Electron build artifacts from the GitHub Releases page instead.'",
+  "framework": null,
+  "ignoreCommand": "exit 0"
+}

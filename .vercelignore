@@ -1,0 +1,5 @@
+# Vercel: do not include any source. eVera is not a Vercel-deployable project.
+# This file is paired with vercel.json's `ignoreCommand: exit 0`, which causes
+# Vercel to skip the build entirely. eVera is shipped via Docker, PyPI, and
+# Electron — see the GitHub Releases page.
+*
