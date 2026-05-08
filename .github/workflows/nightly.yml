@@ -9,6 +9,9 @@ concurrency:
   group: nightly-${{ github.ref }}
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Nightly Tests (Python ${{ matrix.python-version }}, ${{ matrix.os }})

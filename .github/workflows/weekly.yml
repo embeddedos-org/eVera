@@ -9,6 +9,9 @@ concurrency:
   group: weekly-${{ github.ref }}
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   full-test:
     name: Full Test Suite (Python ${{ matrix.python-version }}, ${{ matrix.os }})

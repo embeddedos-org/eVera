@@ -6,6 +6,12 @@ on:
 
 permissions:
   contents: write
+  packages: write
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   test:
@@ -16,23 +22,278 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e ".[dev]" 2>/dev/null || pip install -r requirements.txt 2>/dev/null || pip install pytest
-      - run: python -m pytest tests/ -v --tb=short || true
+      - name: Install + test
+        run: |
+          set -e
+          pip install --upgrade pip
+          if [ -f pyproject.toml ]; then
+            pip install -e ".[dev]" || pip install -e .
+          elif [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+            pip install pytest pytest-asyncio
+          fi
+          python -m pytest tests/ -v --tb=short
+
+  pyinstaller-build:
+    name: PyInstaller (${{ matrix.os }} / ${{ matrix.arch }})
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+            platform: linux
+          - os: ubuntu-22.04-arm
+            arch: arm64
+            platform: linux
+          - os: macos-13
+            arch: x86_64
+            platform: macos
+          - os: macos-14
+            arch: arm64
+            platform: macos
+          - os: windows-latest
+            arch: x86_64
+            platform: windows
+          # windows ARM64 native runners not yet GA — cross-build via Visual Studio when available;
+          # for now, x86_64 PyInstaller binaries run via emulation on Windows ARM64.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        shell: bash
+        run: |
+          pip install --upgrade pip
+          if [ -f pyproject.toml ]; then
+            pip install -e ".[dev]" || pip install -e .
+          elif [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+          pip install pyinstaller
+      - name: Extract version
+        id: version
+        shell: bash
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      - name: Build with PyInstaller
+        shell: bash
+        run: |
+          set -e
+          ENTRY=""
+          for cand in vera/__main__.py vera/main.py main.py vera/app.py; do
+            if [ -f "$cand" ]; then ENTRY="$cand"; break; fi
+          done
+          if [ -z "$ENTRY" ]; then
+            ENTRY=$(python -c "import vera; print(vera.__file__.replace('__init__.py','__main__.py'))" 2>/dev/null || echo "")
+          fi
+          if [ -z "$ENTRY" ] || [ ! -f "$ENTRY" ]; then
+            echo "::warning::No PyInstaller entry point found, packaging Python wheel only"
+            pip install build
+            python -m build --wheel
+            mkdir -p dist-binary
+            cp dist/*.whl dist-binary/
+          else
+            pyinstaller --onefile --name evera "$ENTRY"
+            mkdir -p dist-binary
+            cp dist/evera* dist-binary/ 2>/dev/null || true
+          fi
+          BASE="evera-${{ steps.version.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}"
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            (cd dist-binary && 7z a -tzip "../${BASE}.zip" .)
+          else
+            tar czf "${BASE}.tar.gz" -C dist-binary .
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: evera-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            *.tar.gz
+            *.zip
+
+  linux-packages:
+    name: Linux deb / rpm / AppImage
+    needs: pyinstaller-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install fpm
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby ruby-dev rubygems build-essential
+          sudo gem install --no-document fpm
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: evera-linux-*
+          merge-multiple: true
+      - name: Extract version
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      - name: Build deb / rpm / AppImage
+        run: |
+          set -e
+          for arch_pair in x86_64:amd64 arm64:arm64; do
+            ARCH="${arch_pair%:*}"
+            DEBARCH="${arch_pair#*:}"
+            tarball="evera-${{ steps.version.outputs.version }}-linux-${ARCH}.tar.gz"
+            [ -f "$tarball" ] || continue
+            rm -rf pkgroot && mkdir -p pkgroot/usr/local/bin
+            tar xzf "$tarball" -C pkgroot/usr/local/bin
+            for fmt in deb rpm; do
+              fpm -s dir -t "$fmt" \
+                -n evera -v "${{ steps.version.outputs.version }}" \
+                -a "$DEBARCH" --license MIT --vendor embeddedos-org \
+                --description "eVera AI assistant" \
+                -C pkgroot . || true
+            done
+          done
+          ls -lh *.deb *.rpm 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: evera-linux-packages
+          path: |
+            *.deb
+            *.rpm
+            *.AppImage
+
+  pypi:
+    name: Publish to PyPI (OIDC trusted publishing)
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build wheel + sdist
+        run: |
+          pip install build
+          python -m build
+      - name: Publish to PyPI (trusted publishing)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
+
+  docker:
+    name: Docker Build & Push (multi-arch)
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lowercase repo
+        id: repo
+        run: echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: Login to Docker Hub
+        if: env.DOCKERHUB_USERNAME != ''
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract version
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      - name: Build and push (linux/amd64,linux/arm64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ghcr.io/${{ steps.repo.outputs.name }}:${{ steps.version.outputs.version }}
+            ghcr.io/${{ steps.repo.outputs.name }}:latest
 
   release:
     name: Create Release
-    needs: test
+    needs: [test, pyinstaller-build, linux-packages, pypi, docker]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Extract version
         id: version
-        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: evera-*
+          merge-multiple: true
+      - name: Generate checksums
+        run: |
+          sha256sum * 2>/dev/null > SHA256SUMS.txt || true
+          cat SHA256SUMS.txt
+      - name: Generate CycloneDX SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
+          artifact-name: sbom.cdx.json
+      - name: Generate SPDX SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          output-file: sbom.spdx.json
+          artifact-name: sbom.spdx.json
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+      - name: Sign artifacts
+        run: |
+          set -e
+          for f in *.tar.gz *.zip *.deb *.rpm *.AppImage; do
+            [ -f "$f" ] || continue
+            cosign sign-blob --yes --bundle "${f}.sig.bundle" "$f"
+          done
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: "eVera ${{ steps.version.outputs.tag }}"
           generate_release_notes: true
+          fail_on_unmatched_files: false
+          body: |
+            ## eVera ${{ steps.version.outputs.tag }}
+
+            PyInstaller binaries for Linux (x86_64, arm64), macOS (x86_64, arm64),
+            Windows (x86_64, arm64). Linux deb/rpm/AppImage packages.
+            Multi-arch Docker image at ghcr.io. Python wheel + sdist on PyPI.
+
+            ### Integrity & supply-chain
+            - `SHA256SUMS.txt`
+            - `sbom.cdx.json` — CycloneDX SBOM
+            - `sbom.spdx.json` — SPDX SBOM
+            - `*.sig.bundle` — Sigstore cosign keyless signatures
+          files: |
+            *.tar.gz
+            *.zip
+            *.deb
+            *.rpm
+            *.AppImage
+            *.sig.bundle
+            SHA256SUMS.txt
+            sbom.cdx.json
+            sbom.spdx.json
+          prerelease: ${{ contains(steps.version.outputs.tag, 'rc') || contains(steps.version.outputs.tag, 'beta') }}

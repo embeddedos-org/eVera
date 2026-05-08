@@ -15,6 +15,13 @@ env:
   PYTHON_VERSION: '3.12'
   NODE_VERSION: '20'
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # ─── Pre-flight: Lint + Test + Frontend ──────────────────────
   preflight:
