@@ -24,3 +24,7 @@ node_modules/
 __pycache__/
 .env
 
+build-*/
+target/
+.pytest_cache/
+.DS_Store

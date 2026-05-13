@@ -1,6 +1,6 @@
 {
   "name": "vera-desktop",
-  "version": "0.9.0",
+  "version": "3.0.0",
   "description": "Vera - Voice-first AI Assistant Desktop App",
   "author": "Srikanth Patchava",
   "main": "main.js",
@@ -29,7 +29,9 @@
       {
         "from": "../dist/vera-server/",
         "to": "backend",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {
@@ -42,7 +44,10 @@
       "category": "public.app-category.productivity"
     },
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "icon": "icon.png",
       "category": "Utility"
     },
@@ -52,8 +57,16 @@
     },
     "dmg": {
       "contents": [
-        { "x": 130, "y": 220 },
-        { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
       ]
     },
     "appImage": {
