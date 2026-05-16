@@ -1,6 +1,6 @@
 {
   "name": "vera-desktop",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Vera - Voice-first AI Assistant Desktop App",
   "author": "Srikanth Patchava",
   "main": "main.js",
