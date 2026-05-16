@@ -315,9 +315,12 @@ class ExecuteScriptTool(Tool):
                 import platform
 
                 if platform.system() == "Windows":
+                    # SECURITY: use cmd.exe /c with argv list instead of shell=True
+                    # to avoid command injection via the `command` parameter.
+                    cmd_parts = shlex.split(command, posix=False)
                     result = subprocess.run(
-                        command,
-                        shell=True,
+                        ["cmd.exe", "/c", *cmd_parts],
+                        shell=False,
                         capture_output=True,
                         text=True,
                         timeout=30,

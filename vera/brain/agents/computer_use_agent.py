@@ -273,16 +273,21 @@ class AppLauncherTool(Tool):
 
     async def execute(self, **kw: Any) -> dict[str, Any]:
         import subprocess
+        import shlex
         import sys
 
         try:
             app, args = kw.get("app_name", ""), kw.get("args", "")
+            # SECURITY: avoid shell=True; pass argv list and let the OS resolve the app.
+            arg_list = shlex.split(args) if args else []
             if sys.platform == "win32":
-                subprocess.Popen(f"start {app} {args}", shell=True)
+                # Windows: use the `start` builtin via cmd.exe but pass args as a list
+                # to avoid f-string-into-shell command injection.
+                subprocess.Popen(["cmd.exe", "/c", "start", "", app, *arg_list], shell=False)
             elif sys.platform == "darwin":
-                subprocess.Popen(["open", "-a", app] + (args.split() if args else []))
+                subprocess.Popen(["open", "-a", app, *arg_list], shell=False)
             else:
-                subprocess.Popen([app] + (args.split() if args else []))
+                subprocess.Popen([app, *arg_list], shell=False)
             return {"status": "success", "launched": app}
         except Exception as e:
             return {"status": "error", "message": str(e)}

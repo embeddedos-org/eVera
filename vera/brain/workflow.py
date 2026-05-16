@@ -229,8 +229,33 @@ class WorkflowEngine:
 
         elif step.step_type == "condition":
             condition = self._resolve_template_string(step.condition_if, step_outputs, variables)
+            # SECURITY: avoid eval() of arbitrary expressions. Use a restricted
+            # evaluator (simpleeval) that supports comparisons, boolean ops,
+            # and references to step_outputs only — no attribute access, no
+            # function calls, no arbitrary builtins.
             try:
-                result = bool(eval(condition, {"__builtins__": {}}, step_outputs))
+                from simpleeval import SimpleEval, NameNotDefined
+                evaluator = SimpleEval(names=dict(step_outputs))
+                # Disable function calls and attribute access for safety
+                evaluator.functions = {}
+                result = bool(evaluator.eval(condition))
+            except ImportError:
+                # Fallback to a strictly limited eval — only literals / comparisons
+                # / boolean ops are permitted via AST inspection.
+                import ast
+                _ALLOWED = (
+                    ast.Expression, ast.BoolOp, ast.UnaryOp, ast.Compare, ast.Constant,
+                    ast.Name, ast.Load, ast.And, ast.Or, ast.Not, ast.Eq, ast.NotEq,
+                    ast.Lt, ast.LtE, ast.Gt, ast.GtE, ast.In, ast.NotIn,
+                )
+                try:
+                    tree = ast.parse(condition, mode="eval")
+                    for node in ast.walk(tree):
+                        if not isinstance(node, _ALLOWED):
+                            raise ValueError(f"disallowed AST node: {type(node).__name__}")
+                    result = bool(eval(compile(tree, "<condition>", "eval"), {"__builtins__": {}}, dict(step_outputs)))
+                except Exception:
+                    result = False
             except Exception:
                 result = False
             return {"next_step": step.condition_then if result else step.condition_else, "condition_result": result}
