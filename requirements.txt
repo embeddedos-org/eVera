@@ -70,7 +70,7 @@ matplotlib>=3.7.0
 seaborn>=0.12.0
 scikit-learn>=1.3.0
 openpyxl>=3.1.0
-duckdb>=0.9.0
+duckdb>=1.5.2
 
 # Translation Agent
 deep-translator>=1.11.0
