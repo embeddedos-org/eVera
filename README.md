@@ -23,7 +23,7 @@ We continuously benchmark eVera — Autonomous Agent against the entire Embedded
 
 ---
 
-## 🎬 Product Marketing Video
+## 🎬 Product Marketing Video (App Store Proof of Production)
 
 Experience eVera — Autonomous Agent in action! Watch our high-fidelity product demonstration and marketing video:
 
