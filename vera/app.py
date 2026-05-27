@@ -77,6 +77,43 @@ class FactResponse(BaseModel):
     value: str | None
 
 
+class ExtensionActionRequest(BaseModel):
+    text: str
+    context: str | None = None
+    model: str | None = None
+
+
+class AutomationPlanRequest(BaseModel):
+    task: str
+
+
+class AutomationScrapeRequest(BaseModel):
+    url: str
+    data_schema: dict[str, str]
+    max_pages: int = 5
+    output_format: str = "json"
+
+
+class DiagramExportRequest(BaseModel):
+    mermaid: str
+    format: str = "svg"
+    filename: str = "diagram"
+
+
+class CodeAnalyzeRequest(BaseModel):
+    path: str
+    content: str | None = None
+    action: str  # summarize, explain, find_issues
+
+
+class LocationUpdateRequest(BaseModel):
+    latitude: float
+    longitude: float
+    accuracy: float | None = None
+    altitude: float | None = None
+    session_id: str | None = None
+
+
 # --- App factory ---
 
 
@@ -465,11 +502,6 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
 
     # --- Extension endpoints (Phase 3) ---
 
-    class ExtensionActionRequest(BaseModel):
-        text: str
-        context: str | None = None
-        model: str | None = None
-
     @app.post("/extension/summarize")
     async def extension_summarize(request: ExtensionActionRequest):
         """Summarize text for Chrome extension."""
@@ -567,15 +599,6 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         return {"result": result.content, "model": result.model}
 
     # --- Automation endpoints (Phase 4) ---
-
-    class AutomationPlanRequest(BaseModel):
-        task: str
-
-    class AutomationScrapeRequest(BaseModel):
-        url: str
-        data_schema: dict[str, str]
-        max_pages: int = 5
-        output_format: str = "json"
 
     @app.post("/automation/plan")
     async def automation_plan(request: AutomationPlanRequest):
@@ -1084,11 +1107,6 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
 
     # --- Diagram endpoints ---
 
-    class DiagramExportRequest(BaseModel):
-        mermaid: str
-        format: str = "svg"
-        filename: str = "diagram"
-
     @app.post("/diagrams/export")
     async def export_diagram(request: DiagramExportRequest):
         """Export a Mermaid diagram to SVG/PNG/PDF."""
@@ -1239,11 +1257,6 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
             }
         )
 
-    class CodeAnalyzeRequest(BaseModel):
-        path: str
-        content: str | None = None
-        action: str  # summarize, explain, find_issues
-
     @app.post("/api/code/analyze")
     async def code_analyze(request: CodeAnalyzeRequest):
         """Run AI analysis on a code file."""
@@ -1353,12 +1366,6 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         return JSONResponse({"nodes": nodes, "edges": edges})
 
     # --- GPS / Location endpoint ---
-    class LocationUpdateRequest(BaseModel):
-        latitude: float
-        longitude: float
-        accuracy: float | None = None
-        altitude: float | None = None
-        session_id: str | None = None
 
     @app.post("/location/update")
     async def location_update(request: LocationUpdateRequest):
@@ -1376,9 +1383,9 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
             "altitude_m": request.altitude,
         }
         # Persist location in semantic memory so agents can access it
-        brain_instance.memory_vault.semantic.set("user_latitude", str(request.latitude))
-        brain_instance.memory_vault.semantic.set("user_longitude", str(request.longitude))
-        brain_instance.memory_vault.semantic.set("user_location_accuracy", str(request.accuracy or ""))
+        brain_instance.memory_vault.semantic.remember("user_latitude", str(request.latitude))
+        brain_instance.memory_vault.semantic.remember("user_longitude", str(request.longitude))
+        brain_instance.memory_vault.semantic.remember("user_location_accuracy", str(request.accuracy or ""))
         logger.info(
             "Location updated for session %s: lat=%.4f lon=%.4f",
             session_id, request.latitude, request.longitude,
@@ -1393,9 +1400,9 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
     @app.get("/location/current")
     async def location_current():
         """Retrieve the last known GPS location."""
-        lat = brain_instance.memory_vault.semantic.get("user_latitude")
-        lon = brain_instance.memory_vault.semantic.get("user_longitude")
-        acc = brain_instance.memory_vault.semantic.get("user_location_accuracy")
+        lat = brain_instance.memory_vault.semantic.recall("user_latitude")
+        lon = brain_instance.memory_vault.semantic.recall("user_longitude")
+        acc = brain_instance.memory_vault.semantic.recall("user_location_accuracy")
         if lat and lon:
             return {
                 "status": "ok",

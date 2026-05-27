@@ -17,7 +17,13 @@ def mock_graph():
         patch("vera.providers.manager.litellm") as mock_litellm,
         patch("vera.memory.vault.settings") as mock_mem_settings,
         patch("vera.safety.policy.settings") as mock_safety_settings,
+        patch("vera.memory.vault.EpisodicMemory") as mock_episodic,
     ):
+        # Mock episodic memory methods to prevent torch/sentence_transformers imports
+        mock_episodic_instance = MagicMock()
+        mock_episodic_instance.recall.return_value = []
+        mock_episodic_instance.count = 0
+        mock_episodic.return_value = mock_episodic_instance
         # Memory settings
         mock_mem_settings.memory.working_memory_max_turns = 10
         mock_mem_settings.memory.embedding_model = "all-MiniLM-L6-v2"

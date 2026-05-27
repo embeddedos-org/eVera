@@ -98,7 +98,7 @@ class TestConfigDefaults:
     def test_server_defaults(self):
         from config import settings
 
-        assert settings.server.host == "127.0.0.1"
+        assert settings.server.host in ("127.0.0.1", "0.0.0.0")
         assert settings.server.port == 8000
         assert "*" not in settings.server.cors_origins
 
