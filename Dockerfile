@@ -5,7 +5,7 @@
 # ============================================================
 
 # --- Stage 1: Builder ---
-FROM python:3.12-slim AS builder
+FROM python:3.14-slim AS builder
 
 WORKDIR /build
 
@@ -26,7 +26,7 @@ RUN pip install --no-cache-dir --prefix=/install \
     python-pptx paramiko 2>/dev/null || true
 
 # --- Stage 2: Runtime ---
-FROM python:3.12-slim AS runtime
+FROM python:3.14-slim AS runtime
 
 LABEL maintainer="embeddedos-org"
 LABEL description="eVera — Voice-first multi-agent AI assistant (43 agents, 278+ tools)"
