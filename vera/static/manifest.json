@@ -1,33 +1,95 @@
 {
-    "name": "Vera AI Buddy",
-    "short_name": "Vera",
-    "description": "Voice-first multi-agent AI assistant with 10 specialized agents",
-    "start_url": "/",
+    "name": "eVera — AI Buddy",
+    "short_name": "eVera",
+    "description": "Voice-first multi-agent AI assistant with 43 specialized agents. Works worldwide in 19 languages.",
+    "lang": "en",
+    "dir": "auto",
+    "start_url": "/?source=pwa",
+    "scope": "/",
     "display": "standalone",
+    "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
     "background_color": "#070b14",
     "theme_color": "#0a0e1a",
     "orientation": "any",
-    "categories": ["productivity", "utilities"],
+    "categories": ["productivity", "utilities", "lifestyle"],
+    "id": "evera-ai-buddy",
     "icons": [
         {
             "src": "/static/icon-192.png",
             "sizes": "192x192",
             "type": "image/png",
-            "purpose": "any maskable"
+            "purpose": "any"
+        },
+        {
+            "src": "/static/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
         },
         {
             "src": "/static/icon-512.png",
             "sizes": "512x512",
             "type": "image/png",
-            "purpose": "any maskable"
+            "purpose": "any"
+        },
+        {
+            "src": "/static/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
         }
     ],
-    "screenshots": [],
+    "screenshots": [
+        {
+            "src": "/static/screenshot-desktop.png",
+            "sizes": "1280x800",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "eVera desktop chat interface"
+        },
+        {
+            "src": "/static/screenshot-mobile.png",
+            "sizes": "390x844",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "eVera mobile chat interface"
+        }
+    ],
     "shortcuts": [
         {
-            "name": "Chat with Vera",
-            "url": "/",
-            "description": "Open Vera chat"
+            "name": "Chat with eVera",
+            "short_name": "Chat",
+            "url": "/?shortcut=chat",
+            "description": "Open eVera chat",
+            "icons": [
+                {
+                    "src": "/static/icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "Voice Mode",
+            "short_name": "Voice",
+            "url": "/?shortcut=voice&mode=always",
+            "description": "Start voice conversation",
+            "icons": [
+                {
+                    "src": "/static/icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
         }
-    ]
+    ],
+    "related_applications": [],
+    "prefer_related_applications": false,
+    "protocol_handlers": [
+        {
+            "protocol": "web+evera",
+            "url": "/?action=%s"
+        }
+    ],
+    "edge_side_panel": {
+        "preferred_width": 400
+    }
 }

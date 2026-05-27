@@ -19,8 +19,9 @@ import {
   Platform,
   Vibration,
 } from 'react-native';
-import { ServerConfig, VeraWebSocket, ChatMessage, VeraResponse } from '../services/api';
+import { ServerConfig, VeraWebSocket, ChatMessage, VeraResponse, updateLocation } from '../services/api';
 import { voiceService } from '../services/voice';
+import Geolocation from 'react-native-geolocation-service';
 
 interface Props {
   serverConfig: ServerConfig;
@@ -109,6 +110,39 @@ export default function ChatScreen({ serverConfig, onOpenSettings }: Props) {
     return () => {
       ws.disconnect();
       voiceService.destroy();
+    };
+  }, [serverConfig]);
+
+  // ─── GPS Location Tracking ───
+  useEffect(() => {
+    let watchId: number | null = null;
+
+    // Send a location update to the eVera server
+    const sendLoc = async (coords: { latitude: number; longitude: number; accuracy: number | null; altitude: number | null }) => {
+      await updateLocation(
+        serverConfig,
+        coords.latitude,
+        coords.longitude,
+        coords.accuracy ?? undefined,
+        coords.altitude ?? undefined,
+      );
+    };
+
+    // Get initial position and start watching
+    Geolocation.getCurrentPosition(
+      (pos) => { sendLoc(pos.coords); },
+      (err) => { console.warn('[eVera] GPS error:', err.message); },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
+    );
+
+    watchId = Geolocation.watchPosition(
+      (pos) => { sendLoc(pos.coords); },
+      (err) => { console.warn('[eVera] GPS watch error:', err.message); },
+      { enableHighAccuracy: false, distanceFilter: 500, interval: 5 * 60 * 1000 },
+    );
+
+    return () => {
+      if (watchId !== null) Geolocation.clearWatch(watchId);
     };
   }, [serverConfig]);
 

@@ -1,30 +1,108 @@
-# Data and secrets
-data/
-.env
-*.key
-*.db
+# ============================================================
+# eVera — .gitignore
+# ============================================================
 
-# Python
+# --- Secrets & Credentials ---
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+secrets/
+credentials/
+
+# --- Data directories ---
+data/
+/deploy/certbot/conf/
+/deploy/certbot/www/
+
+# --- Python ---
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
 *.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.pyc
+
+# --- Virtual environments ---
 .venv/
 venv/
-dist/
-build/
+env/
+ENV/
+env.bak/
+venv.bak/
 
-# Test artifacts
+# --- Testing ---
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+nosetests.xml
+*.cover
+*.py,cover
 MagicMock/
 
-# Executables
-*.exe
+# --- IDEs ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
 
+# --- Node.js (mobile) ---
 node_modules/
-*.pyc
-__pycache__/
-.env
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp
+.pnp.js
+mobile/.expo/
+mobile/android/
+mobile/ios/
+mobile/build/
 
+# --- Build artifacts ---
 build-*/
 target/
-.pytest_cache/
-.DS_Store
+*.exe
+*.dll
+*.dylib
+
+# --- Logs ---
+*.log
+logs/
+*.log.*
+
+# --- Docker ---
+.dockerignore.local
+
+# --- Misc ---
+*.tmp
+*.bak
+*.swp
+.cache/

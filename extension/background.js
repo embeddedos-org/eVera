@@ -4,7 +4,10 @@
  * Handles: WebSocket to backend, context menus, message routing, connection badge.
  */
 
-const DEFAULT_SERVER_URL = "http://localhost:8000";
+// Default server URL — can be overridden in extension options.
+// For production deployments, set this to your hosted eVera server URL.
+// Users can change this in the extension Options page.
+const DEFAULT_SERVER_URL = "https://evera-api.embeddedos.org";
 let ws = null;
 let serverUrl = DEFAULT_SERVER_URL;
 let connected = false;

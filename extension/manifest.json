@@ -2,16 +2,21 @@
   "manifest_version": 3,
   "name": "eVera AI Copilot",
   "version": "1.0.0",
-  "description": "AI-powered text actions and chat sidebar powered by eVera",
+  "description": "AI-powered text actions, voice chat, and sidebar assistant powered by eVera — works with any eVera server (cloud or self-hosted)",
   "permissions": [
     "activeTab",
     "contextMenus",
     "sidePanel",
-    "storage"
+    "storage",
+    "notifications"
   ],
   "host_permissions": [
+    "https://evera-api.embeddedos.org/*",
+    "https://evera.embeddedos.org/*",
     "http://localhost:8000/*",
-    "http://127.0.0.1:8000/*"
+    "http://127.0.0.1:8000/*",
+    "http://*/*",
+    "https://*/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -33,12 +38,19 @@
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
-    }
+    },
+    "default_title": "eVera AI Copilot"
   },
   "options_page": "options.html",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

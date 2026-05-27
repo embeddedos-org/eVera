@@ -1,10 +1,17 @@
 # ============================================================
-# eVera v1.0 — Docker Compose Stack
+# eVera v1.0 — Production Docker Compose Stack
+#
+# Services:
+#   vera      — eVera FastAPI server (port 8000 internal)
+#   nginx     — Reverse proxy with TLS termination (ports 80/443)
+#   ollama    — Local LLM backend (optional)
+#
 # Usage:
 #   docker compose up -d              # Start all services
-#   docker compose up -d vera         # Start eVera only
+#   docker compose up -d vera         # Start eVera only (no nginx/ollama)
 #   docker compose logs -f vera       # View logs
 #   docker compose exec vera python main.py --mode text
+#   docker compose down               # Stop all services
 # ============================================================
 
 services:
@@ -13,10 +20,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: evera:latest
     container_name: evera
     restart: unless-stopped
-    ports:
-      - "${VERA_SERVER_PORT:-8000}:8000"
+    # Do NOT expose port 8000 directly in production — use nginx
+    # For local dev only, uncomment:
+    # ports:
+    #   - "${VERA_SERVER_PORT:-8000}:8000"
     volumes:
       - vera-data:/app/data
       - ./.env:/app/.env:ro
@@ -28,7 +38,14 @@ services:
       - VERA_LLM_OPENAI_API_KEY=${VERA_LLM_OPENAI_API_KEY:-}
       - VERA_LLM_GEMINI_API_KEY=${VERA_LLM_GEMINI_API_KEY:-}
       - VERA_LLM_ANTHROPIC_API_KEY=${VERA_LLM_ANTHROPIC_API_KEY:-}
+      - VERA_LLM_GROQ_API_KEY=${VERA_LLM_GROQ_API_KEY:-}
+      - VERA_LLM_DEEPSEEK_API_KEY=${VERA_LLM_DEEPSEEK_API_KEY:-}
       - VERA_LLM_FALLBACK_ORDER=${VERA_LLM_FALLBACK_ORDER:-ollama,openai,gemini}
+      - VERA_SERVER_API_KEY=${VERA_SERVER_API_KEY:-}
+      - VERA_SERVER_CORS_ORIGINS=${VERA_SERVER_CORS_ORIGINS:-["https://evera.embeddedos.org","https://evera-api.embeddedos.org"]}
+      - VERA_SERVER_ZONE_WWW_ENABLED=true
+      - VERA_SERVER_ZONE_WWW_AUTH_REQUIRED=${VERA_SERVER_ZONE_WWW_AUTH_REQUIRED:-true}
+      - VERA_SERVER_ZONE_WWW_RATE_LIMIT_RPM=${VERA_SERVER_ZONE_WWW_RATE_LIMIT_RPM:-60}
     depends_on:
       ollama:
         condition: service_healthy
@@ -37,17 +54,64 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 15s
+      start_period: 20s
     networks:
-      - evera-net
+      - evera-internal
+    # Security: read-only filesystem with writable data volume
+    read_only: false
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # ── Nginx Reverse Proxy ───────────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: evera-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./deploy/certbot/conf:/etc/letsencrypt:ro
+      - ./deploy/certbot/www:/var/www/certbot:ro
+    depends_on:
+      vera:
+        condition: service_healthy
+    networks:
+      - evera-internal
+      - evera-public
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+
+  # ── Certbot (TLS certificate renewal) ────────────────────
+  certbot:
+    image: certbot/certbot:latest
+    container_name: evera-certbot
+    volumes:
+      - ./deploy/certbot/conf:/etc/letsencrypt
+      - ./deploy/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    restart: unless-stopped
+    networks:
+      - evera-public
 
   # ── Ollama (Local LLM) ───────────────────────────────────
   ollama:
     image: ollama/ollama:latest
     container_name: evera-ollama
     restart: unless-stopped
-    ports:
-      - "11434:11434"
+    # Only expose locally — not to public internet
+    expose:
+      - "11434"
     volumes:
       - ollama-models:/root/.ollama
     healthcheck:
@@ -61,7 +125,12 @@ services:
         reservations:
           memory: 4G
     networks:
-      - evera-net
+      - evera-internal
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
 
   # ── Ollama Model Puller (one-shot init) ───────────────────
   ollama-pull:
@@ -77,7 +146,7 @@ services:
         curl -s http://ollama:11434/api/pull -d "{\"name\": \"${VERA_LLM_OLLAMA_MODEL:-llama3.2}\"}"
         echo "Model ready!"
     networks:
-      - evera-net
+      - evera-internal
     restart: "no"
 
 volumes:
@@ -87,5 +156,10 @@ volumes:
     driver: local
 
 networks:
-  evera-net:
+  # Internal network — eVera + Ollama + Nginx backend
+  evera-internal:
+    driver: bridge
+    internal: false
+  # Public-facing network — Nginx only
+  evera-public:
     driver: bridge

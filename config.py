@@ -198,13 +198,18 @@ class ServerSettings(BaseSettings):
     """FastAPI server configuration."""
 
     host: str = Field(
-        "127.0.0.1",
-        description="Server bind host (127.0.0.1 for local, 0.0.0.0 for network)",
+        "0.0.0.0",
+        description="Server bind host (0.0.0.0 for network/production, 127.0.0.1 for local-only)",
     )
     port: int = Field(8000, description="Server bind port")
     cors_origins: list[str] = Field(
-        default=["http://localhost:8000", "http://127.0.0.1:8000"],
-        description="CORS allowed origins",
+        default=[
+            "https://evera.embeddedos.org",
+            "https://evera-api.embeddedos.org",
+            "http://localhost:8000",
+            "http://127.0.0.1:8000",
+        ],
+        description="CORS allowed origins (add your production domain here)",
     )
     api_key: str = Field(
         "",

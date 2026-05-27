@@ -1,17 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vera — AI Buddy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>eVera — AI Buddy</title>
+    <meta name="description" content="eVera — Voice-first multi-agent AI assistant with 43 specialized agents. Works worldwide in 19 languages.">
+    <meta name="keywords" content="AI assistant, voice assistant, multi-agent, eVera, Vera, AI buddy">
+    <meta name="author" content="EmbeddedOS Organization">
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#0a0e1a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://localhost:* http://127.0.0.1:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* wss:; img-src 'self' data: blob: http://localhost:*; font-src 'self'; media-src 'self' blob:; worker-src 'self' blob:;">
+    <meta name="apple-mobile-web-app-title" content="eVera">
+    <meta name="mobile-web-app-capable" content="yes">
+    <!-- Open Graph / Social -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="eVera — AI Buddy">
+    <meta property="og:description" content="Voice-first multi-agent AI assistant with 43 specialized agents">
+    <meta property="og:image" content="/static/icon-512.png">
+    <!-- Production-ready CSP: allows self + CDN scripts + any server (wss/https) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https: wss: ws: http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*; img-src 'self' data: blob: https:; media-src 'self' blob:; worker-src 'self' blob:;">
     <meta name="X-Content-Type-Options" content="nosniff">
     <meta name="Referrer-Policy" content="strict-origin-when-cross-origin">
     <link rel="stylesheet" href="/static/style.css">
+    <!-- i18n: load UI strings from server based on browser language -->
+    <script>
+        (function() {
+            // Detect browser language and apply to <html> element
+            var lang = localStorage.getItem('vera_lang') ||
+                       navigator.language.split('-')[0] ||
+                       'en';
+            document.documentElement.lang = lang;
+            // RTL support for Arabic
+            if (lang === 'ar') {
+                document.documentElement.dir = 'rtl';
+            }
+            window.VERA_LANG = lang;
+        })();
+    </script>
 </head>
 <body>
     <!-- Animated particle background -->
@@ -23,7 +49,7 @@
             <div class="header-left">
                 <div class="logo">
                     <span class="logo-icon">🎙️</span>
-                    <span class="logo-text">Vera</span>
+                    <span class="logo-text">eVera</span>
                 </div>
             </div>
             <div class="header-center">
@@ -38,14 +64,20 @@
                     <option value="fr">🇫🇷 FR</option>
                     <option value="de">🇩🇪 DE</option>
                     <option value="hi">🇮🇳 HI</option>
-                    <option value="te">🇮🇳 TE</option>
+                    <option value="zh">🇨🇳 ZH</option>
+                    <option value="ar">🇸🇦 AR</option>
+                    <option value="pt">🇧🇷 PT</option>
                     <option value="ja">🇯🇵 JA</option>
                     <option value="ko">🇰🇷 KO</option>
-                    <option value="zh">🇨🇳 ZH</option>
-                    <option value="pt">🇧🇷 PT</option>
-                    <option value="ar">🇸🇦 AR</option>
-                    <option value="it">🇮🇹 IT</option>
                     <option value="ru">🇷🇺 RU</option>
+                    <option value="it">🇮🇹 IT</option>
+                    <option value="te">🇮🇳 TE</option>
+                    <option value="ta">🇮🇳 TA</option>
+                    <option value="nl">🇳🇱 NL</option>
+                    <option value="pl">🇵🇱 PL</option>
+                    <option value="tr">🇹🇷 TR</option>
+                    <option value="vi">🇻🇳 VI</option>
+                    <option value="th">🇹🇭 TH</option>
                 </select>
             </div>
             <div class="header-right">
@@ -54,7 +86,7 @@
                 </select>
                 <div class="connection-badge" id="connectionBadge">
                     <span class="dot"></span>
-                    <span class="label">Connecting…</span>
+                    <span class="label" data-i18n="connecting">Connecting…</span>
                 </div>
             </div>
         </header>
@@ -79,7 +111,7 @@
                     <div class="chat-messages" id="chatMessages">
                         <div class="system-message">
                             <span class="system-icon">✨</span>
-                            Hey there! 👋 I'm Vera, your AI buddy. Tell me your name and let's get started!
+                            <span data-i18n="greeting">Hey there! 👋 I'm Vera, your AI buddy. Tell me your name and let's get started!</span>
                         </div>
                     </div>
 
@@ -89,7 +121,7 @@
                             <span class="dot-2"></span>
                             <span class="dot-3"></span>
                         </div>
-                        <span class="typing-label">Vera is thinking…</span>
+                        <span class="typing-label" data-i18n="thinking">Vera is thinking…</span>
                     </div>
                 </div>
             </div>
@@ -98,7 +130,7 @@
             <div class="right-column" id="agentPanel">
                 <div class="glass-panel agent-panel">
                     <div class="agent-panel-header">
-                        <h2>👁️ Agents</h2>
+                        <h2>👁️ <span data-i18n="agents">Agents</span></h2>
                         <div class="view-switcher" id="viewSwitcher">
                             <button class="view-btn active" data-view="cards" title="Card View">◉</button>
                             <button class="view-btn" data-view="timeline" title="Timeline">☰</button>
@@ -143,7 +175,7 @@
                             <div class="stat-icon">📡</div>
                             <div class="stat-info">
                                 <span class="stat-value" id="statConnection">—</span>
-                                <span class="stat-label">Status</span>
+                                <span class="stat-label" data-i18n="connected">Status</span>
                             </div>
                         </div>
                     </div>
@@ -175,7 +207,7 @@
                     <!-- Memory Stats -->
                     <div class="memory-section">
                         <div class="stat-row">
-                            <span class="stat-label">Working</span>
+                            <span class="stat-label" data-i18n="memory">Working</span>
                             <span class="stat-value" id="memWorking">0 turns</span>
                         </div>
                         <div class="stat-row">
@@ -187,7 +219,7 @@
 
                     <!-- Event Log -->
                     <div class="event-log-section">
-                        <h3>Event Log</h3>
+                        <h3><span data-i18n="events">Event Log</span></h3>
                         <div class="event-log" id="eventLog">
                             <div class="placeholder-text">Waiting for events…</div>
                         </div>
@@ -206,16 +238,22 @@
                 type="text"
                 id="chatInput"
                 placeholder="Type a message…"
+                data-i18n-placeholder="placeholder"
                 autocomplete="off"
+                aria-label="Chat input"
             >
-            <button class="send-btn" id="sendBtn" title="Send message">
+            <button class="send-btn" id="sendBtn" title="Send message" aria-label="Send">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="22" y1="2" x2="11" y2="13"></line>
                     <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                 </svg>
             </button>
-            <button class="tts-btn active" id="ttsBtn" title="Toggle voice output">
+            <button class="tts-btn active" id="ttsBtn" title="Toggle voice output" aria-label="Toggle TTS">
                 <span class="tts-icon">🔊</span>
+            </button>
+            <!-- Voice mic button for server-side STT -->
+            <button class="voice-mic-btn" id="voiceMicBtn" title="Start voice input (server STT)" aria-label="Voice input">
+                <span>🎙</span>
             </button>
         </div>
     </div>
@@ -225,7 +263,7 @@
             referrerpolicy="no-referrer"></script>
     <script>
         if (typeof THREE === "undefined") {
-            console.warn("[Vera] Three.js CDN failed, loading local fallback");
+            console.warn("[eVera] Three.js CDN failed, loading local fallback");
             document.write('<script src="/static/lib/three.min.js"><\/script>');
         }
     </script>
@@ -236,6 +274,8 @@
     <script src="/static/pipeline-view.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
     <script src="/static/diagram-viewer.js"></script>
+    <script src="/static/i18n.js"></script>
+    <script src="/static/geolocation.js"></script>
     <script src="/static/app.js"></script>
 </body>
 </html>

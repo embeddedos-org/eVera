@@ -15,7 +15,7 @@
     chrome.storage.sync.get(
         ["serverUrl", "defaultModel", "showOverlay"],
         (result) => {
-            serverUrlInput.value = result.serverUrl || "http://localhost:8000";
+            serverUrlInput.value = result.serverUrl || "https://evera-api.embeddedos.org";
             defaultModelInput.value = result.defaultModel || "";
             showOverlayInput.checked = result.showOverlay !== false;
         }
@@ -25,7 +25,7 @@
     saveBtn.addEventListener("click", () => {
         const newUrl = serverUrlInput.value.trim().replace(/\/$/, "");
         const settings = {
-            serverUrl: newUrl || "http://localhost:8000",
+            serverUrl: newUrl || "https://evera-api.embeddedos.org",
             defaultModel: defaultModelInput.value.trim(),
             showOverlay: showOverlayInput.checked,
         };

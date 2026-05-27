@@ -27,10 +27,11 @@ interface Props {
 }
 
 export default function SettingsScreen({ currentConfig, onSave }: Props) {
-  const [host, setHost] = useState(currentConfig?.host || '192.168.1.100');
-  const [port, setPort] = useState(String(currentConfig?.port || 8000));
+  // Default to the production eVera cloud server; users can override to self-hosted
+  const [host, setHost] = useState(currentConfig?.host || 'evera-api.embeddedos.org');
+  const [port, setPort] = useState(String(currentConfig?.port || 443));
   const [apiKey, setApiKey] = useState(currentConfig?.apiKey || '');
-  const [useTLS, setUseTLS] = useState(currentConfig?.useTLS || false);
+  const [useTLS, setUseTLS] = useState(currentConfig?.useTLS ?? true);
   const [testing, setTesting] = useState(false);
   const [permissions, setPermissions] = useState<Record<PermissionType, boolean> | null>(null);
 
@@ -79,7 +80,7 @@ export default function SettingsScreen({ currentConfig, onSave }: Props) {
         style={styles.input}
         value={host}
         onChangeText={setHost}
-        placeholder="192.168.1.100"
+        placeholder="evera-api.embeddedos.org"
         placeholderTextColor="#555"
         autoCapitalize="none"
         autoCorrect={false}
@@ -148,11 +149,12 @@ export default function SettingsScreen({ currentConfig, onSave }: Props) {
 
       <Text style={[styles.sectionTitle, { marginTop: 32 }]}>ℹ️ Setup Guide</Text>
       <Text style={styles.hint}>
-        1. On your PC, set VERA_SERVER_HOST=0.0.0.0 in .env{'\n'}
+        Cloud: Use evera-api.embeddedos.org (default) — no setup needed.{'\n\n'}
+        Self-hosted setup:{'\n'}
+        1. Set VERA_SERVER_HOST=0.0.0.0 in .env{'\n'}
         2. Run: python main.py --mode server{'\n'}
-        3. Find your PC's IP: ipconfig (Windows) or ifconfig (Mac/Linux){'\n'}
-        4. Enter the IP above and tap "Test & Connect"{'\n'}
-        5. Both devices must be on the same WiFi network
+        3. Enter your server IP/hostname above{'\n'}
+        4. Tap "Test & Connect" to verify
       </Text>
     </ScrollView>
   );

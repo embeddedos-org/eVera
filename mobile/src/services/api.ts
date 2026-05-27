@@ -50,6 +50,54 @@ const buildAuthParams = (config: ServerConfig) => {
 
 // ─── REST API ────────────────────────────────────────────────
 
+export async function fetchServerInfo(config: ServerConfig) {
+  try {
+    const url = `${buildBaseUrl(config, 'http')}/info`;
+    const res = await fetch(url, { headers: getHeaders(config) });
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function updateLocation(
+  config: ServerConfig,
+  latitude: number,
+  longitude: number,
+  accuracy?: number,
+  altitude?: number,
+  sessionId?: string,
+) {
+  try {
+    const url = `${buildBaseUrl(config, 'http')}/location/update${buildAuthParams(config)}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { ...getHeaders(config), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        latitude,
+        longitude,
+        accuracy: accuracy ?? null,
+        altitude: altitude ?? null,
+        session_id: sessionId ?? null,
+      }),
+    });
+    return res.json();
+  } catch (e) {
+    console.warn('[eVera] Failed to send location update:', e);
+    return null;
+  }
+}
+
+export async function fetchI18nStrings(config: ServerConfig, lang: string) {
+  try {
+    const url = `${buildBaseUrl(config, 'http')}/i18n/strings/${lang}`;
+    const res = await fetch(url);
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchHealth(config: ServerConfig): Promise<boolean> {
   try {
     const url = `${buildBaseUrl(config, 'http')}/health`;

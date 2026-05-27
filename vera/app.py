@@ -99,10 +99,21 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         await brain_instance.stop()
 
     app = FastAPI(
-        title="Vera API",
-        description="Voice-first multi-agent AI assistant",
+        title="eVera API",
+        description="Voice-first multi-agent AI assistant — 43 agents, 278+ tools, 19 languages",
         version="1.0.0",
         lifespan=lifespan,
+        docs_url="/docs",
+        redoc_url="/redoc",
+        openapi_url="/openapi.json",
+        contact={
+            "name": "EmbeddedOS Organization",
+            "url": "https://github.com/embeddedos-org/eVera",
+        },
+        license_info={
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT",
+        },
     )
 
     # Merge configured origins with chrome-extension support
@@ -1340,5 +1351,335 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         edges.append({"source": "episodic", "target": "semantic", "type": "relates_to"})
 
         return JSONResponse({"nodes": nodes, "edges": edges})
+
+    # --- GPS / Location endpoint ---
+    class LocationUpdateRequest(BaseModel):
+        latitude: float
+        longitude: float
+        accuracy: float | None = None
+        altitude: float | None = None
+        session_id: str | None = None
+
+    @app.post("/location/update")
+    async def location_update(request: LocationUpdateRequest):
+        """Receive GPS location update from mobile/web client.
+
+        Stores the location in the session's working memory so that
+        location-aware agents (travel, weather, nearby search) can
+        use it automatically without the user having to specify a city.
+        """
+        session_id = request.session_id or "default"
+        location_data = {
+            "latitude": request.latitude,
+            "longitude": request.longitude,
+            "accuracy_m": request.accuracy,
+            "altitude_m": request.altitude,
+        }
+        # Persist location in semantic memory so agents can access it
+        brain_instance.memory_vault.semantic.set("user_latitude", str(request.latitude))
+        brain_instance.memory_vault.semantic.set("user_longitude", str(request.longitude))
+        brain_instance.memory_vault.semantic.set("user_location_accuracy", str(request.accuracy or ""))
+        logger.info(
+            "Location updated for session %s: lat=%.4f lon=%.4f",
+            session_id, request.latitude, request.longitude,
+        )
+        return {
+            "status": "ok",
+            "session_id": session_id,
+            "location": location_data,
+            "message": "Location stored. Location-aware agents will use this automatically.",
+        }
+
+    @app.get("/location/current")
+    async def location_current():
+        """Retrieve the last known GPS location."""
+        lat = brain_instance.memory_vault.semantic.get("user_latitude")
+        lon = brain_instance.memory_vault.semantic.get("user_longitude")
+        acc = brain_instance.memory_vault.semantic.get("user_location_accuracy")
+        if lat and lon:
+            return {
+                "status": "ok",
+                "latitude": float(lat),
+                "longitude": float(lon),
+                "accuracy_m": float(acc) if acc else None,
+            }
+        return JSONResponse(status_code=404, content={"status": "no_location", "message": "No location data available"})
+
+    # --- i18n / Language endpoint ---
+    @app.get("/i18n/languages")
+    async def i18n_languages():
+        """Return all supported languages with metadata."""
+        from vera.brain.language import SUPPORTED_LANGUAGES
+        return {
+            lang_code: {
+                "code": lang_code,
+                "name": info["name"],
+                "flag": info["flag"],
+                "speech_code": info["speech_code"],
+            }
+            for lang_code, info in SUPPORTED_LANGUAGES.items()
+        }
+
+    @app.get("/i18n/strings/{lang_code}")
+    async def i18n_strings(lang_code: str):
+        """Return UI strings for the given language code."""
+        strings = _get_ui_strings(lang_code)
+        return {"lang": lang_code, "strings": strings}
+
+    def _get_ui_strings(lang: str) -> dict:
+        """Return localised UI strings for the web interface."""
+        translations: dict[str, dict] = {
+            "en": {
+                "greeting": "Hey there! I'm Vera, your AI buddy.",
+                "placeholder": "Type a message…",
+                "send": "Send",
+                "listening": "Listening…",
+                "thinking": "Vera is thinking…",
+                "connected": "Connected",
+                "disconnected": "Disconnected",
+                "reconnecting": "Reconnecting…",
+                "agents": "Agents",
+                "memory": "Memory",
+                "events": "Events",
+                "settings": "Settings",
+                "language": "Language",
+                "model": "Model",
+                "you": "You",
+                "vera": "Vera",
+            },
+            "es": {
+                "greeting": "¡Hola! Soy Vera, tu asistente de IA.",
+                "placeholder": "Escribe un mensaje…",
+                "send": "Enviar",
+                "listening": "Escuchando…",
+                "thinking": "Vera está pensando…",
+                "connected": "Conectado",
+                "disconnected": "Desconectado",
+                "reconnecting": "Reconectando…",
+                "agents": "Agentes",
+                "memory": "Memoria",
+                "events": "Eventos",
+                "settings": "Configuración",
+                "language": "Idioma",
+                "model": "Modelo",
+                "you": "Tú",
+                "vera": "Vera",
+            },
+            "fr": {
+                "greeting": "Bonjour ! Je suis Vera, votre assistante IA.",
+                "placeholder": "Tapez un message…",
+                "send": "Envoyer",
+                "listening": "En écoute…",
+                "thinking": "Vera réfléchit…",
+                "connected": "Connecté",
+                "disconnected": "Déconnecté",
+                "reconnecting": "Reconnexion…",
+                "agents": "Agents",
+                "memory": "Mémoire",
+                "events": "Événements",
+                "settings": "Paramètres",
+                "language": "Langue",
+                "model": "Modèle",
+                "you": "Vous",
+                "vera": "Vera",
+            },
+            "zh": {
+                "greeting": "你好！我是Vera，你的AI助手。",
+                "placeholder": "输入消息…",
+                "send": "发送",
+                "listening": "正在聆听…",
+                "thinking": "Vera正在思考…",
+                "connected": "已连接",
+                "disconnected": "已断开",
+                "reconnecting": "重新连接…",
+                "agents": "智能体",
+                "memory": "记忆",
+                "events": "事件",
+                "settings": "设置",
+                "language": "语言",
+                "model": "模型",
+                "you": "你",
+                "vera": "Vera",
+            },
+            "hi": {
+                "greeting": "नमस्ते! मैं Vera हूँ, आपकी AI सहायक।",
+                "placeholder": "संदेश लिखें…",
+                "send": "भेजें",
+                "listening": "सुन रही हूँ…",
+                "thinking": "Vera सोच रही है…",
+                "connected": "जुड़ा हुआ",
+                "disconnected": "डिस्कनेक्ट",
+                "reconnecting": "पुनः जोड़ रहे हैं…",
+                "agents": "एजेंट",
+                "memory": "स्मृति",
+                "events": "घटनाएँ",
+                "settings": "सेटिंग्स",
+                "language": "भाषा",
+                "model": "मॉडल",
+                "you": "आप",
+                "vera": "Vera",
+            },
+            "ar": {
+                "greeting": "مرحباً! أنا Vera، مساعدتك الذكية.",
+                "placeholder": "اكتب رسالة…",
+                "send": "إرسال",
+                "listening": "أستمع…",
+                "thinking": "Vera تفكر…",
+                "connected": "متصل",
+                "disconnected": "غير متصل",
+                "reconnecting": "جارٍ إعادة الاتصال…",
+                "agents": "الوكلاء",
+                "memory": "الذاكرة",
+                "events": "الأحداث",
+                "settings": "الإعدادات",
+                "language": "اللغة",
+                "model": "النموذج",
+                "you": "أنت",
+                "vera": "Vera",
+            },
+            "de": {
+                "greeting": "Hallo! Ich bin Vera, deine KI-Assistentin.",
+                "placeholder": "Nachricht eingeben…",
+                "send": "Senden",
+                "listening": "Höre zu…",
+                "thinking": "Vera denkt nach…",
+                "connected": "Verbunden",
+                "disconnected": "Getrennt",
+                "reconnecting": "Verbinde erneut…",
+                "agents": "Agenten",
+                "memory": "Gedächtnis",
+                "events": "Ereignisse",
+                "settings": "Einstellungen",
+                "language": "Sprache",
+                "model": "Modell",
+                "you": "Du",
+                "vera": "Vera",
+            },
+            "pt": {
+                "greeting": "Olá! Eu sou Vera, sua assistente de IA.",
+                "placeholder": "Digite uma mensagem…",
+                "send": "Enviar",
+                "listening": "Ouvindo…",
+                "thinking": "Vera está pensando…",
+                "connected": "Conectado",
+                "disconnected": "Desconectado",
+                "reconnecting": "Reconectando…",
+                "agents": "Agentes",
+                "memory": "Memória",
+                "events": "Eventos",
+                "settings": "Configurações",
+                "language": "Idioma",
+                "model": "Modelo",
+                "you": "Você",
+                "vera": "Vera",
+            },
+            "ja": {
+                "greeting": "こんにちは！私はVera、あなたのAIアシスタントです。",
+                "placeholder": "メッセージを入力…",
+                "send": "送信",
+                "listening": "聞いています…",
+                "thinking": "Veraが考えています…",
+                "connected": "接続済み",
+                "disconnected": "切断",
+                "reconnecting": "再接続中…",
+                "agents": "エージェント",
+                "memory": "メモリ",
+                "events": "イベント",
+                "settings": "設定",
+                "language": "言語",
+                "model": "モデル",
+                "you": "あなた",
+                "vera": "Vera",
+            },
+            "ko": {
+                "greeting": "안녕하세요! 저는 Vera, 당신의 AI 어시스턴트입니다.",
+                "placeholder": "메시지를 입력하세요…",
+                "send": "전송",
+                "listening": "듣고 있습니다…",
+                "thinking": "Vera가 생각 중입니다…",
+                "connected": "연결됨",
+                "disconnected": "연결 끊김",
+                "reconnecting": "재연결 중…",
+                "agents": "에이전트",
+                "memory": "메모리",
+                "events": "이벤트",
+                "settings": "설정",
+                "language": "언어",
+                "model": "모델",
+                "you": "당신",
+                "vera": "Vera",
+            },
+            "ru": {
+                "greeting": "Привет! Я Vera, ваш ИИ-ассистент.",
+                "placeholder": "Введите сообщение…",
+                "send": "Отправить",
+                "listening": "Слушаю…",
+                "thinking": "Vera думает…",
+                "connected": "Подключено",
+                "disconnected": "Отключено",
+                "reconnecting": "Переподключение…",
+                "agents": "Агенты",
+                "memory": "Память",
+                "events": "События",
+                "settings": "Настройки",
+                "language": "Язык",
+                "model": "Модель",
+                "you": "Вы",
+                "vera": "Vera",
+            },
+            "it": {
+                "greeting": "Ciao! Sono Vera, la tua assistente IA.",
+                "placeholder": "Scrivi un messaggio…",
+                "send": "Invia",
+                "listening": "In ascolto…",
+                "thinking": "Vera sta pensando…",
+                "connected": "Connesso",
+                "disconnected": "Disconnesso",
+                "reconnecting": "Riconnessione…",
+                "agents": "Agenti",
+                "memory": "Memoria",
+                "events": "Eventi",
+                "settings": "Impostazioni",
+                "language": "Lingua",
+                "model": "Modello",
+                "you": "Tu",
+                "vera": "Vera",
+            },
+        }
+        return translations.get(lang, translations["en"])
+
+    # --- Server info endpoint (production-facing) ---
+    @app.get("/info")
+    async def server_info():
+        """Return public server information for clients."""
+        from vera.brain.language import SUPPORTED_LANGUAGES
+        return {
+            "name": "eVera API",
+            "version": "1.0.0",
+            "description": "Voice-first multi-agent AI assistant — 43 agents, 278+ tools",
+            "organization": "EmbeddedOS Organization",
+            "repository": "https://github.com/embeddedos-org/eVera",
+            "docs": "/docs",
+            "health": "/health",
+            "supported_languages": list(SUPPORTED_LANGUAGES.keys()),
+            "features": [
+                "voice_chat",
+                "multi_agent",
+                "gps_location",
+                "i18n",
+                "pwa",
+                "browser_extension",
+                "mobile_app",
+                "knowledge_base",
+                "browser_automation",
+                "code_analysis",
+                "trading",
+                "smart_home",
+                "email",
+                "calendar",
+                "travel",
+                "wellness",
+            ],
+        }
 
     return app
