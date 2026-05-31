@@ -329,12 +329,12 @@ jobs:
 
             ## 🚀 One-Command Install (Linux / macOS)
             ```bash
-            curl -fsSL https://raw.githubusercontent.com/embeddedos-org/eVera/main/install.sh | bash
+            curl -fsSL https://raw.githubusercontent.com/embeddedos-org/eVera/master/install.sh | bash
             ```
 
             ## 🪟 Windows One-Command Install
             ```powershell
-            irm https://raw.githubusercontent.com/embeddedos-org/eVera/main/setup.ps1 | iex
+            irm https://raw.githubusercontent.com/embeddedos-org/eVera/master/setup.ps1 | iex
             ```
 
             ## 🐍 From Source (manual)
