@@ -1,4 +1,8 @@
-"""Episodic memory — FAISS-backed vector store for past events."""
+"""Episodic memory — FAISS-backed vector store for past events.
+
+Uses OfflineEmbedder (Ollama → TF-IDF fallback) instead of sentence_transformers
+to avoid torch._dynamo compatibility issues on Python 3.11 + torch 2.12.
+"""
 
 from __future__ import annotations
 
@@ -26,27 +30,29 @@ class EpisodicEvent:
 
 
 class EpisodicMemory:
-    """Long-term episodic memory using sentence-transformers + FAISS."""
+    """Long-term episodic memory using OfflineEmbedder + FAISS."""
 
-    def __init__(self, model_name: str = "all-MiniLM-L6-v2", index_path: Path | None = None) -> None:
-        self._model_name = model_name
+    MAX_EVENTS = 10_000
+
+    def __init__(
+        self,
+        model_name: str = "all-MiniLM-L6-v2",  # kept for API compat, ignored
+        index_path: Path | None = None,
+        ollama_url: str = "http://localhost:11434",
+    ) -> None:
         self._index_path = index_path
+        self._ollama_url = ollama_url
         self._embedder = None
         self._index = None
         self._events: list[EpisodicEvent] = []
-        self._dimension: int = 384  # default for all-MiniLM-L6-v2
+        self._dimension: int = 384
 
     def _ensure_loaded(self) -> None:
         """Lazy-load the embedding model and FAISS index."""
         if self._embedder is None:
-            try:
-                from sentence_transformers import SentenceTransformer
-
-                self._embedder = SentenceTransformer(self._model_name)
-                self._dimension = self._embedder.get_sentence_embedding_dimension()
-            except ImportError:
-                logger.warning("sentence-transformers not installed; episodic memory disabled")
-                return
+            from vera.memory.embedder import OfflineEmbedder
+            self._embedder = OfflineEmbedder(ollama_url=self._ollama_url)
+            self._dimension = self._embedder.get_sentence_embedding_dimension()
 
         if self._index is None:
             try:
@@ -64,9 +70,7 @@ class EpisodicMemory:
         self._ensure_loaded()
         if self._embedder is None:
             return np.zeros((len(texts), self._dimension), dtype=np.float32)
-        return self._embedder.encode(texts, convert_to_numpy=True).astype(np.float32)
-
-    MAX_EVENTS = 10000
+        return self._embedder.encode(texts)
 
     def store(self, text: str, agent: str | None = None, metadata: dict[str, Any] | None = None) -> None:
         self._ensure_loaded()

@@ -41,26 +41,19 @@ class RAGPipeline:
         self._loaded = False
 
     def _ensure_loaded(self) -> None:
-        """Lazy-load embedding model, FAISS index, and document metadata."""
+        """Lazy-load OfflineEmbedder, FAISS index, and document metadata."""
         if self._loaded:
             return
 
         KNOWLEDGE_DIR.mkdir(parents=True, exist_ok=True)
 
-        try:
-            from sentence_transformers import SentenceTransformer
-
-            model_name = settings.memory.embedding_model
-            self._embedder = SentenceTransformer(model_name)
-            self._dimension = self._embedder.get_sentence_embedding_dimension()
-        except ImportError:
-            logger.warning("sentence-transformers not installed; knowledge base disabled")
-            self._loaded = True
-            return
+        from vera.memory.embedder import OfflineEmbedder
+        ollama_url = getattr(settings.llm, "ollama_url", "http://localhost:11434")
+        self._embedder = OfflineEmbedder(ollama_url=ollama_url)
+        self._dimension = self._embedder.get_sentence_embedding_dimension()
 
         try:
             import faiss
-
             self._index = faiss.IndexFlatL2(self._dimension)
         except ImportError:
             logger.warning("faiss-cpu not installed; knowledge base disabled")
@@ -72,11 +65,11 @@ class RAGPipeline:
         self._loaded = True
 
     def _embed(self, texts: list[str]) -> np.ndarray:
-        """Embed texts using the sentence transformer model."""
+        """Embed texts using OfflineEmbedder (Ollama → TF-IDF fallback)."""
         self._ensure_loaded()
         if self._embedder is None:
             return np.zeros((len(texts), self._dimension), dtype=np.float32)
-        return self._embedder.encode(texts, convert_to_numpy=True).astype(np.float32)
+        return self._embedder.encode(texts)
 
     async def ingest_document(
         self,
