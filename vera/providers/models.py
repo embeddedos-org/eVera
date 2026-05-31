@@ -12,6 +12,7 @@ from typing import Optional
 
 class ModelTier(str, Enum):
     """Model capability tiers for intelligent routing."""
+    REFLEX = "reflex"       # Tier 0 — instant regex/rule-based, no LLM needed
     FAST = "fast"           # Ultra-fast, small models for simple tasks
     EXECUTOR = "executor"   # General-purpose, balanced models
     SPECIALIST = "specialist"  # Domain-specific or large models

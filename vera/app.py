@@ -60,7 +60,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     response: str
     agent: str
-    tier: int
+    tier: str
     intent: str = ""
     needs_confirmation: bool = False
     mood: str = "neutral"
