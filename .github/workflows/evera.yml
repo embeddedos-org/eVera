@@ -359,10 +359,46 @@ jobs:
           path: mobile/ios/build/Vera.xcarchive.zip
           if-no-files-found: warn
 
-  # ── 7. GitHub Release ───────────────────────────────────────────────────────
+  # ── 7. VS Code Extension ──────────────────────────────────────────────────
+  build-vscode:
+    name: "🔌 VS Code Extension (.vsix)"
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: ${{ !failure() && !cancelled() && startsWith(github.ref, 'refs/tags/v') }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        working-directory: vscode-extension
+        run: npm install
+
+      - name: Install vsce
+        run: npm install -g @vscode/vsce typescript
+
+      - name: Compile TypeScript
+        working-directory: vscode-extension
+        run: tsc -p ./
+
+      - name: Package extension
+        working-directory: vscode-extension
+        run: vsce package --no-dependencies -o evera-ai.vsix
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-extension
+          path: vscode-extension/evera-ai.vsix
+          if-no-files-found: warn
+
+  # ── 8. GitHub Release ───────────────────────────────────────────────────────
   release:
     name: "🚀 GitHub Release"
-    needs: [build-windows, build-macos, build-linux, build-android, build-ios]
+    needs: [build-windows, build-macos, build-linux, build-android, build-ios, build-vscode]
     if: ${{ startsWith(github.ref, 'refs/tags/v') && always() }}
     runs-on: ubuntu-latest
     permissions:
@@ -405,6 +441,7 @@ jobs:
             artifacts/**/*.deb
             artifacts/**/*.apk
             artifacts/**/*.zip
+            artifacts/**/*.vsix
           body: |
             ## 🚀 eVera ${{ github.ref_name }}
 
@@ -426,6 +463,7 @@ jobs:
             | **Wear OS** | `Vera-Wear-*.apk` | Sideload or install via Play Store |
             | **iOS** | `Vera.xcarchive.zip` | Open in Xcode → distribute to device |
             | **Web (PWA)** | — | Open `http://localhost:8000` in any browser |
+            | **VS Code** | `evera-ai.vsix` | `code --install-extension evera-ai.vsix` |
 
             ---
 

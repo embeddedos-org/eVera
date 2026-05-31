@@ -1,0 +1,215 @@
+{
+  "name": "evera-ai",
+  "displayName": "eVera AI — Local & Cloud Agent",
+  "description": "Your personal AI agent in VS Code. Powered by eVera — works offline with Ollama, on LAN, or with cloud LLMs. Inline chat, code explain/fix/generate, RAG knowledge base, and multi-agent workflows.",
+  "version": "1.0.0",
+  "publisher": "embeddedos",
+  "icon": "icons/icon128.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "AI",
+    "Chat",
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "ai", "llm", "ollama", "local", "offline", "agent", "copilot", "chat", "code", "evera"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "evera.chat",
+        "title": "eVera: Open Chat",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "evera.explainCode",
+        "title": "eVera: Explain Selected Code",
+        "icon": "$(lightbulb)"
+      },
+      {
+        "command": "evera.fixCode",
+        "title": "eVera: Fix Selected Code",
+        "icon": "$(wrench)"
+      },
+      {
+        "command": "evera.generateCode",
+        "title": "eVera: Generate Code from Comment",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "evera.reviewCode",
+        "title": "eVera: Review This File",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "evera.addToKnowledge",
+        "title": "eVera: Add File to Knowledge Base",
+        "icon": "$(database)"
+      },
+      {
+        "command": "evera.switchModel",
+        "title": "eVera: Switch AI Model",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "evera.switchMode",
+        "title": "eVera: Switch Operating Mode (LOCAL/LAN/WWW)",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "evera.openDashboard",
+        "title": "eVera: Open Dashboard",
+        "icon": "$(dashboard)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "evera-sidebar",
+          "title": "eVera AI",
+          "icon": "icons/icon_sidebar.svg"
+        }
+      ]
+    },
+    "views": {
+      "evera-sidebar": [
+        {
+          "type": "webview",
+          "id": "evera.chatView",
+          "name": "Chat",
+          "icon": "$(comment-discussion)"
+        },
+        {
+          "id": "evera.modelsView",
+          "name": "Models",
+          "icon": "$(server)"
+        },
+        {
+          "id": "evera.agentsView",
+          "name": "Agents",
+          "icon": "$(robot)"
+        }
+      ]
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "evera.explainCode",
+          "when": "editorHasSelection",
+          "group": "evera@1"
+        },
+        {
+          "command": "evera.fixCode",
+          "when": "editorHasSelection",
+          "group": "evera@2"
+        },
+        {
+          "command": "evera.generateCode",
+          "when": "editorHasSelection",
+          "group": "evera@3"
+        },
+        {
+          "command": "evera.addToKnowledge",
+          "group": "evera@4"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "evera.reviewCode",
+          "group": "navigation"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "evera.chat",
+        "key": "ctrl+shift+e",
+        "mac": "cmd+shift+e"
+      },
+      {
+        "command": "evera.explainCode",
+        "key": "ctrl+shift+x",
+        "mac": "cmd+shift+x",
+        "when": "editorHasSelection"
+      },
+      {
+        "command": "evera.fixCode",
+        "key": "ctrl+shift+f",
+        "mac": "cmd+shift+f",
+        "when": "editorHasSelection"
+      }
+    ],
+    "configuration": {
+      "title": "eVera AI",
+      "properties": {
+        "evera.serverUrl": {
+          "type": "string",
+          "default": "http://localhost:8765",
+          "description": "URL of your eVera server (local, LAN, or cloud)"
+        },
+        "evera.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key for eVera server (leave empty for local)"
+        },
+        "evera.model": {
+          "type": "string",
+          "default": "auto",
+          "description": "Default model to use (auto = virtual router picks best)"
+        },
+        "evera.mode": {
+          "type": "string",
+          "enum": ["local", "lan", "www"],
+          "default": "local",
+          "description": "Operating mode: local (offline), lan (network), www (internet)"
+        },
+        "evera.inlineCompletions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable inline code completions (like Copilot)"
+        },
+        "evera.autoReview": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically review files on save"
+        },
+        "evera.streamResponses": {
+          "type": "boolean",
+          "default": true,
+          "description": "Stream responses token by token"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^2.22.0"
+  },
+  "dependencies": {
+    "eventsource": "^2.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/embeddedos-org/eVera.git",
+    "directory": "vscode-extension"
+  },
+  "license": "MIT"
+}

@@ -1,12 +1,12 @@
-# eVera — Your Personal AI Agent
+# eVera — Your Sovereign AI Agent
 
-[![Version](https://img.shields.io/badge/version-2.2.0-blue?style=for-the-badge)](https://github.com/embeddedos-org/eVera/releases/latest)
-[![Build & Release](https://img.shields.io/github/actions/workflow/status/embeddedos-org/eVera/build.yml?style=for-the-badge&label=Build%20%26%20Release)](https://github.com/embeddedos-org/eVera/actions/workflows/build.yml)
-[![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android%20%7C%20iOS%20%7C%20Web-success?style=for-the-badge)](#download)
+[![Version](https://img.shields.io/badge/version-3.0.0-6c63ff?style=for-the-badge)](https://github.com/embeddedos-org/eVera/releases/latest)
+[![Build](https://img.shields.io/github/actions/workflow/status/embeddedos-org/eVera/evera.yml?branch=master&style=for-the-badge&label=CI)](https://github.com/embeddedos-org/eVera/actions)
+[![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android%20%7C%20iOS%20%7C%20Web%20%7C%20VS%20Code-success?style=for-the-badge)](#download)
 [![Offline](https://img.shields.io/badge/works-100%25%20offline-success?style=for-the-badge)](#offline-llms)
 [![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
 
-eVera is a fully autonomous personal AI agent that works **completely offline**, on your **local network**, or with the **full internet**. It controls your computer, runs 50+ local AI models, and is available on every platform — Web, Desktop, and Mobile.
+eVera is a fully autonomous personal AI agent that works **completely offline**, on your **local network**, or with the **full internet**. It controls your computer, runs 160+ local AI models, speaks with a 3D animated avatar, and is available on every platform — Web, Desktop, Mobile, and VS Code.
 
 ---
 
@@ -25,6 +25,7 @@ Pre-built installers are published automatically on every tagged release via Git
 | **Wear OS** | [`Vera-Wear-*.apk`](https://github.com/embeddedos-org/eVera/releases/latest) | Sideload or install via Play Store |
 | **iOS** | [`Vera.xcarchive.zip`](https://github.com/embeddedos-org/eVera/releases/latest) | Open in Xcode → distribute to device |
 | **Web (PWA)** | [Open in browser](http://localhost:8000) | Install from browser address bar (Chrome/Edge/Safari) |
+| **VS Code** | [`evera-ai.vsix`](https://github.com/embeddedos-org/eVera/releases/latest) | `code --install-extension evera-ai.vsix` |
 
 > All binaries are built and published automatically by GitHub Actions on every `v*` tag push.
 > See [Actions](https://github.com/embeddedos-org/eVera/actions) for live build status.
@@ -36,7 +37,7 @@ Pre-built installers are published automatically on every tagged release via Git
 ### Linux / macOS
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/embeddedos-org/eVera/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/embeddedos-org/eVera/master/install.sh | bash
 ```
 
 This single command clones the repo, installs Python 3.12, creates a virtual environment, installs all Python packages, installs system libraries (tesseract, ffmpeg, portaudio, xdotool), installs Playwright Chromium, installs Ollama, pulls a default offline model, and installs Electron dependencies. Nothing else is needed.
@@ -44,7 +45,7 @@ This single command clones the repo, installs Python 3.12, creates a virtual env
 ### Windows (PowerShell)
 
 ```powershell
-irm https://raw.githubusercontent.com/embeddedos-org/eVera/main/setup.ps1 | iex
+irm https://raw.githubusercontent.com/embeddedos-org/eVera/master/setup.ps1 | iex
 ```
 
 ### After Setup
@@ -58,6 +59,40 @@ python main.py --mode server
 ```
 
 For full manual installation steps, see [INSTALL.md](INSTALL.md).
+
+---
+
+## How eVera Compares
+
+| Feature | eVera | Manus | ChatGPT | Claude | OpenClaw | Cursor | AnythingLLM | AutoGen |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Fully offline (no internet)** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| **Runs on your hardware** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| **3D animated avatar** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Multi-accent voice (TTS)** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Computer / OS control** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **LAN / org network access** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **LOCAL / LAN / WWW modes** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Virtual LLM router** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **RAG knowledge base** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| **Multi-agent crew** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **Workflow automation** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **VS Code extension** | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| **WhatsApp integration** | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **Telegram integration** | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **Discord integration** | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **Web PWA** | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| **Desktop app** | ✅ | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ | ❌ |
+| **Mobile app (Android/iOS)** | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Android Auto** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Wear OS** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **54+ specialized agents** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **160+ LLM models** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Ollama offline models** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| **LM Studio / Jan / llama.cpp** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| **Open source** | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ |
+| **Free (no subscription)** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| **Data stays on your machine** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
 
 ---
 
@@ -130,7 +165,51 @@ A real-time 3D holographic avatar (Three.js WebGL) is displayed alongside the ch
 ### Voice — Multi-Accent TTS
 All browser-native TTS voices are available in the voice selector, grouped by language and accent. Local (offline) voices are marked with `●`, network voices with `○`. Selection is saved across sessions.
 
-### 39+ Specialized Agents
+### Virtual LLM Router
+
+eVera's **Virtual LLM Router** automatically selects the best available model for each task — no manual model selection needed:
+
+| Task | Preferred Offline Model | Cloud Fallback |
+|---|---|---|
+| Coding | `qwen2.5-coder:7b` | `gpt-4o` |
+| Reasoning / math | `qwq:32b` | `o3-mini` |
+| Vision | `llava:13b` | `gpt-4o` |
+| Fast / chat | `qwen3:0.6b` | `gpt-4o-mini` |
+| Long context | `qwen3:14b` | `gemini-2.5-pro` |
+| Embedding | `mxbai-embed-large` | _(offline only)_ |
+
+The router checks model availability in real time and falls back automatically if a model is not pulled.
+
+### VS Code Extension
+
+Install the eVera extension to get AI assistance directly in your editor:
+
+```bash
+# From release download
+code --install-extension evera-ai.vsix
+```
+
+- **Inline chat** — `Ctrl+Shift+V` to open eVera chat in the sidebar
+- **Explain code** — right-click any selection → "eVera: Explain"
+- **Fix bug** — right-click → "eVera: Fix Bug"
+- **Generate code** — right-click → "eVera: Generate"
+- **Inline completion** — Copilot-style suggestions as you type
+- **Works offline** — uses your local Ollama models, no cloud required
+
+### WhatsApp Integration
+
+Two modes — no account needed for local mode:
+
+```bash
+# Local (scan QR once, no API key)
+cd vera/messaging && npm install whatsapp-web.js qrcode-terminal express
+node whatsapp_bridge.js
+
+# Or Twilio (production)
+TWILIO_ACCOUNT_SID=ACxxx TWILIO_AUTH_TOKEN=xxx python main.py
+```
+
+### 54+ Specialized Agents
 eVera routes every request to the best-suited agent automatically:
 
 | Category | Agents |
@@ -143,6 +222,7 @@ eVera routes every request to the best-suited agent automatically:
 | Memory | Working memory, episodic memory, fact extraction |
 | LAN | Network scanner, SSH, file shares, org data |
 | Creative | Writing, brainstorming, translation, summarization |
+| Messaging | WhatsApp, Telegram, Discord, Slack |
 
 ### Memory System
 - **Working memory**: current conversation context
@@ -202,7 +282,8 @@ Every push to a `v*` tag triggers a full build across all platforms simultaneous
 | Desktop — Linux | ubuntu-latest | `Vera-*.AppImage`, `Vera-*.deb` |
 | Android | ubuntu-latest | `Vera-*.apk`, `Vera-Auto-*.apk`, `Vera-Wear-*.apk` |
 | iOS | macos-latest | `Vera.xcarchive.zip` (unsigned, for distribution) |
-| GitHub Release | ubuntu-latest | Creates release, attaches all artifacts |
+| VS Code | ubuntu-latest | `evera-ai.vsix` |
+| GitHub Release | ubuntu-latest | Creates release, attaches all 9 artifacts |
 
 The Python backend is bundled into a self-contained binary via PyInstaller before Electron packages it. Users need no Python, Node.js, or any runtime installed.
 
