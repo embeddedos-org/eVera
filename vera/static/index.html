@@ -265,8 +265,34 @@
             <button class="voice-mic-btn" id="voiceMicBtn" title="Start voice input (server STT)" aria-label="Voice input">
                 <span>🎙</span>
             </button>
+            <!-- Voice / Accent selector -->
+            <select class="voice-selector" id="voiceSelector" title="Select voice / accent" aria-label="Voice accent selector">
+                <option value="">🔊 Voice</option>
+            </select>
         </div>
     </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Mobile navigation">
+        <div class="nav-items">
+            <button class="mobile-nav-btn active" id="mobileTabChat" data-tab="chat" aria-label="Chat">
+                <span class="nav-icon">💬</span>
+                <span class="nav-label">Chat</span>
+            </button>
+            <button class="mobile-nav-btn" id="mobileTabAvatar" data-tab="avatar" aria-label="Avatar">
+                <span class="nav-icon">🤖</span>
+                <span class="nav-label">Avatar</span>
+            </button>
+            <button class="mobile-nav-btn" id="mobileTabAgents" data-tab="agents" aria-label="Agents">
+                <span class="nav-icon">⬡</span>
+                <span class="nav-label">Agents</span>
+            </button>
+            <button class="mobile-nav-btn" id="mobileTabSettings" data-tab="settings" aria-label="Settings">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-label">Settings</span>
+            </button>
+        </div>
+    </nav>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.162.0/three.min.js"
             crossorigin="anonymous"

@@ -6,7 +6,7 @@
  * Stale-while-revalidate for i18n strings.
  */
 
-const CACHE_NAME = "evera-v2";
+const CACHE_NAME = "evera-v2.1";
 const STATIC_ASSETS = [
     "/",
     "/static/style.css",

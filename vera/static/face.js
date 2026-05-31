@@ -164,7 +164,16 @@ const VeraFace = (function () {
         }
     }
 
-    // ── Fallback renderer (2D canvas) when WebGL/Three.js unavailable ──
+    // ── Fallback renderer (2D animated face) when WebGL/Three.js unavailable ──
+    let _fallbackAnimFrame = null;
+    let _fallbackPhase = 0;
+    let _fallbackBlink = 0;
+    let _fallbackBlinkTimer = 0;
+    let _fallbackExpression = "idle";
+    let _fallbackSpeakAmp = 0;
+    let _fallbackCanvas = null;
+    let _fallbackCtx = null;
+
     function _renderFallback() {
         if (!_container) return;
         const canvas = document.createElement("canvas");
@@ -173,19 +182,140 @@ const VeraFace = (function () {
         canvas.style.width = "100%";
         canvas.style.height = "100%";
         canvas.style.borderRadius = "20px";
+        canvas.style.display = "block";
         _container.appendChild(canvas);
+        _fallbackCanvas = canvas;
 
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
+        _fallbackCtx = ctx;
 
-        ctx.fillStyle = "#1e2130";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        function drawFallbackFace() {
+            if (_destroyed) return;
+            const W = canvas.width, H = canvas.height;
+            ctx.clearRect(0, 0, W, H);
 
-        ctx.fillStyle = "#6c7bff";
-        ctx.font = "14px system-ui, sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("3D Avatar requires WebGL", canvas.width / 2, canvas.height / 2 - 10);
-        ctx.fillText("Using simplified mode", canvas.width / 2, canvas.height / 2 + 14);
+            // Background gradient
+            const bg = ctx.createRadialGradient(W/2, H/2, 20, W/2, H/2, H/2);
+            bg.addColorStop(0, "#1a1f35");
+            bg.addColorStop(1, "#0a0e1a");
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, W, H);
+
+            // Outer pulse ring
+            const pulse = 0.5 + 0.5 * Math.sin(_fallbackPhase * 1.5);
+            ctx.beginPath();
+            ctx.arc(W/2, H/2 - 20, 90 + pulse * 8, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(108,123,255," + (0.08 + pulse * 0.12) + ")";
+            ctx.lineWidth = 2 + pulse * 2;
+            ctx.stroke();
+
+            // Head circle
+            const headGrad = ctx.createRadialGradient(W/2, H/2 - 20, 10, W/2, H/2 - 20, 80);
+            headGrad.addColorStop(0, "#1e2540");
+            headGrad.addColorStop(1, "#12172a");
+            ctx.beginPath();
+            ctx.arc(W/2, H/2 - 20, 80, 0, Math.PI * 2);
+            ctx.fillStyle = headGrad;
+            ctx.fill();
+            ctx.strokeStyle = "rgba(108,123,255," + (0.3 + pulse * 0.2) + ")";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Expression color map
+            const exprColors = {
+                idle: "#6c7bff", listening: "#6c7bff", thinking: "#f59e0b",
+                speaking: "#4ade80", happy: "#4ade80", sad: "#60a5fa",
+                excited: "#fbbf24", error: "#f43f5e"
+            };
+            const eyeColor = exprColors[_fallbackExpression] || "#6c7bff";
+
+            // Blink scale
+            const blinkScale = _fallbackBlink > 0.5 ? 0.05 : 1 - _fallbackBlink;
+            const eyeY = H/2 - 35;
+            const eyeOffX = 26;
+
+            // Draw one eye
+            function drawEye(cx, cy) {
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.scale(1, blinkScale);
+                // White
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 12, 12, 0, 0, Math.PI * 2);
+                ctx.fillStyle = "#e4e6f0";
+                ctx.fill();
+                // Pupil
+                ctx.beginPath();
+                ctx.arc(0, 0, 6, 0, Math.PI * 2);
+                ctx.fillStyle = "#1a1d27";
+                ctx.fill();
+                // Iris glow
+                ctx.beginPath();
+                ctx.arc(3, -3, 3, 0, Math.PI * 2);
+                ctx.fillStyle = eyeColor;
+                ctx.globalAlpha = 0.8;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                ctx.restore();
+            }
+            drawEye(W/2 - eyeOffX, eyeY);
+            drawEye(W/2 + eyeOffX, eyeY);
+
+            // Mouth
+            const mouthY = H/2 + 10;
+            const mouthW = 30;
+            ctx.beginPath();
+            if (_fallbackExpression === "happy" || _fallbackExpression === "excited") {
+                ctx.arc(W/2, mouthY - 10, mouthW, 0.2, Math.PI - 0.2);
+            } else if (_fallbackExpression === "sad") {
+                ctx.arc(W/2, mouthY + 10, mouthW, Math.PI + 0.2, -0.2);
+            } else if (_fallbackExpression === "speaking") {
+                const openH = 6 + _fallbackSpeakAmp * 14;
+                ctx.ellipse(W/2, mouthY, mouthW * 0.7, openH, 0, 0, Math.PI * 2);
+            } else {
+                ctx.moveTo(W/2 - mouthW, mouthY);
+                ctx.lineTo(W/2 + mouthW, mouthY);
+            }
+            ctx.strokeStyle = eyeColor;
+            ctx.lineWidth = 2.5;
+            ctx.lineCap = "round";
+            ctx.stroke();
+
+            // Holographic scan line
+            const scanY = ((_fallbackPhase * 30) % H + H) % H;
+            const scanGrad = ctx.createLinearGradient(0, scanY - 2, 0, scanY + 2);
+            scanGrad.addColorStop(0, "transparent");
+            scanGrad.addColorStop(0.5, "rgba(108,123,255,0.15)");
+            scanGrad.addColorStop(1, "transparent");
+            ctx.fillStyle = scanGrad;
+            ctx.fillRect(0, scanY - 2, W, 4);
+
+            // Name tag
+            ctx.font = "bold 11px system-ui, sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillStyle = eyeColor;
+            ctx.globalAlpha = 0.6;
+            ctx.fillText("eVera", W/2, H - 20);
+            ctx.globalAlpha = 1;
+
+            _fallbackPhase += 0.025;
+
+            // Blink logic
+            _fallbackBlinkTimer++;
+            if (_fallbackBlinkTimer > 180 + Math.random() * 120) {
+                _fallbackBlink = 0;
+                _fallbackBlinkTimer = 0;
+            }
+            if (_fallbackBlink < 1 && _fallbackBlinkTimer < 5) {
+                _fallbackBlink = Math.min(1, _fallbackBlink + 0.4);
+            } else if (_fallbackBlink > 0 && _fallbackBlinkTimer >= 5) {
+                _fallbackBlink = Math.max(0, _fallbackBlink - 0.3);
+            }
+
+            _fallbackAnimFrame = requestAnimationFrame(drawFallbackFace);
+        }
+        drawFallbackFace();
     }
 
     // ── Scene setup ──
@@ -619,11 +749,30 @@ const VeraFace = (function () {
     }
 
     // ── Resize ──
+    let _resizeRetries = 0;
+    const _RESIZE_MAX_RETRIES = 20;
     function _resize() {
         if (!_container || !_renderer || _destroyed) return;
-        const w = _container.clientWidth;
-        const h = _container.clientHeight;
-        if (w === 0 || h === 0) return;
+        const w = _container.clientWidth || _container.offsetWidth;
+        const h = _container.clientHeight || _container.offsetHeight;
+        if (w === 0 || h === 0) {
+            // DOM not painted yet — retry via rAF (up to 20 times)
+            if (_resizeRetries < _RESIZE_MAX_RETRIES) {
+                _resizeRetries++;
+                requestAnimationFrame(function () {
+                    if (!_destroyed) _resize();
+                });
+            } else {
+                // Use the fixed CSS dimensions as fallback
+                const fallbackW = 280;
+                const fallbackH = 350;
+                _camera.aspect = fallbackW / fallbackH;
+                _camera.updateProjectionMatrix();
+                _renderer.setSize(fallbackW, fallbackH);
+            }
+            return;
+        }
+        _resizeRetries = 0;
         _camera.aspect = w / h;
         _camera.updateProjectionMatrix();
         _renderer.setSize(w, h);
@@ -639,6 +788,8 @@ const VeraFace = (function () {
             _target = { ...EXPRESSIONS[sanitized] };
             _targetGesture = EXPRESSIONS[sanitized].gesture;
         }
+        // Also update fallback face expression
+        _fallbackExpression = sanitized || "idle";
     }
 
     function getExpression() {
@@ -649,6 +800,7 @@ const VeraFace = (function () {
         if (_destroyed) return;
         if (typeof amp !== "number" || !isFinite(amp)) return;
         _speakAmplitude = Math.min(1, Math.max(0, amp));
+        _fallbackSpeakAmp = _speakAmplitude;
     }
 
     // ── Lerp ──
@@ -996,6 +1148,11 @@ const VeraFace = (function () {
         if (_animFrame) {
             cancelAnimationFrame(_animFrame);
             _animFrame = null;
+        }
+        // Stop fallback animation loop
+        if (_fallbackAnimFrame) {
+            cancelAnimationFrame(_fallbackAnimFrame);
+            _fallbackAnimFrame = null;
         }
 
         // Stop blink timer

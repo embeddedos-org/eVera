@@ -67,6 +67,10 @@
         modelSelector: document.getElementById("modelSelector"),
         operatingModeSelector: document.getElementById("operatingModeSelector"),
         zoneBadge: document.getElementById("zoneBadge"),
+        voiceSelector: document.getElementById("voiceSelector"),
+        facePanel: document.querySelector(".face-panel"),
+        chatPanel: document.querySelector(".chat-panel"),
+        rightColumn: document.getElementById("agentPanel"),
     };
 
     // --- Operating Mode ---
@@ -356,6 +360,56 @@
         return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     }
 
+    // --- Web Speech API: Voice Loading ---
+
+    var _voicesLoaded = false;
+    function _loadVoices() {
+        if (_voicesLoaded) return;
+        const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+        if (!voices || voices.length === 0) return;
+        _voicesLoaded = true;
+        const sel = dom.voiceSelector;
+        if (!sel) return;
+        // Clear existing options except the first placeholder
+        while (sel.options.length > 1) sel.remove(1);
+        // Group voices by language code
+        const groups = {};
+        voices.forEach(function (v) {
+            const lang = v.lang || "Unknown";
+            const langLabel = lang.split("-")[0].toUpperCase();
+            if (!groups[langLabel]) groups[langLabel] = [];
+            groups[langLabel].push(v);
+        });
+        // Sort language groups alphabetically
+        Object.keys(groups).sort().forEach(function (lang) {
+            const og = document.createElement("optgroup");
+            og.label = lang;
+            groups[lang].forEach(function (v) {
+                const opt = document.createElement("option");
+                opt.value = v.name;
+                // ● = local (offline), ○ = network
+                opt.textContent = v.name + (v.localService ? " \u25cf" : " \u25cb");
+                opt.dataset.lang = v.lang;
+                og.appendChild(opt);
+            });
+            sel.appendChild(og);
+        });
+        // Restore saved preference
+        const saved = localStorage.getItem("vera_voice");
+        if (saved) {
+            for (let i = 0; i < sel.options.length; i++) {
+                if (sel.options[i].value === saved) {
+                    sel.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+    }
+    if (window.speechSynthesis) {
+        window.speechSynthesis.addEventListener("voiceschanged", _loadVoices);
+        setTimeout(_loadVoices, 150);
+    }
+
     // --- Web Speech API: Synthesis ---
 
     function speak(text) {
@@ -367,6 +421,14 @@
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.rate = 1.0;
         utterance.pitch = 1.0;
+
+        // Apply selected voice/accent
+        const sel = dom.voiceSelector;
+        if (sel && sel.value) {
+            const voices = window.speechSynthesis.getVoices();
+            const chosen = voices.find(function (v) { return v.name === sel.value; });
+            if (chosen) utterance.voice = chosen;
+        }
 
         utterance.onboundary = function () {
             if (typeof VeraFace !== "undefined") {
@@ -695,6 +757,57 @@
     });
 
     dom.ttsBtn.addEventListener("click", toggleTts);
+
+    // --- Voice selector change ---
+    if (dom.voiceSelector) {
+        dom.voiceSelector.addEventListener("change", function () {
+            localStorage.setItem("vera_voice", dom.voiceSelector.value);
+        });
+    }
+
+    // --- Mobile Bottom Navigation ---
+    (function initMobileNav() {
+        var tabs = document.querySelectorAll(".mobile-nav-btn");
+        if (!tabs.length) return;
+        function setMobileTab(tab) {
+            tabs.forEach(function (btn) { btn.classList.remove("active"); });
+            tab.classList.add("active");
+            var name = tab.dataset.tab;
+            if (dom.facePanel) {
+                dom.facePanel.classList.toggle("mobile-active", name === "avatar");
+            }
+            if (dom.chatPanel) {
+                dom.chatPanel.classList.toggle("mobile-hidden", name !== "chat");
+            }
+            if (dom.rightColumn) {
+                dom.rightColumn.classList.toggle("mobile-active", name === "agents");
+            }
+        }
+        tabs.forEach(function (btn) {
+            btn.addEventListener("click", function () { setMobileTab(btn); });
+        });
+        // Swipe left/right to switch tabs on mobile
+        var touchStartX = 0;
+        var touchStartY = 0;
+        document.addEventListener("touchstart", function (e) {
+            touchStartX = e.changedTouches[0].clientX;
+            touchStartY = e.changedTouches[0].clientY;
+        }, { passive: true });
+        document.addEventListener("touchend", function (e) {
+            if (window.innerWidth > 600) return;
+            var dx = e.changedTouches[0].clientX - touchStartX;
+            var dy = e.changedTouches[0].clientY - touchStartY;
+            if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.8) return;
+            var tabOrder = ["chat", "avatar", "agents", "settings"];
+            var activeBtn = document.querySelector(".mobile-nav-btn.active");
+            var currentIdx = activeBtn ? tabOrder.indexOf(activeBtn.dataset.tab) : 0;
+            var nextIdx = dx < 0
+                ? Math.min(currentIdx + 1, tabOrder.length - 1)
+                : Math.max(currentIdx - 1, 0);
+            var nextBtn = document.querySelector(".mobile-nav-btn[data-tab='" + tabOrder[nextIdx] + "']");
+            if (nextBtn) setMobileTab(nextBtn);
+        }, { passive: true });
+    })();
 
     if (dom.toggleAgentPanel) {
         dom.toggleAgentPanel.addEventListener("click", function () {
