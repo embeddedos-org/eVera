@@ -313,25 +313,27 @@ class LANAgent(BaseAgent):
     Only available in LAN and WWW modes.
     """
 
+    name = "lan"
+    description = (
+        "Discover and access computers on your local network. "
+        "Scan for devices, SSH into machines, list shared files, "
+        "query org databases, and wake sleeping computers."
+    )
+    tier = ModelTier.SPECIALIST
+
     def __init__(self):
-        super().__init__(
-            name="lan",
-            description=(
-                "Discover and access computers on your local network. "
-                "Scan for devices, SSH into machines, list shared files, "
-                "query org databases, and wake sleeping computers."
-            ),
-            tier=ModelTier.SPECIALIST,
-            tools=[
-                LanScanTool(),
-                PingSweepTool(),
-                PortScanTool(),
-                SSHCommandTool(),
-                SharedFilesTool(),
-                WakeOnLanTool(),
-                LanQueryTool(),
-            ],
-        )
+        super().__init__()
+
+    def _setup_tools(self) -> None:
+        self._tools = [
+            LanScanTool(),
+            PingSweepTool(),
+            PortScanTool(),
+            SSHCommandTool(),
+            SharedFilesTool(),
+            WakeOnLanTool(),
+            LanQueryTool(),
+        ]
 
     def respond_offline(self, state: Any) -> str:
         return (
