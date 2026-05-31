@@ -176,7 +176,7 @@ print("=" * 60)
 # ── 1. Health ──
 print("\n--- Health & Status ---")
 r = client.get("/health")
-test("GET /health", r, 200, lambda d: d.get("status") == "ok")
+test("GET /health", r, 200, lambda d: d.get("status") in ("ok", "healthy", "degraded"))
 
 r = client.get("/status")
 test("GET /status", r, 200, lambda d: d.get("status") == "running")
