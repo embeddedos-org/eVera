@@ -12,6 +12,10 @@ class VeraState(TypedDict, total=False):
     transcript: str
     session_id: str
 
+    # Operating mode: "local" | "lan" | "www"
+    # Controls which agents and LLM providers are available for this request.
+    operating_mode: str
+
     # User identity
     user_name: str
 

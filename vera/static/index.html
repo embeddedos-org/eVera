@@ -81,9 +81,19 @@
                 </select>
             </div>
             <div class="header-right">
+                <!-- Operating Mode Selector -->
+                <div class="operating-mode-selector" id="operatingModeSelector" title="Operating Mode">
+                    <button class="op-mode-btn" data-mode="local" title="LOCAL — Offline, computer control only">🖥️ LOCAL</button>
+                    <button class="op-mode-btn active" data-mode="lan" title="LAN — Local network, org data access">🌐 LAN</button>
+                    <button class="op-mode-btn" data-mode="www" title="WWW — Full internet + all cloud LLMs">🌍 WWW</button>
+                </div>
                 <select class="model-selector" id="modelSelector" title="Model">
                     <option value="">🤖 Auto</option>
                 </select>
+                <div class="zone-badge" id="zoneBadge" title="Network zone">
+                    <span class="zone-dot"></span>
+                    <span class="zone-label">local</span>
+                </div>
                 <div class="connection-badge" id="connectionBadge">
                     <span class="dot"></span>
                     <span class="label" data-i18n="connecting">Connecting…</span>

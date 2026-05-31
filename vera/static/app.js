@@ -65,30 +65,72 @@
         expressionLabel: document.getElementById("expressionLabel"),
         particleField: document.getElementById("particleField"),
         modelSelector: document.getElementById("modelSelector"),
+        operatingModeSelector: document.getElementById("operatingModeSelector"),
+        zoneBadge: document.getElementById("zoneBadge"),
     };
 
+    // --- Operating Mode ---
+    var currentOperatingMode = localStorage.getItem("vera_operating_mode") || "lan";
+
+    function applyOperatingMode(mode) {
+        currentOperatingMode = mode;
+        localStorage.setItem("vera_operating_mode", mode);
+        if (dom.operatingModeSelector) {
+            dom.operatingModeSelector.querySelectorAll(".op-mode-btn").forEach(function(btn) {
+                btn.classList.toggle("active", btn.dataset.mode === mode);
+            });
+        }
+        if (dom.zoneBadge) {
+            dom.zoneBadge.setAttribute("data-zone", mode);
+            dom.zoneBadge.querySelector(".zone-label").textContent = mode.toUpperCase();
+        }
+        fetch("/mode", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({mode: mode})
+        }).catch(function(e) { console.warn("[Mode] Failed to set mode:", e); });
+        loadModels(true);
+    }
+
+    function initOperatingModeSelector() {
+        if (!dom.operatingModeSelector) return;
+        dom.operatingModeSelector.querySelectorAll(".op-mode-btn").forEach(function(btn) {
+            btn.addEventListener("click", function() {
+                applyOperatingMode(btn.dataset.mode);
+            });
+        });
+        applyOperatingMode(currentOperatingMode);
+    }
+
     // --- Load available models ---
-    async function loadModels() {
+    async function loadModels(refresh) {
         try {
-            const resp = await fetch("/models");
-            const models = await resp.json();
             const select = dom.modelSelector;
             if (!select) return;
-
-            for (const [provider, modelList] of Object.entries(models)) {
+            if (refresh) {
+                while (select.children.length > 1) select.removeChild(select.lastChild);
+            }
+            const resp = await fetch("/models");
+            const models = await resp.json();
+            // Ollama first (offline), then cloud providers
+            const providerOrder = ["ollama"];
+            Object.keys(models).forEach(p => { if (!providerOrder.includes(p)) providerOrder.push(p); });
+            for (const provider of providerOrder) {
+                const modelList = models[provider];
+                if (!modelList) continue;
+                const isOllama = provider === "ollama";
                 const group = document.createElement("optgroup");
-                group.label = provider.charAt(0).toUpperCase() + provider.slice(1);
+                group.label = isOllama ? "\uD83E\uDD99 Ollama (Offline)" : (provider.charAt(0).toUpperCase() + provider.slice(1));
                 for (const m of modelList) {
-                    if (!m.configured) continue;
+                    if (!m.configured && !isOllama) continue;
                     const opt = document.createElement("option");
                     opt.value = m.model_name;
-                    opt.textContent = `${m.model_name.split("/").pop()} (${m.speed_tier})`;
-                    opt.title = m.description;
+                    const shortName = m.model_name.split("/").pop();
+                    opt.textContent = `${shortName} (${m.speed_tier})${isOllama ? " \u2713" : ""}`;
+                    opt.title = m.description || m.model_name;
                     group.appendChild(opt);
                 }
-                if (group.children.length > 0) {
-                    select.appendChild(group);
-                }
+                if (group.children.length > 0) select.appendChild(group);
             }
         } catch (e) {
             console.warn("Failed to load models:", e);
@@ -184,10 +226,15 @@
         showTyping(true);
         setExpression("thinking");
 
-        state.ws.send(JSON.stringify({
+        const payload = {
             type: "transcript",
             data: text,
-        }));
+            operating_mode: currentOperatingMode,
+        };
+        if (dom.modelSelector && dom.modelSelector.value) {
+            payload.model_override = dom.modelSelector.value;
+        }
+        state.ws.send(JSON.stringify(payload));
     }
 
     function handleMessage(msg) {
@@ -671,6 +718,7 @@
 
     initListener();
     initModeSelector();
+    initOperatingModeSelector();
     initLanguageSelector();
     initViewSwitcher();
     connectWebSocket();

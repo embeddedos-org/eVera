@@ -437,6 +437,29 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
         """Check health of all configured providers."""
         return await brain_instance.provider_manager.provider_health_check()
 
+    # --- Operating Mode endpoints ---
+
+    @app.get("/mode")
+    async def get_mode():
+        """Return current operating mode and available agents."""
+        from vera.operating_mode import mode_manager
+        return mode_manager.get_status()
+
+    @app.post("/mode")
+    async def set_mode_endpoint(request: Request):
+        """Change the operating mode at runtime (local / lan / www)."""
+        from vera.operating_mode import mode_manager, OperatingMode
+        body = await request.json()
+        mode_str = body.get("mode", "").lower()
+        try:
+            mode_manager.set_mode(OperatingMode(mode_str))
+            return mode_manager.get_status()
+        except ValueError:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": f"Invalid mode '{mode_str}'. Must be: local, lan, www"}
+            )
+
     # --- Knowledge Base endpoints (Phase 2) ---
 
     @app.post("/knowledge/upload")

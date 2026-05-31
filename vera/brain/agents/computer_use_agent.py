@@ -293,6 +293,197 @@ class AppLauncherTool(Tool):
             return {"status": "error", "message": str(e)}
 
 
+class FileManagerTool(Tool):
+    """File system operations: list, read, write, copy, move, delete, search."""
+
+    def __init__(self):
+        super().__init__(
+            name="file_manager",
+            description="File operations: list directory, read file, write file, copy, move, delete, search, mkdir",
+            parameters={
+                "action": {"type": "str", "description": "list|read|write|copy|move|delete|search|mkdir"},
+                "path": {"type": "str", "description": "File or directory path"},
+                "destination": {"type": "str", "description": "Destination path for copy/move"},
+                "content": {"type": "str", "description": "Content to write"},
+                "pattern": {"type": "str", "description": "Search pattern (glob or text)"},
+            },
+        )
+
+    async def execute(self, **kw: Any) -> dict[str, Any]:
+        import os
+        import shutil
+        import glob as _glob
+
+        action = kw.get("action", "list")
+        path = kw.get("path", ".")
+        try:
+            if action == "list":
+                entries = []
+                for e in sorted(os.scandir(path), key=lambda x: (not x.is_dir(), x.name.lower())):
+                    entries.append({"name": e.name, "type": "dir" if e.is_dir() else "file",
+                                    "size": e.stat().st_size if e.is_file() else None})
+                return {"status": "success", "path": path, "entries": entries[:100]}
+            elif action == "read":
+                with open(path, "r", errors="replace") as f:
+                    content = f.read(8192)
+                return {"status": "success", "path": path, "content": content}
+            elif action == "write":
+                with open(path, "w") as f:
+                    f.write(kw.get("content", ""))
+                return {"status": "success", "path": path, "written": len(kw.get("content", ""))}
+            elif action == "copy":
+                dest = kw.get("destination", "")
+                shutil.copy2(path, dest)
+                return {"status": "success", "copied": path, "to": dest}
+            elif action == "move":
+                dest = kw.get("destination", "")
+                shutil.move(path, dest)
+                return {"status": "success", "moved": path, "to": dest}
+            elif action == "delete":
+                if os.path.isdir(path):
+                    shutil.rmtree(path)
+                else:
+                    os.remove(path)
+                return {"status": "success", "deleted": path}
+            elif action == "mkdir":
+                os.makedirs(path, exist_ok=True)
+                return {"status": "success", "created": path}
+            elif action == "search":
+                pattern = kw.get("pattern", "*")
+                matches = _glob.glob(os.path.join(path, "**", pattern), recursive=True)[:50]
+                return {"status": "success", "matches": matches}
+            return {"status": "error", "message": f"Unknown action: {action}"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+class ProcessManagerTool(Tool):
+    """List, kill, and inspect running processes."""
+
+    def __init__(self):
+        super().__init__(
+            name="process_manager",
+            description="List running processes, kill by PID or name, get CPU/RAM/disk usage",
+            parameters={
+                "action": {"type": "str", "description": "list|kill|top"},
+                "pid": {"type": "int", "description": "Process ID to kill"},
+                "name": {"type": "str", "description": "Process name filter"},
+            },
+        )
+
+    async def execute(self, **kw: Any) -> dict[str, Any]:
+        try:
+            import psutil
+        except ImportError:
+            return {"status": "error", "message": "pip install psutil"}
+        action = kw.get("action", "list")
+        try:
+            if action == "list":
+                name_filter = kw.get("name", "").lower()
+                procs = []
+                for p in psutil.process_iter(["pid", "name", "status", "cpu_percent", "memory_info"]):
+                    try:
+                        info = p.info
+                        if name_filter and name_filter not in (info["name"] or "").lower():
+                            continue
+                        procs.append({
+                            "pid": info["pid"], "name": info["name"],
+                            "status": info["status"],
+                            "cpu": info["cpu_percent"],
+                            "mem_mb": round(info["memory_info"].rss / 1024 / 1024, 1) if info["memory_info"] else 0,
+                        })
+                    except Exception:
+                        pass
+                procs.sort(key=lambda x: x["mem_mb"], reverse=True)
+                return {"status": "success", "processes": procs[:50]}
+            elif action == "kill":
+                pid = kw.get("pid")
+                name = kw.get("name", "")
+                killed = []
+                if pid:
+                    psutil.Process(int(pid)).terminate()
+                    killed.append(pid)
+                elif name:
+                    for p in psutil.process_iter(["pid", "name"]):
+                        if name.lower() in (p.info["name"] or "").lower():
+                            p.terminate()
+                            killed.append(p.info["pid"])
+                return {"status": "success", "killed": killed}
+            elif action == "top":
+                cpu = psutil.cpu_percent(interval=0.5)
+                mem = psutil.virtual_memory()
+                disk = psutil.disk_usage("/")
+                return {
+                    "status": "success",
+                    "cpu_pct": cpu,
+                    "mem_used_gb": round(mem.used / 1e9, 2),
+                    "mem_total_gb": round(mem.total / 1e9, 2),
+                    "disk_used_gb": round(disk.used / 1e9, 2),
+                    "disk_total_gb": round(disk.total / 1e9, 2),
+                }
+            return {"status": "error", "message": f"Unknown action: {action}"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+class SystemInfoTool(Tool):
+    """Get system information: OS, hardware, network interfaces, battery."""
+
+    def __init__(self):
+        super().__init__(
+            name="system_info",
+            description="Get system info: OS, CPU, RAM, disk, network interfaces, battery, uptime",
+            parameters={},
+        )
+
+    async def execute(self, **kw: Any) -> dict[str, Any]:
+        import platform
+        import socket
+        import time
+
+        try:
+            import psutil
+
+            mem = psutil.virtual_memory()
+            disk = psutil.disk_usage("/")
+            net = psutil.net_if_addrs()
+            interfaces = {
+                iface: [a.address for a in addrs if a.family == socket.AF_INET]
+                for iface, addrs in net.items()
+            }
+            battery = None
+            try:
+                b = psutil.sensors_battery()
+                if b:
+                    battery = {"percent": b.percent, "plugged": b.power_plugged}
+            except Exception:
+                pass
+            return {
+                "status": "success",
+                "os": platform.system(),
+                "os_version": platform.version(),
+                "hostname": socket.gethostname(),
+                "cpu": platform.processor(),
+                "cpu_cores": psutil.cpu_count(),
+                "cpu_pct": psutil.cpu_percent(interval=0.3),
+                "ram_total_gb": round(mem.total / 1e9, 2),
+                "ram_used_gb": round(mem.used / 1e9, 2),
+                "disk_total_gb": round(disk.total / 1e9, 2),
+                "disk_used_gb": round(disk.used / 1e9, 2),
+                "network_interfaces": interfaces,
+                "battery": battery,
+                "uptime_hours": round((time.time() - psutil.boot_time()) / 3600, 1),
+            }
+        except ImportError:
+            return {
+                "status": "success",
+                "os": platform.system(),
+                "os_version": platform.version(),
+                "hostname": socket.gethostname(),
+                "cpu": platform.processor(),
+            }
+
+
 class ComputerUseAgent(BaseAgent):
     """Direct GUI automation -- screen control, OCR, clipboard, windows."""
 
@@ -317,4 +508,7 @@ class ComputerUseAgent(BaseAgent):
             FindOnScreenTool(),
             WindowManagerTool(),
             AppLauncherTool(),
+            FileManagerTool(),
+            ProcessManagerTool(),
+            SystemInfoTool(),
         ]

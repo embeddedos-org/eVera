@@ -308,6 +308,73 @@ html, body {
     color: var(--text-primary);
 }
 
+/* === Operating Mode Selector === */
+.operating-mode-selector {
+    display: flex;
+    gap: 2px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 2px;
+}
+.op-mode-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.23, 1, 0.32, 1);
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+}
+.op-mode-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255,255,255,0.08);
+}
+.op-mode-btn:active { transform: scale(0.96); }
+.op-mode-btn.active[data-mode="local"] {
+    background: #48bb78;
+    color: #fff;
+    box-shadow: 0 0 10px rgba(72,187,120,0.45);
+}
+.op-mode-btn.active[data-mode="lan"] {
+    background: #4299e1;
+    color: #fff;
+    box-shadow: 0 0 10px rgba(66,153,225,0.45);
+}
+.op-mode-btn.active[data-mode="www"] {
+    background: #9f7aea;
+    color: #fff;
+    box-shadow: 0 0 10px rgba(159,122,234,0.45);
+}
+/* === Zone Badge === */
+.zone-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--bg-glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.zone-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #48bb78;
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+.zone-badge[data-zone="local"] .zone-dot { background: #48bb78; }
+.zone-badge[data-zone="lan"] .zone-dot { background: #4299e1; }
+.zone-badge[data-zone="www"] .zone-dot { background: #9f7aea; }
+
 /* === Main Content === */
 
 .main-content {

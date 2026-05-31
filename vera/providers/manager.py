@@ -19,6 +19,7 @@ from vera.providers.models import (
     DEFAULT_MODELS,
     PROVIDER_KEY_MAP,
     TASK_MODEL_ROUTING,
+    ZONE_PROVIDER_POLICY,
     ModelConfig,
     ModelTier,
 )
@@ -292,12 +293,19 @@ class ProviderManager:
         return None
 
     def _get_available_models_for_tier(self, tier: ModelTier) -> list[ModelConfig]:
-        """Get models for a tier, filtered to only configured providers."""
+        """Get models for a tier, filtered to configured providers and current operating mode."""
+        from vera.operating_mode import mode_manager
+        allowed_providers = ZONE_PROVIDER_POLICY.get(mode_manager.mode.value, ["ollama"])
         models = self._models.get(tier, [])
-        available = [m for m in models if self._is_provider_configured(m.provider)]
+        # Filter by operating mode first, then by configured providers
+        zone_filtered = [m for m in models if m.provider in allowed_providers]
+        available = [m for m in zone_filtered if self._is_provider_configured(m.provider)]
         if available:
             return available
-        return models  # Return all if none configured (litellm will handle errors)
+        # Fallback: if no configured models in zone, return all zone-allowed models
+        if zone_filtered:
+            return zone_filtered
+        return models  # Last resort: return all (litellm will handle errors)
 
     async def _call_model(
         self,

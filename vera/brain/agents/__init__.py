@@ -32,6 +32,7 @@ from vera.brain.agents.meeting_agent import MeetingAgent
 # === NEW POWER AGENTS (v1.0) ===
 from vera.brain.agents.music_agent import MusicAgent
 from vera.brain.agents.network_agent import NetworkAgent
+from vera.brain.agents.lan_agent import LANAgent
 from vera.brain.agents.operator import OperatorAgent
 from vera.brain.agents.pdf_agent import PDFAgent
 from vera.brain.agents.planner import PlannerAgent
@@ -85,6 +86,7 @@ AGENT_REGISTRY: dict[str, BaseAgent] = {
     "automation": AutomationAgent(),
     "calendar": CalendarAgent(),
     "network": NetworkAgent(),
+    "lan": LANAgent(),
     "pdf": PDFAgent(),
     "spreadsheet": SpreadsheetAgent(),
     "api": APIAgent(),

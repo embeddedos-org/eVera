@@ -2,11 +2,18 @@
 
 from __future__ import annotations
 
+import os
+import sys
+
+# Disable torch.compile / TorchDynamo BEFORE any other imports to prevent
+# VariableBuilder dispatch conflicts when sentence_transformers is loaded.
+os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
+os.environ.setdefault("TORCH_COMPILE_DISABLE", "1")
+os.environ.setdefault("TORCH_DYNAMO_DISABLE", "1")
+
 import argparse
 import asyncio
 import logging
-import os
-import sys
 
 from config import settings
 

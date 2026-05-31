@@ -34,6 +34,7 @@ from vera.providers.manager import ProviderManager
 from vera.providers.models import ModelTier
 from vera.safety.policy import PolicyAction, PolicyService
 from vera.safety.privacy import PrivacyGuard
+from vera.operating_mode import mode_manager
 
 # Patterns to detect the user's name
 NAME_PATTERNS = [
@@ -238,9 +239,19 @@ def build_graph(
         return state
 
     async def agent_node(state: VeraState) -> VeraState:
-        """Execute the selected agent."""
+        """Execute the selected agent — enforces operating mode restrictions."""
         await emit_pipeline_event("agent", "working")
         agent_name = state.get("agent_name", "companion")
+
+        # --- Operating mode gate: block agents not available in current mode ---
+        if not mode_manager.is_agent_available(agent_name):
+            blocked_msg = mode_manager.get_offline_message(agent_name)
+            state["agent_response"] = blocked_msg
+            state["mood"] = "neutral"
+            state["agent_name"] = "companion"
+            await emit_pipeline_event("agent", "done", agent_name="companion", tool_count=0)
+            return state
+
         agent = get_agent(agent_name)
 
         if agent is None:
