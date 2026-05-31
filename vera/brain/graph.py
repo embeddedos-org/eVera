@@ -37,9 +37,30 @@ from vera.safety.privacy import PrivacyGuard
 from vera.operating_mode import mode_manager
 
 # Patterns to detect the user's name
+# Non-name words that commonly follow "I'm" / "I am" — prevents false positives like "feeling", "not"
+_NON_NAMES: set[str] = {
+    "feeling", "not", "sure", "happy", "sad", "good", "bad", "fine", "ok", "okay",
+    "going", "trying", "just", "here", "there", "ready", "done", "back", "home",
+    "new", "old", "young", "tall", "short", "tired", "sick", "well", "great",
+    "sorry", "glad", "excited", "nervous", "scared", "worried", "confused",
+    "a", "an", "the", "very", "so", "really", "quite", "pretty", "kind",
+    "nice", "pleased", "looking", "working", "living", "coming", "getting",
+}
 NAME_PATTERNS = [
+    # Pattern 0: "my name is X" / "name's X" — most reliable, supports Unicode names
     re.compile(
-        r"(?:my name is|i'm|i am|call me|they call me|name's)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)", re.IGNORECASE
+        r"(?:my name is|name's)\s+([A-Za-z\u00C0-\u024F][a-zA-Z\u00C0-\u024F'-]{0,30})(?:\s|$|[,.])",
+        re.IGNORECASE,
+    ),
+    # Pattern 1: "call me X" — reliable
+    re.compile(
+        r"(?:call me|they call me)\s+([A-Za-z\u00C0-\u024F][a-zA-Z\u00C0-\u024F'-]{0,30})(?:\s|$|[,.])",
+        re.IGNORECASE,
+    ),
+    # Pattern 2: "I'm X" / "I am X" — only when name is at end of sentence
+    re.compile(
+        r"(?:i'm|i am)\s+([A-Za-z\u00C0-\u024F][a-zA-Z\u00C0-\u024F'-]{0,30})\s*[!?.]?\s*$",
+        re.IGNORECASE,
     ),
 ]
 
@@ -91,10 +112,18 @@ def build_graph(
         ctx = memory_vault.enrich(transcript, session_id=state.get("session_id"))
 
         # Detect and store user name
-        for pattern in NAME_PATTERNS:
-            match = pattern.search(transcript)
+        # Strip leading salutation before applying pattern 2 ("I'm X")
+        _clean_transcript = re.sub(
+            r'^(?:hi|hey|hello|good\s+\w+)[,!]?\s*', '', transcript, flags=re.IGNORECASE
+        )
+        for i, pattern in enumerate(NAME_PATTERNS):
+            src = _clean_transcript if i == 2 else transcript
+            match = pattern.search(src)
             if match:
-                name = match.group(1).strip()
+                name = match.group(1).strip(".,!?")
+                # For "I'm X" pattern: reject common non-name words
+                if i == 2 and name.lower() in _NON_NAMES:
+                    continue
                 memory_vault.remember_fact("user_name", name)
                 logger.info("Learned user name: %s", name)
                 break
