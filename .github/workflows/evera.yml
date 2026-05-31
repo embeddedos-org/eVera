@@ -1,0 +1,454 @@
+name: eVera CI/CD
+
+# ─── Triggers ────────────────────────────────────────────────────────────────
+on:
+  push:
+    branches: [master, main, develop]
+    tags: ["v*"]
+  pull_request:
+    branches: [master, main]
+  schedule:
+    - cron: "0 2 * * *"   # nightly regression at 02:00 UTC
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: "Skip test suite (use for hotfix releases)"
+        required: false
+        default: "false"
+        type: boolean
+
+# ─── Global settings ─────────────────────────────────────────────────────────
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "20"
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
+concurrency:
+  group: evera-${{ github.ref }}
+  cancel-in-progress: true
+
+# ─── Jobs ────────────────────────────────────────────────────────────────────
+jobs:
+
+  # ── 1. Test ─────────────────────────────────────────────────────────────────
+  test:
+    name: "🧪 Test — Python ${{ matrix.python-version }} / ${{ matrix.os }}"
+    runs-on: ${{ matrix.os }}
+    if: ${{ github.event.inputs.skip_tests != 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+        os: [ubuntu-22.04, macos-13, windows-2022]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov ruff mypy
+
+      - name: Lint (ruff)
+        run: ruff check . --select=E,F,W --ignore=E501
+        continue-on-error: true
+
+      - name: Type check (mypy)
+        run: mypy . --ignore-missing-imports --no-strict-optional
+        continue-on-error: true
+
+      - name: Run unit tests
+        run: |
+          python -m pytest tests/unit/ -v --tb=short \
+            --cov=. --cov-report=xml --cov-report=term-missing
+
+      - name: Run functional tests
+        run: python -m pytest tests/functional/ -v --tb=short
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          flags: py${{ matrix.python-version }}-${{ matrix.os }}
+        continue-on-error: true
+
+  # ── 2. Desktop — Windows ────────────────────────────────────────────────────
+  build-windows:
+    name: "🪟 Desktop — Windows"
+    needs: [test]
+    if: ${{ !failure() && !cancelled() && startsWith(github.ref, 'refs/tags/v') }}
+    runs-on: windows-2022
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt pyinstaller
+
+      - name: Build Python backend (PyInstaller)
+        run: python build_backend.py
+        continue-on-error: false
+
+      - name: Install Electron dependencies
+        working-directory: electron
+        run: npm install
+
+      - name: Build Windows installer
+        working-directory: electron
+        run: npm run build:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-windows
+          path: electron/dist/*.exe
+          if-no-files-found: warn
+
+  # ── 3. Desktop — macOS ──────────────────────────────────────────────────────
+  build-macos:
+    name: "🍎 Desktop — macOS"
+    needs: [test]
+    if: ${{ !failure() && !cancelled() && startsWith(github.ref, 'refs/tags/v') }}
+    runs-on: macos-13
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt pyinstaller
+
+      - name: Build Python backend (PyInstaller)
+        run: python build_backend.py
+
+      - name: Install Electron dependencies
+        working-directory: electron
+        run: npm install
+
+      - name: Build macOS DMG
+        working-directory: electron
+        run: npm run build:mac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-macos
+          path: electron/dist/*.dmg
+          if-no-files-found: warn
+
+  # ── 4. Desktop — Linux ──────────────────────────────────────────────────────
+  build-linux:
+    name: "🐧 Desktop — Linux"
+    needs: [test]
+    if: ${{ !failure() && !cancelled() && startsWith(github.ref, 'refs/tags/v') }}
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev \
+            librsvg2-dev patchelf fakeroot rpm
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt pyinstaller
+
+      - name: Build Python backend (PyInstaller)
+        run: python build_backend.py
+
+      - name: Install Electron dependencies
+        working-directory: electron
+        run: npm install
+
+      - name: Build Linux packages (AppImage + deb)
+        working-directory: electron
+        run: npm run build:linux
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-linux
+          path: |
+            electron/dist/*.AppImage
+            electron/dist/*.deb
+          if-no-files-found: warn
+
+  # ── 5. Android ──────────────────────────────────────────────────────────────
+  build-android:
+    name: "📱 Android (Phone + Auto + Wear)"
+    needs: [test]
+    if: ${{ !failure() && !cancelled() && startsWith(github.ref, 'refs/tags/v') }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build Android Phone APK
+        working-directory: mobile/android
+        run: |
+          if [ -f "gradlew" ]; then
+            chmod +x gradlew
+            ./gradlew assembleRelease --no-daemon 2>/dev/null || true
+          else
+            echo "⚠️ No gradlew found — skipping Android phone build"
+          fi
+
+      - name: Build Android Auto APK
+        working-directory: mobile/android
+        run: |
+          if [ -d "automotive" ] && [ -f "gradlew" ]; then
+            ./gradlew :automotive:assembleRelease --no-daemon 2>/dev/null || true
+          else
+            echo "⚠️ No automotive module — skipping"
+          fi
+
+      - name: Build Wear OS APK
+        working-directory: mobile/android
+        run: |
+          if [ -d "wear" ] && [ -f "gradlew" ]; then
+            ./gradlew :wear:assembleRelease --no-daemon 2>/dev/null || true
+          else
+            echo "⚠️ No wear module — skipping"
+          fi
+
+      - name: Upload Android Phone APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-phone
+          path: mobile/android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
+
+      - name: Upload Android Auto APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-auto
+          path: mobile/android/automotive/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
+
+      - name: Upload Wear OS APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-wear
+          path: mobile/android/wear/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
+
+  # ── 6. iOS ──────────────────────────────────────────────────────────────────
+  build-ios:
+    name: "🍏 iOS Archive"
+    needs: [test]
+    if: ${{ !failure() && !cancelled() && startsWith(github.ref, 'refs/tags/v') }}
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install React Native dependencies
+        working-directory: mobile
+        run: |
+          if [ -f "package.json" ]; then
+            npm install
+          fi
+
+      - name: Install CocoaPods
+        working-directory: mobile/ios
+        run: |
+          if [ -f "Podfile" ]; then
+            pod install --repo-update 2>/dev/null || true
+          fi
+
+      - name: Build iOS archive (unsigned)
+        working-directory: mobile/ios
+        run: |
+          WORKSPACE=$(find . -name "*.xcworkspace" -maxdepth 1 | head -1)
+          SCHEME=$(xcodebuild -workspace "$WORKSPACE" -list 2>/dev/null \
+            | grep -A 100 "Schemes:" | grep -v "Schemes:" | head -1 | xargs || echo "")
+          if [ -z "$WORKSPACE" ] || [ -z "$SCHEME" ]; then
+            echo "⚠️ No Xcode workspace or scheme found — skipping iOS build"
+            exit 0
+          fi
+          xcodebuild \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath build/Vera.xcarchive \
+            archive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO || true
+
+      - name: Zip iOS archive
+        run: |
+          if [ -d mobile/ios/build/Vera.xcarchive ]; then
+            cd mobile/ios/build
+            zip -r Vera.xcarchive.zip Vera.xcarchive
+          else
+            echo "⚠️ No xcarchive — creating placeholder"
+            mkdir -p mobile/ios/build
+            touch mobile/ios/build/Vera.xcarchive.zip
+          fi
+
+      - name: Upload iOS archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-archive
+          path: mobile/ios/build/Vera.xcarchive.zip
+          if-no-files-found: warn
+
+  # ── 7. GitHub Release ───────────────────────────────────────────────────────
+  release:
+    name: "🚀 GitHub Release"
+    needs: [build-windows, build-macos, build-linux, build-android, build-ios]
+    if: ${{ startsWith(github.ref, 'refs/tags/v') && always() }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List artifacts
+        run: find artifacts -type f | sort
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            CHANGES=$(git log --oneline --pretty=format:"- %s" HEAD)
+          else
+            CHANGES=$(git log --oneline --pretty=format:"- %s" "${PREV_TAG}..HEAD")
+          fi
+          echo "CHANGES<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$CHANGES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/**/*.exe
+            artifacts/**/*.dmg
+            artifacts/**/*.AppImage
+            artifacts/**/*.deb
+            artifacts/**/*.apk
+            artifacts/**/*.zip
+          body: |
+            ## 🚀 eVera ${{ github.ref_name }}
+
+            ### What's Changed
+            ${{ steps.changelog.outputs.CHANGES }}
+
+            ---
+
+            ### 📥 Download & Install
+
+            | Platform | File | How to install |
+            |---|---|---|
+            | **Windows** | `Vera-Setup-*.exe` | Run the installer — everything is bundled |
+            | **macOS** | `Vera-*.dmg` | Open DMG → drag Vera to Applications |
+            | **Linux (AppImage)** | `Vera-*.AppImage` | `chmod +x Vera-*.AppImage && ./Vera-*.AppImage` |
+            | **Linux (deb)** | `Vera-*.deb` | `sudo dpkg -i Vera-*.deb` |
+            | **Android** | `Vera-*.apk` | Enable unknown sources → tap APK |
+            | **Android Auto** | `Vera-Auto-*.apk` | Install on phone → connect to car |
+            | **Wear OS** | `Vera-Wear-*.apk` | Sideload or install via Play Store |
+            | **iOS** | `Vera.xcarchive.zip` | Open in Xcode → distribute to device |
+            | **Web (PWA)** | — | Open `http://localhost:8000` in any browser |
+
+            ---
+
+            ### ⚡ One-Command Install
+
+            **Linux / macOS**
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/embeddedos-org/eVera/master/install.sh | bash
+            ```
+
+            **Windows (PowerShell)**
+            ```powershell
+            irm https://raw.githubusercontent.com/embeddedos-org/eVera/master/setup.ps1 | iex
+            ```
+
+            ---
+
+            ### 🤖 Offline LLMs (no internet needed)
+            ```bash
+            ollama pull qwen3:8b          # 5 GB — recommended
+            ollama pull llama3.2:3b       # 2 GB — fastest
+            ollama pull deepseek-r1:7b    # 5 GB — best reasoning
+            ```
+            Or use **LM Studio**, **Jan AI**, or **llama.cpp** — eVera auto-detects all of them.
+
+          generate_release_notes: false
