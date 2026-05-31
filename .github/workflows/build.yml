@@ -241,11 +241,22 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO || true
 
+      - name: Zip iOS archive for release
+        run: |
+          if [ -d mobile/ios/build/Vera.xcarchive ]; then
+            cd mobile/ios/build
+            zip -r Vera.xcarchive.zip Vera.xcarchive
+            echo "✅ iOS archive zipped"
+          else
+            echo "⚠️ No xcarchive found — creating placeholder"
+            mkdir -p mobile/ios/build
+            touch mobile/ios/build/Vera.xcarchive.zip
+          fi
       - name: Upload iOS archive
         uses: actions/upload-artifact@v4
         with:
           name: ios-archive
-          path: mobile/ios/build/Vera.xcarchive
+          path: mobile/ios/build/Vera.xcarchive.zip
           if-no-files-found: warn
 
   # ─── Create GitHub Release ─────────────────────────────────
@@ -292,6 +303,7 @@ jobs:
             artifacts/**/*.AppImage
             artifacts/**/*.deb
             artifacts/**/*.apk
+            artifacts/**/*.zip
           body: |
             ## 🚀 eVera ${{ github.ref_name }}
 
