@@ -400,6 +400,39 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
     async def status():
         return brain_instance.get_status()
 
+    @app.get("/api/system/info")
+    async def system_info():
+        """Return live system metrics: CPU, memory, disk, network for the dashboard."""
+        import socket
+        import psutil
+        cpu = psutil.cpu_percent(interval=0.2)
+        mem = psutil.virtual_memory()
+        disk = psutil.disk_usage('/')
+        net_if = psutil.net_if_addrs()
+        ip, iface = '—', '—'
+        for name, addrs in net_if.items():
+            if name.startswith('lo'):
+                continue
+            for addr in addrs:
+                if addr.family == socket.AF_INET:
+                    ip = addr.address
+                    iface = name
+                    break
+            if ip != '—':
+                break
+        return {
+            'cpu': round(cpu, 1),
+            'cpu_cores': psutil.cpu_count(),
+            'memory': round(mem.percent, 1),
+            'memory_used_gb': round(mem.used / 1e9, 1),
+            'memory_total_gb': round(mem.total / 1e9, 1),
+            'disk': round(disk.percent, 1),
+            'disk_used_gb': round(disk.used / 1e9, 1),
+            'disk_total_gb': round(disk.total / 1e9, 1),
+            'network': {'interface': iface, 'ip': ip},
+            'uptime': round((__import__('time').time() - psutil.boot_time()) / 3600, 1),
+        }
+
     @app.get("/agents")
     async def agents():
         return {

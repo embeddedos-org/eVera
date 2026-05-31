@@ -16,6 +16,7 @@ import litellm
 
 from config import settings
 from vera.providers.models import (
+    ALL_MODELS,
     DEFAULT_MODELS,
     PROVIDER_KEY_MAP,
     TASK_MODEL_ROUTING,
@@ -65,7 +66,12 @@ class ProviderManager:
     """Manages LLM providers with tiered routing and fallback."""
 
     def __init__(self) -> None:
-        self._models = dict(DEFAULT_MODELS)
+        # Build tier → list[ModelConfig] from the full model registry
+        self._models: dict[ModelTier, list[ModelConfig]] = {tier: [] for tier in ModelTier}
+        for m in ALL_MODELS:
+            self._models.setdefault(m.tier, []).append(m)
+        # Keep DEFAULT_MODELS for quick default-model lookups
+        self._default_models: dict[ModelTier, str] = dict(DEFAULT_MODELS)
         self._usage: dict[ModelTier, TokenUsage] = {tier: TokenUsage() for tier in ModelTier}
         self._provider_health: dict[str, bool] = {}
         self._configure_providers()
@@ -119,18 +125,18 @@ class ProviderManager:
 
                 by_provider[provider].append(
                     {
-                        "model_name": model.model_name,
+                        "model_name": model.id,
                         "provider": provider,
                         "tier": tier.name,
-                        "tier_value": int(tier),
+                        "tier_value": tier.name,
                         "description": model.description,
                         "context_window": model.context_window,
                         "supports_vision": model.supports_vision,
                         "supports_tools": model.supports_tools,
-                        "cost_per_1k_input": model.cost_per_1k_input,
-                        "cost_per_1k_output": model.cost_per_1k_output,
-                        "speed_tier": model.speed_tier,
-                        "task_types": list(model.task_types),
+                        "cost_per_1k_input": 0.0,
+                        "cost_per_1k_output": 0.0,
+                        "speed_tier": "fast" if model.tier.value in ("fast", "executor") else "normal",
+                        "task_types": list(model.tags or []),
                         "configured": configured,
                         "healthy": healthy,
                     }
@@ -146,23 +152,16 @@ class ProviderManager:
         """
         preferred_provider = TASK_MODEL_ROUTING.get(task_type, "openai")
 
-        # First try specialized tier
-        for model in self._models.get(ModelTier.SPECIALIZED, []):
+        # First try specialist tier with preferred provider
+        for model in self._models.get(ModelTier.SPECIALIST, []):
             if (
-                task_type in model.task_types
+                task_type in (model.tags or [])
                 and model.provider == preferred_provider
                 and self._is_provider_configured(model.provider)
             ):
                 return model
-
-        # Fall back to specialist/strategist tiers
-        for tier in [ModelTier.SPECIALIST, ModelTier.STRATEGIST]:
-            for model in self._models.get(tier, []):
-                if task_type in model.task_types and self._is_provider_configured(model.provider):
-                    return model
-
-        # Fall back to any configured model
-        for tier in [ModelTier.SPECIALIST, ModelTier.STRATEGIST, ModelTier.EXECUTOR]:
+        # Fall back to any configured model in SPECIALIST then EXECUTOR
+        for tier in [ModelTier.SPECIALIST, ModelTier.EXECUTOR, ModelTier.FAST]:
             for model in self._models.get(tier, []):
                 if self._is_provider_configured(model.provider):
                     return model
@@ -196,7 +195,7 @@ class ProviderManager:
             start = time.monotonic()
             try:
                 kwargs: dict[str, Any] = {
-                    "model": test_model.model_name,
+                    "model": test_model.id,
                     "messages": [{"role": "user", "content": "hi"}],
                     "max_tokens": 5,
                     "temperature": 0,
@@ -242,11 +241,10 @@ class ProviderManager:
                 return await self._call_model(messages, override_config, max_tokens, temperature, tools)
             # Use it as a raw model name via litellm
             raw_config = ModelConfig(
+                id=model_override,
                 tier=tier,
-                model_name=model_override,
                 provider="unknown",
-                max_tokens=max_tokens or 2048,
-                temperature=temperature or 0.7,
+                context_window=max_tokens or 2048,
             )
             return await self._call_model(messages, raw_config, max_tokens, temperature, tools)
 
@@ -267,13 +265,13 @@ class ProviderManager:
             try:
                 return await self._call_model(messages, model_config, max_tokens, temperature, tools)
             except Exception as e:
-                logger.warning("Model %s failed: %s", model_config.model_name, e)
+                logger.warning("Model %s failed: %s", model_config.id, e)
                 # Record LLM error for monitoring
                 from vera.monitoring import metrics as mon_metrics
 
                 mon_metrics.record_llm_call(
                     provider=model_config.provider,
-                    model=model_config.model_name,
+                    model=model_config.id,
                     tier=model_config.tier.name,
                     tokens=0,
                     latency_ms=0,
@@ -288,7 +286,7 @@ class ProviderManager:
         """Find a model by name across all tiers."""
         for tier in ModelTier:
             for model in self._models.get(tier, []):
-                if model.model_name == model_name:
+                if model.id == model_name:
                     return model
         return None
 
@@ -319,10 +317,10 @@ class ProviderManager:
         start = time.monotonic()
 
         kwargs: dict = {
-            "model": model_config.model_name,
+            "model": model_config.id,
             "messages": messages,
-            "max_tokens": max_tokens or model_config.max_tokens,
-            "temperature": temperature if temperature is not None else model_config.temperature,
+            "max_tokens": max_tokens or 2048,
+            "temperature": temperature if temperature is not None else 0.7,
         }
 
         if model_config.provider == "ollama":
@@ -371,7 +369,7 @@ class ProviderManager:
 
         mon_metrics.record_llm_call(
             provider=model_config.provider,
-            model=model_config.model_name,
+            model=model_config.id,
             tier=model_config.tier.name,
             tokens=usage.total_tokens,
             latency_ms=elapsed_ms,
@@ -380,7 +378,7 @@ class ProviderManager:
 
         logger.info(
             "LLM call: model=%s tier=%s tokens=%d latency=%.0fms tools=%s",
-            model_config.model_name,
+            model_config.id,
             model_config.tier.name,
             usage.total_tokens,
             elapsed_ms,
@@ -389,7 +387,7 @@ class ProviderManager:
 
         return CompletionResult(
             content=content,
-            model=model_config.model_name,
+            model=model_config.id,
             tier=model_config.tier,
             prompt_tokens=usage.prompt_tokens,
             completion_tokens=usage.completion_tokens,
@@ -437,7 +435,7 @@ class ProviderManager:
                     yield chunk
                 return
             except Exception as e:
-                logger.warning("Streaming model %s failed: %s", model_config.model_name, e)
+                logger.warning("Streaming model %s failed: %s", model_config.id, e)
                 last_error = e
                 continue
 
@@ -452,10 +450,10 @@ class ProviderManager:
     ):
         """Stream from a specific model."""
         kwargs: dict = {
-            "model": model_config.model_name,
+            "model": model_config.id,
             "messages": messages,
-            "max_tokens": max_tokens or model_config.max_tokens,
-            "temperature": temperature if temperature is not None else model_config.temperature,
+            "max_tokens": max_tokens or 2048,
+            "temperature": temperature if temperature is not None else 0.7,
             "stream": True,
         }
         if model_config.provider == "ollama":

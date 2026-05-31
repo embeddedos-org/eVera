@@ -1647,3 +1647,257 @@ html, body {
 .diagram-open-btn:hover {
     background: var(--accent-dim);
 }
+
+/* ================================================================
+   eVera v2.0 — World-Class UI Upgrades
+   ================================================================ */
+
+/* === System Dashboard Panel === */
+.system-dashboard {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    width: min(760px, 95vw);
+    background: var(--bg-glass-strong);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    padding: 20px;
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-fast), transform var(--transition-smooth);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(108,123,255,0.1);
+}
+.system-dashboard.visible {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateX(-50%) translateY(0);
+}
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+}
+.dash-card {
+    background: rgba(108, 123, 255, 0.06);
+    border: 1px solid rgba(108, 123, 255, 0.12);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    text-align: center;
+    transition: all var(--transition-fast);
+}
+.dash-card:hover {
+    background: rgba(108, 123, 255, 0.12);
+    border-color: rgba(108, 123, 255, 0.25);
+    transform: translateY(-2px);
+}
+.dash-card-icon { font-size: 22px; margin-bottom: 6px; display: block; }
+.dash-card-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-muted); margin-bottom: 4px;
+}
+.dash-card-value { font-size: 18px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.dash-card-sub { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
+.dash-progress {
+    height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px;
+    margin-top: 8px; overflow: hidden;
+}
+.dash-progress-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent), #a78bfa);
+    transition: width 0.6s ease;
+}
+.dash-progress-fill.warn { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+.dash-section-title {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-muted); margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+}
+.dash-section-title::after { content: ''; flex: 1; height: 1px; background: var(--glass-border); }
+
+/* === File Drop Zone === */
+.file-drop-overlay {
+    position: fixed; inset: 0;
+    background: rgba(108, 123, 255, 0.12);
+    backdrop-filter: blur(4px);
+    z-index: 500;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity var(--transition-fast);
+}
+.file-drop-overlay.active { opacity: 1; pointer-events: all; }
+.file-drop-box {
+    width: 400px; height: 250px;
+    border: 2px dashed var(--accent);
+    border-radius: var(--radius);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+    background: rgba(108, 123, 255, 0.08);
+    animation: pulse-border 1.5s ease-in-out infinite;
+}
+@keyframes pulse-border {
+    0%, 100% { border-color: var(--accent); box-shadow: 0 0 0 0 var(--accent-glow); }
+    50% { border-color: var(--accent-hover); box-shadow: 0 0 20px 4px var(--accent-glow); }
+}
+.file-drop-icon { font-size: 48px; }
+.file-drop-text { font-size: 16px; color: var(--text-secondary); }
+.file-drop-sub { font-size: 12px; color: var(--text-muted); }
+
+/* === Attached File Chips === */
+.attached-files { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 16px 0; }
+.file-chip {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(108, 123, 255, 0.12);
+    border: 1px solid rgba(108, 123, 255, 0.2);
+    border-radius: 20px; padding: 4px 10px 4px 8px;
+    font-size: 12px; color: var(--text-secondary);
+    animation: chip-in 0.2s var(--transition-spring);
+}
+@keyframes chip-in {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+.file-chip-icon { font-size: 14px; }
+.file-chip-name { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-chip-remove {
+    background: none; border: none; color: var(--text-muted);
+    cursor: pointer; padding: 0; font-size: 14px; line-height: 1;
+    transition: color var(--transition-fast);
+}
+.file-chip-remove:hover { color: var(--error); }
+
+/* === Orchestrator Activity Feed === */
+.orchestrator-feed {
+    background: rgba(108, 123, 255, 0.04);
+    border: 1px solid rgba(108, 123, 255, 0.1);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px; margin: 8px 0;
+    font-size: 12px; font-family: var(--font-mono);
+    color: var(--text-secondary);
+    max-height: 160px; overflow-y: auto; line-height: 1.7;
+}
+.orchestrator-feed .step-done { color: #4ade80; }
+.orchestrator-feed .step-running { color: #60a5fa; }
+.orchestrator-feed .step-fail { color: #f43f5e; }
+.orchestrator-feed .step-plan { color: #a78bfa; }
+
+/* === Agent Mode Badges === */
+.agent-card .agent-mode-badge {
+    position: absolute; top: 6px; right: 6px;
+    font-size: 9px; padding: 2px 5px;
+    border-radius: 4px; font-weight: 600; letter-spacing: 0.05em;
+}
+.agent-mode-badge.local { background: rgba(74, 222, 128, 0.15); color: #4ade80; }
+.agent-mode-badge.lan { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
+.agent-mode-badge.www { background: rgba(167, 139, 250, 0.15); color: #a78bfa; }
+
+/* === Voice Input Visualizer === */
+.voice-visualizer {
+    display: flex; align-items: center; justify-content: center;
+    gap: 3px; height: 32px; padding: 0 12px;
+}
+.voice-bar {
+    width: 3px; border-radius: 2px; background: var(--accent);
+    animation: voice-bounce 0.8s ease-in-out infinite;
+    transform-origin: bottom;
+}
+.voice-bar:nth-child(1) { animation-delay: 0s; height: 8px; }
+.voice-bar:nth-child(2) { animation-delay: 0.1s; height: 14px; }
+.voice-bar:nth-child(3) { animation-delay: 0.2s; height: 20px; }
+.voice-bar:nth-child(4) { animation-delay: 0.3s; height: 14px; }
+.voice-bar:nth-child(5) { animation-delay: 0.4s; height: 8px; }
+@keyframes voice-bounce {
+    0%, 100% { transform: scaleY(0.4); opacity: 0.5; }
+    50% { transform: scaleY(1); opacity: 1; }
+}
+
+/* === Capability Pills === */
+.capability-pills {
+    display: flex; gap: 6px; padding: 6px 16px;
+    overflow-x: auto; scrollbar-width: none;
+}
+.capability-pills::-webkit-scrollbar { display: none; }
+.cap-pill {
+    display: flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; white-space: nowrap;
+    cursor: default; transition: all var(--transition-fast);
+    border: 1px solid transparent;
+}
+.cap-pill.active {
+    background: rgba(108, 123, 255, 0.12);
+    border-color: rgba(108, 123, 255, 0.25);
+    color: var(--accent-hover);
+}
+.cap-pill.inactive {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.06);
+    color: var(--text-muted); opacity: 0.5;
+}
+
+/* === Dashboard Toggle Button === */
+.dashboard-toggle-btn {
+    background: rgba(108, 123, 255, 0.08);
+    border: 1px solid rgba(108, 123, 255, 0.15);
+    border-radius: var(--radius-xs);
+    color: var(--text-secondary);
+    padding: 5px 10px; font-size: 12px;
+    cursor: pointer; transition: all var(--transition-fast);
+    display: flex; align-items: center; gap: 5px;
+}
+.dashboard-toggle-btn:hover { background: rgba(108, 123, 255, 0.15); color: var(--text-primary); }
+.dashboard-toggle-btn.active {
+    background: rgba(108, 123, 255, 0.2);
+    border-color: rgba(108, 123, 255, 0.35);
+    color: var(--accent);
+}
+
+/* === Glow on Active Agent === */
+@keyframes agent-active-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(108, 123, 255, 0); }
+    50% { box-shadow: 0 0 12px 3px rgba(108, 123, 255, 0.25); }
+}
+.agent-card.processing { animation: agent-active-glow 1.5s ease-in-out infinite; }
+
+/* === Welcome Banner === */
+.welcome-banner {
+    background: linear-gradient(135deg, rgba(108,123,255,0.08) 0%, rgba(100,200,255,0.05) 100%);
+    border: 1px solid rgba(108,123,255,0.15);
+    border-radius: var(--radius);
+    padding: 16px 20px; margin: 8px 12px;
+    display: flex; align-items: center; gap: 14px;
+}
+.welcome-banner-icon { font-size: 32px; flex-shrink: 0; }
+.welcome-banner-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 3px; }
+.welcome-banner-sub { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.welcome-banner-close {
+    margin-left: auto; background: none; border: none;
+    color: var(--text-muted); cursor: pointer; font-size: 18px;
+    padding: 4px; flex-shrink: 0; transition: color var(--transition-fast);
+}
+.welcome-banner-close:hover { color: var(--text-primary); }
+
+/* === Mode-Aware Input Bar === */
+.glass-input-bar.mode-local { border-top-color: rgba(74, 222, 128, 0.2); }
+.glass-input-bar.mode-lan { border-top-color: rgba(96, 165, 250, 0.2); }
+.glass-input-bar.mode-www { border-top-color: rgba(167, 139, 250, 0.2); }
+
+/* === Thinking Steps === */
+.thinking-steps {
+    padding: 8px 16px; font-size: 12px; color: var(--text-muted);
+    font-family: var(--font-mono);
+    border-left: 2px solid var(--accent-dim);
+    margin: 4px 0; animation: fade-in 0.3s ease;
+}
+.thinking-step { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
+.thinking-step .step-icon { font-size: 10px; }
+.thinking-step.done { color: #4ade80; }
+.thinking-step.running { color: var(--accent); }
+
+/* === Responsive === */
+@media (max-width: 768px) {
+    .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+    .capability-pills { padding: 4px 8px; }
+}

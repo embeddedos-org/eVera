@@ -816,3 +816,362 @@
     }
 
 })();
+
+/* ================================================================
+   eVera v2.0 — World-Class UI Upgrades
+   ================================================================ */
+
+/* === System Dashboard === */
+(function initSystemDashboard() {
+    // Inject dashboard HTML into body
+    const dashHtml = `
+    <div class="system-dashboard" id="systemDashboard">
+        <div class="dash-section-title">⚡ System Status</div>
+        <div class="dashboard-grid">
+            <div class="dash-card" id="dashCpu">
+                <span class="dash-card-icon">🖥️</span>
+                <div class="dash-card-label">CPU</div>
+                <div class="dash-card-value" id="dashCpuVal">—</div>
+                <div class="dash-card-sub" id="dashCpuSub">loading…</div>
+                <div class="dash-progress"><div class="dash-progress-fill" id="dashCpuBar" style="width:0%"></div></div>
+            </div>
+            <div class="dash-card" id="dashMem">
+                <span class="dash-card-icon">💾</span>
+                <div class="dash-card-label">Memory</div>
+                <div class="dash-card-value" id="dashMemVal">—</div>
+                <div class="dash-card-sub" id="dashMemSub">loading…</div>
+                <div class="dash-progress"><div class="dash-progress-fill" id="dashMemBar" style="width:0%"></div></div>
+            </div>
+            <div class="dash-card" id="dashDisk">
+                <span class="dash-card-icon">💿</span>
+                <div class="dash-card-label">Disk</div>
+                <div class="dash-card-value" id="dashDiskVal">—</div>
+                <div class="dash-card-sub" id="dashDiskSub">loading…</div>
+                <div class="dash-progress"><div class="dash-progress-fill" id="dashDiskBar" style="width:0%"></div></div>
+            </div>
+            <div class="dash-card" id="dashNet">
+                <span class="dash-card-icon">🌐</span>
+                <div class="dash-card-label">Network</div>
+                <div class="dash-card-value" id="dashNetVal">—</div>
+                <div class="dash-card-sub" id="dashNetSub">loading…</div>
+            </div>
+            <div class="dash-card" id="dashMode">
+                <span class="dash-card-icon" id="dashModeIcon">🖥️</span>
+                <div class="dash-card-label">Mode</div>
+                <div class="dash-card-value" id="dashModeVal">LOCAL</div>
+                <div class="dash-card-sub" id="dashModeSub">Offline</div>
+            </div>
+            <div class="dash-card" id="dashAgents">
+                <span class="dash-card-icon">🤖</span>
+                <div class="dash-card-label">Agents</div>
+                <div class="dash-card-value" id="dashAgentsVal">—</div>
+                <div class="dash-card-sub" id="dashAgentsSub">available</div>
+            </div>
+        </div>
+    </div>
+    <div class="file-drop-overlay" id="fileDropOverlay">
+        <div class="file-drop-box">
+            <span class="file-drop-icon">📂</span>
+            <div class="file-drop-text">Drop files to attach</div>
+            <div class="file-drop-sub">Images, PDFs, text, code — any file</div>
+        </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', dashHtml);
+
+    // Add dashboard toggle button to header
+    const headerRight = document.querySelector('.header-right');
+    if (headerRight) {
+        const btn = document.createElement('button');
+        btn.className = 'dashboard-toggle-btn';
+        btn.id = 'dashboardToggleBtn';
+        btn.title = 'System Dashboard';
+        btn.innerHTML = '📊 Dashboard';
+        headerRight.insertBefore(btn, headerRight.firstChild);
+        btn.addEventListener('click', () => {
+            const dash = document.getElementById('systemDashboard');
+            const isVisible = dash.classList.toggle('visible');
+            btn.classList.toggle('active', isVisible);
+            if (isVisible) refreshDashboard();
+        });
+    }
+
+    // Add capability pills below the mode selector
+    const inputBar = document.querySelector('.glass-input-bar');
+    if (inputBar) {
+        const pills = document.createElement('div');
+        pills.className = 'capability-pills';
+        pills.id = 'capabilityPills';
+        inputBar.parentNode.insertBefore(pills, inputBar);
+    }
+
+    // Fetch and render system info
+    async function refreshDashboard() {
+        try {
+            const r = await fetch('/api/system/info');
+            if (!r.ok) return;
+            const d = await r.json();
+            if (d.cpu !== undefined) {
+                document.getElementById('dashCpuVal').textContent = d.cpu.toFixed(1) + '%';
+                document.getElementById('dashCpuSub').textContent = d.cpu_cores + ' cores';
+                const cpuBar = document.getElementById('dashCpuBar');
+                cpuBar.style.width = d.cpu + '%';
+                if (d.cpu > 80) cpuBar.classList.add('warn'); else cpuBar.classList.remove('warn');
+            }
+            if (d.memory !== undefined) {
+                document.getElementById('dashMemVal').textContent = d.memory.toFixed(1) + '%';
+                document.getElementById('dashMemSub').textContent = d.memory_used_gb + ' / ' + d.memory_total_gb + ' GB';
+                const memBar = document.getElementById('dashMemBar');
+                memBar.style.width = d.memory + '%';
+                if (d.memory > 85) memBar.classList.add('warn'); else memBar.classList.remove('warn');
+            }
+            if (d.disk !== undefined) {
+                document.getElementById('dashDiskVal').textContent = d.disk.toFixed(1) + '%';
+                document.getElementById('dashDiskSub').textContent = d.disk_used_gb + ' / ' + d.disk_total_gb + ' GB';
+                const diskBar = document.getElementById('dashDiskBar');
+                diskBar.style.width = d.disk + '%';
+                if (d.disk > 90) diskBar.classList.add('warn'); else diskBar.classList.remove('warn');
+            }
+            if (d.network) {
+                document.getElementById('dashNetVal').textContent = d.network.interface || 'eth0';
+                document.getElementById('dashNetSub').textContent = d.network.ip || '—';
+            }
+        } catch (e) { /* server might not have /api/system/info yet */ }
+
+        // Update mode card from current mode selector
+        const activeMode = document.querySelector('.op-mode-btn.active');
+        if (activeMode) {
+            const mode = activeMode.dataset.mode;
+            const icons = { local: '🖥️', lan: '🌐', www: '🌍' };
+            const subs = { local: 'Offline', lan: 'LAN Network', www: 'Full Internet' };
+            document.getElementById('dashModeIcon').textContent = icons[mode] || '🖥️';
+            document.getElementById('dashModeVal').textContent = mode.toUpperCase();
+            document.getElementById('dashModeSub').textContent = subs[mode] || '';
+        }
+
+        // Agent count from /agents
+        try {
+            const ar = await fetch('/agents');
+            if (ar.ok) {
+                const agents = await ar.json();
+                const count = Array.isArray(agents) ? agents.length : Object.keys(agents).length;
+                document.getElementById('dashAgentsVal').textContent = count;
+            }
+        } catch (e) {}
+    }
+
+    // Auto-refresh dashboard every 5s when visible
+    setInterval(() => {
+        const dash = document.getElementById('systemDashboard');
+        if (dash && dash.classList.contains('visible')) refreshDashboard();
+    }, 5000);
+})();
+
+/* === File Drag & Drop === */
+(function initFileDrop() {
+    const overlay = document.getElementById('fileDropOverlay');
+    const attachedFiles = [];
+    let dragCounter = 0;
+
+    // Inject attached files container above input bar
+    const inputBar = document.querySelector('.glass-input-bar');
+    if (inputBar) {
+        const container = document.createElement('div');
+        container.className = 'attached-files';
+        container.id = 'attachedFilesContainer';
+        inputBar.parentNode.insertBefore(container, inputBar);
+    }
+
+    document.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        dragCounter++;
+        if (overlay) overlay.classList.add('active');
+    });
+    document.addEventListener('dragleave', () => {
+        dragCounter--;
+        if (dragCounter <= 0 && overlay) {
+            overlay.classList.remove('active');
+            dragCounter = 0;
+        }
+    });
+    document.addEventListener('dragover', (e) => e.preventDefault());
+    document.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dragCounter = 0;
+        if (overlay) overlay.classList.remove('active');
+        const files = Array.from(e.dataTransfer.files);
+        files.forEach(addFileChip);
+    });
+
+    function getFileIcon(name) {
+        const ext = name.split('.').pop().toLowerCase();
+        const icons = {
+            pdf: '📄', png: '🖼️', jpg: '🖼️', jpeg: '🖼️', gif: '🖼️', svg: '🖼️',
+            mp3: '🎵', wav: '🎵', mp4: '🎬', py: '🐍', js: '📜', ts: '📜',
+            html: '🌐', css: '🎨', json: '📋', csv: '📊', xlsx: '📊',
+            txt: '📝', md: '📝', zip: '📦', tar: '📦'
+        };
+        return icons[ext] || '📎';
+    }
+
+    function addFileChip(file) {
+        attachedFiles.push(file);
+        const container = document.getElementById('attachedFilesContainer');
+        if (!container) return;
+        const chip = document.createElement('div');
+        chip.className = 'file-chip';
+        chip.dataset.name = file.name;
+        chip.innerHTML = `
+            <span class="file-chip-icon">${getFileIcon(file.name)}</span>
+            <span class="file-chip-name" title="${file.name}">${file.name}</span>
+            <button class="file-chip-remove" title="Remove">×</button>`;
+        chip.querySelector('.file-chip-remove').addEventListener('click', () => {
+            const idx = attachedFiles.findIndex(f => f.name === file.name);
+            if (idx > -1) attachedFiles.splice(idx, 1);
+            chip.remove();
+        });
+        container.appendChild(chip);
+    }
+
+    // Expose for sendMessage to read
+    window._eVeraAttachedFiles = attachedFiles;
+})();
+
+/* === Capability Pills (mode-aware) === */
+(function initCapabilityPills() {
+    const pillsContainer = document.getElementById('capabilityPills');
+    if (!pillsContainer) return;
+
+    const capabilities = {
+        local: [
+            { icon: '🖥️', label: 'Computer Control', key: 'computer' },
+            { icon: '💬', label: 'Conversation', key: 'chat' },
+            { icon: '💻', label: 'Code', key: 'code' },
+            { icon: '📝', label: 'Writing', key: 'write' },
+            { icon: '🎵', label: 'Music', key: 'music' },
+            { icon: '📊', label: 'Data Analysis', key: 'data' },
+            { icon: '🔒', label: 'Offline', key: 'offline', always: true },
+        ],
+        lan: [
+            { icon: '🖥️', label: 'Computer Control', key: 'computer' },
+            { icon: '🌐', label: 'LAN Network', key: 'lan' },
+            { icon: '🔗', label: 'SSH Access', key: 'ssh' },
+            { icon: '📁', label: 'File Shares', key: 'shares' },
+            { icon: '💬', label: 'Conversation', key: 'chat' },
+            { icon: '💻', label: 'Code', key: 'code' },
+            { icon: '🏢', label: 'Org Data', key: 'org' },
+        ],
+        www: [
+            { icon: '🌍', label: 'Web Search', key: 'search' },
+            { icon: '📈', label: 'Stocks/Finance', key: 'finance' },
+            { icon: '📰', label: 'News', key: 'news' },
+            { icon: '✉️', label: 'Email', key: 'email' },
+            { icon: '🤖', label: 'All LLMs', key: 'llms' },
+            { icon: '🖥️', label: 'Computer Control', key: 'computer' },
+            { icon: '🌐', label: 'LAN Network', key: 'lan' },
+        ]
+    };
+
+    function renderPills(mode) {
+        pillsContainer.innerHTML = '';
+        const caps = capabilities[mode] || capabilities.local;
+        caps.forEach(cap => {
+            const pill = document.createElement('div');
+            pill.className = 'cap-pill active';
+            pill.innerHTML = `<span>${cap.icon}</span><span>${cap.label}</span>`;
+            pill.title = cap.label;
+            pillsContainer.appendChild(pill);
+        });
+    }
+
+    // Listen for mode changes
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.op-mode-btn');
+        if (btn) {
+            setTimeout(() => renderPills(btn.dataset.mode), 50);
+        }
+    });
+
+    // Initial render
+    const activeMode = document.querySelector('.op-mode-btn.active');
+    renderPills(activeMode ? activeMode.dataset.mode : 'local');
+})();
+
+/* === Grouped Model Selector === */
+(function enhanceModelSelector() {
+    const sel = document.getElementById('modelSelector');
+    if (!sel) return;
+
+    // Override loadModels to group by provider
+    const origLoad = window.loadModels;
+    window.loadModels = async function() {
+        try {
+            const r = await fetch('/models');
+            if (!r.ok) return;
+            const data = await r.json();
+            const models = data.models || data || [];
+
+            sel.innerHTML = '<option value="">🤖 Auto (Best Available)</option>';
+
+            const groups = {};
+            models.forEach(m => {
+                const provider = (m.provider || 'other').toLowerCase();
+                if (!groups[provider]) groups[provider] = [];
+                groups[provider].push(m);
+            });
+
+            const providerLabels = {
+                ollama: '🟢 Ollama (Offline)',
+                openai: '🔵 OpenAI',
+                anthropic: '🟡 Anthropic (Claude)',
+                google: '🟣 Google (Gemini)',
+                groq: '⚡ Groq',
+                mistral: '🔶 Mistral',
+                deepseek: '🔷 DeepSeek',
+                together: '🌐 Together AI',
+                perplexity: '🔍 Perplexity',
+            };
+
+            Object.entries(groups).forEach(([provider, pModels]) => {
+                const group = document.createElement('optgroup');
+                group.label = providerLabels[provider] || provider.toUpperCase();
+                pModels.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.id || m.name;
+                    opt.textContent = m.display_name || m.name || m.id;
+                    opt.dataset.provider = provider;
+                    group.appendChild(opt);
+                });
+                sel.appendChild(group);
+            });
+        } catch (e) {
+            if (origLoad) origLoad();
+        }
+    };
+})();
+
+/* === Welcome Banner (first visit) === */
+(function initWelcomeBanner() {
+    if (localStorage.getItem('vera_welcomed')) return;
+    const chatMessages = document.getElementById('chatMessages');
+    if (!chatMessages) return;
+
+    const banner = document.createElement('div');
+    banner.className = 'welcome-banner';
+    banner.innerHTML = `
+        <span class="welcome-banner-icon">🤖</span>
+        <div>
+            <div class="welcome-banner-title">Welcome to eVera v2.0 — Your Personal AI Agent</div>
+            <div class="welcome-banner-sub">
+                I work in three modes: <strong>🖥️ LOCAL</strong> (fully offline, computer control),
+                <strong>🌐 LAN</strong> (network access, org data), and
+                <strong>🌍 WWW</strong> (full internet + all AI models).
+                Drag files to attach them. Ask me anything.
+            </div>
+        </div>
+        <button class="welcome-banner-close" title="Dismiss">✕</button>`;
+    banner.querySelector('.welcome-banner-close').addEventListener('click', () => {
+        banner.remove();
+        localStorage.setItem('vera_welcomed', '1');
+    });
+    chatMessages.insertBefore(banner, chatMessages.firstChild);
+})();

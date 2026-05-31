@@ -33,6 +33,8 @@ from vera.brain.agents.meeting_agent import MeetingAgent
 from vera.brain.agents.music_agent import MusicAgent
 from vera.brain.agents.network_agent import NetworkAgent
 from vera.brain.agents.lan_agent import LANAgent
+from vera.brain.agents.local_agent import LocalAgent
+from vera.brain.agents.www_agent import WWWAgent
 from vera.brain.agents.operator import OperatorAgent
 from vera.brain.agents.pdf_agent import PDFAgent
 from vera.brain.agents.planner import PlannerAgent
@@ -87,6 +89,8 @@ AGENT_REGISTRY: dict[str, BaseAgent] = {
     "calendar": CalendarAgent(),
     "network": NetworkAgent(),
     "lan": LANAgent(),
+    "local": LocalAgent(),
+    "www": WWWAgent(),
     "pdf": PDFAgent(),
     "spreadsheet": SpreadsheetAgent(),
     "api": APIAgent(),

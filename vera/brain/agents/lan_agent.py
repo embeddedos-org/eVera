@@ -508,3 +508,183 @@ async def _smb_list(host: str, username: str, password: str, path: str) -> dict[
         return {"status": "error", "message": "pysmb not installed. Run: pip install pysmb"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+# ---------------------------------------------------------------------------
+# LDAP / Active Directory Query
+# ---------------------------------------------------------------------------
+
+
+class LDAPQueryTool(Tool):
+    """Query LDAP/Active Directory for users, groups, and org structure."""
+
+    def __init__(self):
+        super().__init__(
+            name="ldap_query",
+            description=(
+                "Query LDAP/Active Directory: find users, list groups, get org structure, "
+                "look up email addresses, phone numbers, and department info"
+            ),
+            parameters={
+                "server": {"type": "str", "description": "LDAP server IP or hostname"},
+                "base_dn": {"type": "str", "description": "Base DN e.g. 'dc=company,dc=com'"},
+                "query": {"type": "str", "description": "LDAP filter e.g. '(objectClass=user)' or a name to search"},
+                "username": {"type": "str", "description": "Bind username (optional for anonymous)"},
+                "password": {"type": "str", "description": "Bind password"},
+                "attributes": {
+                    "type": "str",
+                    "description": "Comma-separated attributes to return e.g. 'cn,mail,department,title'",
+                },
+            },
+        )
+
+    async def execute(self, **kw: Any) -> dict[str, Any]:
+        server = kw.get("server", "")
+        base_dn = kw.get("base_dn", "")
+        query = kw.get("query", "(objectClass=user)")
+        username = kw.get("username", "")
+        password = kw.get("password", "")
+        attrs_str = kw.get("attributes", "cn,mail,department,title,telephoneNumber,sAMAccountName")
+        attrs = [a.strip() for a in attrs_str.split(",")]
+        if not server or not base_dn:
+            return {"status": "error", "message": "server and base_dn are required"}
+        try:
+            import ldap3  # type: ignore
+            srv = ldap3.Server(server, get_info=ldap3.ALL)
+            if username:
+                conn = ldap3.Connection(srv, user=username, password=password, auto_bind=True)
+            else:
+                conn = ldap3.Connection(srv, auto_bind=True)
+            conn.search(base_dn, query, attributes=attrs)
+            results = []
+            for entry in conn.entries[:50]:
+                results.append({attr: str(getattr(entry, attr, "")) for attr in attrs})
+            conn.unbind()
+            return {"status": "success", "results": results, "count": len(results)}
+        except ImportError:
+            return {"status": "error", "message": "ldap3 not installed. Run: pip install ldap3"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+# ---------------------------------------------------------------------------
+# LAN REST API Client (Home Assistant, NAS, cameras, routers, smart home)
+# ---------------------------------------------------------------------------
+
+
+class LANAPICallTool(Tool):
+    """Call REST APIs on local network devices."""
+
+    def __init__(self):
+        super().__init__(
+            name="lan_api_call",
+            description=(
+                "Call REST APIs on local network devices: Home Assistant, NAS, IP cameras, "
+                "routers, smart home hubs, Plex, Jellyfin, Proxmox, etc."
+            ),
+            parameters={
+                "url": {"type": "str", "description": "Full URL e.g. 'http://192.168.1.10:8123/api/states'"},
+                "method": {"type": "str", "description": "GET|POST|PUT|DELETE (default GET)"},
+                "headers": {"type": "str", "description": "JSON headers e.g. '{\"Authorization\": \"Bearer token\"}'"},
+                "body": {"type": "str", "description": "JSON request body for POST/PUT"},
+                "timeout": {"type": "int", "description": "Timeout in seconds (default 10)"},
+            },
+        )
+
+    async def execute(self, **kw: Any) -> dict[str, Any]:
+        import json as _json
+        import urllib.request
+        url = kw.get("url", "")
+        method = kw.get("method", "GET").upper()
+        headers_str = kw.get("headers", "{}")
+        body_str = kw.get("body", "")
+        timeout = int(kw.get("timeout", 10))
+        if not url:
+            return {"status": "error", "message": "url is required"}
+        try:
+            headers = _json.loads(headers_str) if headers_str else {}
+            headers.setdefault("Content-Type", "application/json")
+            data = body_str.encode() if body_str else None
+            req = urllib.request.Request(url, data=data, headers=headers, method=method)
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                content = resp.read().decode("utf-8", errors="replace")[:8000]
+                try:
+                    parsed = _json.loads(content)
+                except Exception:
+                    parsed = content
+                return {"status": "success", "url": url, "http_status": resp.status, "response": parsed}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+# ---------------------------------------------------------------------------
+# Printer Control
+# ---------------------------------------------------------------------------
+
+
+class PrinterControlTool(Tool):
+    """List and control printers on the LAN."""
+
+    def __init__(self):
+        super().__init__(
+            name="printer_control",
+            description="List printers, print files, check print queue, cancel jobs on LAN printers",
+            parameters={
+                "action": {"type": "str", "description": "list|print|queue|cancel"},
+                "printer": {"type": "str", "description": "Printer name (from list action)"},
+                "file_path": {"type": "str", "description": "Local file path to print"},
+                "job_id": {"type": "str", "description": "Job ID to cancel"},
+            },
+        )
+
+    async def execute(self, **kw: Any) -> dict[str, Any]:
+        import subprocess as sp
+        action = kw.get("action", "list")
+        printer = kw.get("printer", "")
+        file_path = kw.get("file_path", "")
+        job_id = kw.get("job_id", "")
+        try:
+            if action == "list":
+                r = sp.run(["lpstat", "-a"], capture_output=True, text=True, timeout=10)
+                return {"status": "success", "printers": r.stdout or "No printers found"}
+            elif action == "print":
+                cmd = ["lp"]
+                if printer:
+                    cmd += ["-d", printer]
+                cmd.append(file_path)
+                r = sp.run(cmd, capture_output=True, text=True, timeout=30)
+                return {"status": "success" if r.returncode == 0 else "error", "output": r.stdout, "stderr": r.stderr}
+            elif action == "queue":
+                cmd = ["lpq"]
+                if printer:
+                    cmd += ["-P", printer]
+                r = sp.run(cmd, capture_output=True, text=True, timeout=10)
+                return {"status": "success", "queue": r.stdout}
+            elif action == "cancel":
+                r = sp.run(["cancel", job_id], capture_output=True, text=True, timeout=10)
+                return {"status": "success" if r.returncode == 0 else "error", "output": r.stdout}
+            return {"status": "error", "message": f"Unknown action: {action}. Use list|print|queue|cancel"}
+        except FileNotFoundError:
+            return {"status": "error", "message": "CUPS printing system not found. Install: sudo apt install cups"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+# ---------------------------------------------------------------------------
+# Register new tools in LANAgent
+# ---------------------------------------------------------------------------
+
+# Monkey-patch the existing LANAgent to include new tools
+_original_setup = LANAgent._setup_tools
+
+
+def _enhanced_setup(self) -> None:
+    _original_setup(self)
+    self._tools.extend([
+        LDAPQueryTool(),
+        LANAPICallTool(),
+        PrinterControlTool(),
+    ])
+
+
+LANAgent._setup_tools = _enhanced_setup

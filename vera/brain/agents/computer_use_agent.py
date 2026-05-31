@@ -512,3 +512,500 @@ class ComputerUseAgent(BaseAgent):
             ProcessManagerTool(),
             SystemInfoTool(),
         ]
+
+
+# ---------------------------------------------------------------------------
+# Audio Control
+# ---------------------------------------------------------------------------
+
+class AudioControlTool(Tool):
+    """Control system audio: volume, mute, list devices."""
+
+    def __init__(self):
+        super().__init__(
+            name="audio_control",
+            description="Control system audio: get/set volume, mute/unmute, list audio devices",
+            parameters={
+                "action": {"type": "str", "description": "get_volume|set_volume|mute|unmute|toggle_mute|list_devices"},
+                "volume": {"type": "int", "description": "Volume level 0-100"},
+            },
+        )
+
+    async def execute(self, **kw: Any) -> dict[str, Any]:
+        import platform
+        import subprocess
+        action = kw.get("action", "get_volume")
+        _os = platform.system()
+        try:
+            if _os == "Linux":
+                if action == "get_volume":
+                    r = subprocess.run(["amixer", "get", "Master"], capture_output=True, text=True)
+                    import re
+                    m = re.search(r"\[(\d+)%\]", r.stdout)
+                    vol = int(m.group(1)) if m else None
+                    muted = "[off]" in r.stdout
+                    return {"status": "success", "volume": vol, "muted": muted}
+                elif action == "set_volume":
+                    vol = kw.get("volume", 50)
+                    subprocess.run(["amixer", "set", "Master", f"{vol}%"])
+                    return {"status": "success", "volume": vol}
+                elif action == "mute":
+                    subprocess.run(["amixer", "set", "Master", "mute"])
+                    return {"status": "success", "muted": True}
+                elif action == "unmute":
+                    subprocess.run(["amixer", "set", "Master", "unmute"])
+                    return {"status": "success", "muted": False}
+                elif action == "toggle_mute":
+                    subprocess.run(["amixer", "set", "Master", "toggle"])
+                    return {"status": "success"}
+                elif action == "list_devices":
+                    r = subprocess.run(["pactl", "list", "sinks", "short"], capture_output=True, text=True)
+                    return {"status": "success", "devices": r.stdout}
+            elif _os == "Darwin":
+                if action == "get_volume":
+                    r = subprocess.run(["osascript", "-e", "output volume of (get volume settings)"], capture_output=True, text=True)
+                    vol = int(r.stdout.strip()) if r.stdout.strip().isdigit() else None
+                    return {"status": "success", "volume": vol}
+                elif action == "set_volume":
+                    vol = kw.get("volume", 50)
+                    subprocess.run(["osascript", "-e", f"set volume output volume {vol}"])
+                    return {"status": "success", "volume": vol}
+                elif action == "mute":
+                    subprocess.run(["osascript", "-e", "set volume with output muted"])
+                    return {"status": "success", "muted": True}
+                elif action == "unmute":
+                    subprocess.run(["osascript", "-e", "set volume without output muted"])
+                    return {"status": "success", "muted": False}
+            elif _os == "Windows":
+                try:
+                    from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume  # type: ignore
+                    from ctypes import cast, POINTER
+                    from comtypes import CLSCTX_ALL  # type: ignore
+                    devices = AudioUtilities.GetSpeakers()
+                    interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+                    volume = cast(interface, POINTER(IAudioEndpointVolume))
+                    if action == "get_volume":
+                        return {"status": "success", "volume": int(volume.GetMasterVolumeLevelScalar() * 100), "muted": bool(volume.GetMute())}
+                    elif action == "set_volume":
+                        volume.SetMasterVolumeLevelScalar(int(kw.get("volume", 50)) / 100, None)
+                        return {"status": "success", "volume": kw.get("volume")}
+                    elif action == "mute":
+                        volume.SetMute(1, None)
+                        return {"status": "success", "muted": True}
+                    elif action == "unmute":
+                        volume.SetMute(0, None)
+                        return {"status": "success", "muted": False}
+                except ImportError:
+                    return {"status": "error", "message": "pycaw not installed. Run: pip install pycaw"}
+            return {"status": "error", "message": f"Action '{action}' not supported on {_os}"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+# ---------------------------------------------------------------------------
+# Power Control
+# ---------------------------------------------------------------------------
+
+class PowerControlTool(Tool):
+    """Sleep, hibernate, shutdown, restart, or lock the screen."""
+
+    def __init__(self):
+        super().__init__(
+            name="power_control",
+            description="Sleep, hibernate, shutdown, restart, lock screen, or get power/battery status",
+            parameters={
+                "action": {"type": "str", "description": "sleep|hibernate|shutdown|restart|lock|status|cancel_shutdown"},
+                "delay_seconds": {"type": "int", "description": "Delay before action (default 0)"},
+            },
+        )
+
+    async def execute(self, **kw: Any) -> dict[str, Any]:
+        import platform
+        import subprocess
+        _os = platform.system()
+        action = kw.get("action", "status")
+        delay = int(kw.get("delay_seconds", 0))
+        try:
+            if action == "status":
+                try:
+                    import psutil
+                    bat = psutil.sensors_battery()
+                    return {
+                        "status": "success",
+                        "battery_percent": bat.percent if bat else None,
+                        "plugged_in": bat.power_plugged if bat else None,
+                        "platform": _os,
+                    }
+                except ImportError:
+                    return {"status": "success", "platform": _os}
+            if _os == "Linux":
+                cmds = {
+                    "sleep": ["systemctl", "suspend"],
+                    "hibernate": ["systemctl", "hibernate"],
+                    "shutdown": ["shutdown", "-h", "now"],
+                    "restart": ["shutdown", "-r", "now"],
+                    "lock": ["loginctl", "lock-session"],
+                    "cancel_shutdown": ["shutdown", "-c"],
+                }
+            elif _os == "Darwin":
+                cmds = {
+                    "sleep": ["pmset", "sleepnow"],
+                    "shutdown": ["shutdown", "-h", "now"],
+                    "restart": ["shutdown", "-r", "now"],
+                    "lock": ["osascript", "-e", 'tell application "System Events" to keystroke "q" using {command down, control down}'],
+                }
+            elif _os == "Windows":
+                cmds = {
+                    "sleep": ["rundll32.exe", "powrprof.dll,SetSuspendState", "0,1,0"],
+                    "hibernate": ["shutdown", "/h"],
+                    "shutdown": ["shutdown", "/s", "/t", str(delay)],
+                    "restart": ["shutdown", "/r", "/t", str(delay)],
+                    "lock": ["rundll32.exe", "user32.dll,LockWorkStation"],
+                    "cancel_shutdown": ["shutdown", "/a"],
+                }
+            else:
+                return {"status": "error", "message": f"Unsupported OS: {_os}"}
+            if action not in cmds:
+                return {"status": "error", "message": f"Action '{action}' not supported on {_os}"}
+            r = subprocess.run(cmds[action], capture_output=True, text=True)
+            return {"status": "success" if r.returncode == 0 else "error", "action": action, "message": r.stderr}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+# ---------------------------------------------------------------------------
+# Desktop Notification
+# ---------------------------------------------------------------------------
+
+class NotificationTool(Tool):
+    """Send a desktop notification."""
+
+    def __init__(self):
+        super().__init__(
+            name="notify",
+            description="Send a desktop notification to the user",
+            parameters={
+                "title": {"type": "str", "description": "Notification title"},
+                "message": {"type": "str", "description": "Notification body"},
+                "urgency": {"type": "str", "description": "low|normal|critical"},
+                "duration": {"type": "int", "description": "Duration in seconds (default 5)"},
+            },
+        )
+
+    async def execute(self, **kw: Any) -> dict[str, Any]:
+        import platform
+        import subprocess
+        _os = platform.system()
+        title = kw.get("title", "eVera")
+        message = kw.get("message", "")
+        urgency = kw.get("urgency", "normal")
+        duration = int(kw.get("duration", 5))
+        try:
+            if _os == "Linux":
+                r = subprocess.run(["notify-send", "-u", urgency, "-t", str(duration * 1000), title, message], capture_output=True)
+                return {"status": "success" if r.returncode == 0 else "error"}
+            elif _os == "Darwin":
+                script = f'display notification "{message}" with title "{title}"'
+                r = subprocess.run(["osascript", "-e", script], capture_output=True)
+                return {"status": "success" if r.returncode == 0 else "error"}
+            elif _os == "Windows":
+                try:
+                    from win10toast import ToastNotifier  # type: ignore
+                    ToastNotifier().show_toast(title, message, duration=duration)
+                    return {"status": "success"}
+                except ImportError:
+                    ps = f'Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show("{message}", "{title}")'
+                    subprocess.Popen(["powershell", "-Command", ps])
+                    return {"status": "success", "method": "messagebox"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+# ---------------------------------------------------------------------------
+# Service Manager
+# ---------------------------------------------------------------------------
+
+class ServiceManagerTool(Tool):
+    """Manage system services (systemd / launchd / Windows Services)."""
+
+    def __init__(self):
+        super().__init__(
+            name="service_manager",
+            description="List, start, stop, restart, enable, or disable system services",
+            parameters={
+                "action": {"type": "str", "description": "list|status|start|stop|restart|enable|disable"},
+                "service": {"type": "str", "description": "Service name"},
+            },
+        )
+
+    async def execute(self, **kw: Any) -> dict[str, Any]:
+        import platform
+        import subprocess
+        _os = platform.system()
+        action = kw.get("action", "list")
+        service = kw.get("service", "")
+        try:
+            if _os == "Linux":
+                if action == "list":
+                    r = subprocess.run(["systemctl", "list-units", "--type=service", "--no-pager", "--plain"], capture_output=True, text=True)
+                    return {"status": "success", "services": r.stdout[:3000]}
+                else:
+                    r = subprocess.run(["systemctl", action, service], capture_output=True, text=True)
+                    return {"status": "success" if r.returncode == 0 else "error", "output": r.stdout + r.stderr}
+            elif _os == "Darwin":
+                if action == "list":
+                    r = subprocess.run(["launchctl", "list"], capture_output=True, text=True)
+                    return {"status": "success", "services": r.stdout[:3000]}
+                elif action in ("start", "stop"):
+                    r = subprocess.run(["launchctl", action, service], capture_output=True, text=True)
+                    return {"status": "success" if r.returncode == 0 else "error"}
+            elif _os == "Windows":
+                cmd_map = {
+                    "list": ["sc", "query"],
+                    "start": ["sc", "start", service],
+                    "stop": ["sc", "stop", service],
+                    "status": ["sc", "query", service],
+                    "restart": ["powershell", "-Command", f"Restart-Service {service}"],
+                }
+                r = subprocess.run(cmd_map.get(action, ["sc", "query"]), capture_output=True, text=True)
+                return {"status": "success", "output": r.stdout[:3000]}
+            return {"status": "error", "message": f"Unsupported OS: {_os}"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+# ---------------------------------------------------------------------------
+# Network Control
+# ---------------------------------------------------------------------------
+
+class NetworkControlTool(Tool):
+    """Manage network: interfaces, WiFi, ping, traceroute, DNS, firewall."""
+
+    def __init__(self):
+        super().__init__(
+            name="network_control",
+            description="List network interfaces, WiFi networks, connect/disconnect WiFi, ping, traceroute, check firewall",
+            parameters={
+                "action": {"type": "str", "description": "list_interfaces|wifi_list|wifi_connect|wifi_disconnect|get_ip|ping|traceroute|firewall_status|dns_lookup"},
+                "interface": {"type": "str", "description": "Network interface name"},
+                "ssid": {"type": "str", "description": "WiFi network name"},
+                "password": {"type": "str", "description": "WiFi password"},
+                "host": {"type": "str", "description": "Host to ping/traceroute/lookup"},
+            },
+        )
+
+    async def execute(self, **kw: Any) -> dict[str, Any]:
+        import platform
+        import subprocess
+        import socket
+        _os = platform.system()
+        action = kw.get("action", "list_interfaces")
+        try:
+            if action == "list_interfaces":
+                try:
+                    import psutil
+                    interfaces = {}
+                    for name, addrs in psutil.net_if_addrs().items():
+                        interfaces[name] = [{"family": a.family.name, "address": a.address} for a in addrs]
+                    return {"status": "success", "interfaces": interfaces}
+                except ImportError:
+                    r = subprocess.run(["ip", "addr"] if _os == "Linux" else ["ifconfig"], capture_output=True, text=True)
+                    return {"status": "success", "output": r.stdout[:3000]}
+
+            elif action == "wifi_list":
+                if _os == "Linux":
+                    r = subprocess.run(["nmcli", "dev", "wifi", "list"], capture_output=True, text=True)
+                    return {"status": "success", "networks": r.stdout}
+                elif _os == "Darwin":
+                    r = subprocess.run(["/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport", "-s"], capture_output=True, text=True)
+                    return {"status": "success", "networks": r.stdout}
+                elif _os == "Windows":
+                    r = subprocess.run(["netsh", "wlan", "show", "networks"], capture_output=True, text=True)
+                    return {"status": "success", "networks": r.stdout}
+
+            elif action == "wifi_connect":
+                ssid, password = kw.get("ssid", ""), kw.get("password", "")
+                if _os == "Linux":
+                    r = subprocess.run(["nmcli", "dev", "wifi", "connect", ssid, "password", password], capture_output=True, text=True)
+                    return {"status": "success" if r.returncode == 0 else "error", "output": r.stdout}
+                elif _os == "Windows":
+                    r = subprocess.run(["netsh", "wlan", "connect", f"name={ssid}"], capture_output=True, text=True)
+                    return {"status": "success" if r.returncode == 0 else "error"}
+
+            elif action == "get_ip":
+                hostname = socket.gethostname()
+                local_ip = socket.gethostbyname(hostname)
+                return {"status": "success", "hostname": hostname, "local_ip": local_ip}
+
+            elif action == "ping":
+                host = kw.get("host", "8.8.8.8")
+                count_flag = "-c" if _os != "Windows" else "-n"
+                r = subprocess.run(["ping", count_flag, "4", host], capture_output=True, text=True, timeout=15)
+                return {"status": "success", "output": r.stdout, "reachable": r.returncode == 0}
+
+            elif action == "traceroute":
+                host = kw.get("host", "8.8.8.8")
+                cmd = "traceroute" if _os != "Windows" else "tracert"
+                r = subprocess.run([cmd, host], capture_output=True, text=True, timeout=30)
+                return {"status": "success", "output": r.stdout}
+
+            elif action == "dns_lookup":
+                host = kw.get("host", "")
+                try:
+                    ip = socket.gethostbyname(host)
+                    return {"status": "success", "host": host, "ip": ip}
+                except socket.gaierror as e:
+                    return {"status": "error", "message": str(e)}
+
+            elif action == "firewall_status":
+                if _os == "Linux":
+                    r = subprocess.run(["ufw", "status"], capture_output=True, text=True)
+                    return {"status": "success", "output": r.stdout}
+                elif _os == "Darwin":
+                    r = subprocess.run(["/usr/libexec/ApplicationFirewall/socketfilterfw", "--getglobalstate"], capture_output=True, text=True)
+                    return {"status": "success", "output": r.stdout}
+                elif _os == "Windows":
+                    r = subprocess.run(["netsh", "advfirewall", "show", "allprofiles"], capture_output=True, text=True)
+                    return {"status": "success", "output": r.stdout}
+
+            return {"status": "error", "message": f"Unknown action: {action}"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+# ---------------------------------------------------------------------------
+# Terminal Executor
+# ---------------------------------------------------------------------------
+
+class TerminalExecTool(Tool):
+    """Execute any shell command on the computer."""
+
+    def __init__(self):
+        super().__init__(
+            name="terminal_exec",
+            description="Execute any shell command or script on the computer and return the output",
+            parameters={
+                "command": {"type": "str", "description": "Shell command to execute"},
+                "working_dir": {"type": "str", "description": "Working directory (optional)"},
+                "timeout": {"type": "int", "description": "Timeout in seconds (default 30)"},
+            },
+        )
+
+    async def execute(self, **kw: Any) -> dict[str, Any]:
+        import subprocess
+        command = kw.get("command", "")
+        if not command:
+            return {"status": "error", "message": "command is required"}
+        working_dir = kw.get("working_dir") or None
+        timeout = int(kw.get("timeout", 30))
+        try:
+            result = subprocess.run(
+                command, shell=True, capture_output=True, text=True,
+                timeout=timeout, cwd=working_dir,
+            )
+            return {
+                "status": "success" if result.returncode == 0 else "error",
+                "returncode": result.returncode,
+                "stdout": result.stdout[:5000],
+                "stderr": result.stderr[:2000],
+                "command": command,
+            }
+        except subprocess.TimeoutExpired:
+            return {"status": "error", "message": f"Command timed out after {timeout}s"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+# ---------------------------------------------------------------------------
+# Display Control
+# ---------------------------------------------------------------------------
+
+class DisplayControlTool(Tool):
+    """Control display: brightness, resolution, list monitors."""
+
+    def __init__(self):
+        super().__init__(
+            name="display_control",
+            description="Control display brightness, list monitors, get/set screen resolution",
+            parameters={
+                "action": {"type": "str", "description": "get_brightness|set_brightness|list_displays|get_resolution"},
+                "brightness": {"type": "int", "description": "Brightness level 0-100"},
+                "display": {"type": "str", "description": "Display name or index"},
+            },
+        )
+
+    async def execute(self, **kw: Any) -> dict[str, Any]:
+        import platform
+        import subprocess
+        _os = platform.system()
+        action = kw.get("action", "list_displays")
+        try:
+            if action == "get_brightness":
+                if _os == "Linux":
+                    r = subprocess.run(["brightnessctl", "g"], capture_output=True, text=True)
+                    r_max = subprocess.run(["brightnessctl", "m"], capture_output=True, text=True)
+                    if r.returncode == 0 and r_max.returncode == 0:
+                        pct = round(int(r.stdout.strip()) / int(r_max.stdout.strip()) * 100)
+                        return {"status": "success", "brightness": pct}
+                return {"status": "error", "message": "brightnessctl not found"}
+
+            elif action == "set_brightness":
+                brightness = int(kw.get("brightness", 50))
+                if _os == "Linux":
+                    r = subprocess.run(["brightnessctl", "s", f"{brightness}%"], capture_output=True, text=True)
+                    return {"status": "success" if r.returncode == 0 else "error", "brightness": brightness}
+                elif _os == "Darwin":
+                    # Use osascript to set brightness via System Preferences
+                    r = subprocess.run(["osascript", "-e", f"tell application \"System Events\" to set value of slider 1 of group 1 of tab group 1 of window 1 of application process \"System Preferences\" to {brightness / 100}"], capture_output=True, text=True)
+                    return {"status": "success", "brightness": brightness}
+
+            elif action == "list_displays":
+                if _os == "Linux":
+                    r = subprocess.run(["xrandr", "--query"], capture_output=True, text=True)
+                    return {"status": "success", "output": r.stdout}
+                elif _os == "Darwin":
+                    r = subprocess.run(["system_profiler", "SPDisplaysDataType"], capture_output=True, text=True)
+                    return {"status": "success", "output": r.stdout[:2000]}
+                elif _os == "Windows":
+                    r = subprocess.run(["powershell", "-Command", "Get-WmiObject -Class Win32_VideoController | Select-Object Name,CurrentHorizontalResolution,CurrentVerticalResolution | ConvertTo-Json"], capture_output=True, text=True)
+                    return {"status": "success", "output": r.stdout}
+
+            elif action == "get_resolution":
+                try:
+                    import pyautogui
+                    size = pyautogui.size()
+                    return {"status": "success", "width": size.width, "height": size.height}
+                except ImportError:
+                    if _os == "Linux":
+                        r = subprocess.run(["xdpyinfo"], capture_output=True, text=True)
+                        import re
+                        m = re.search(r"dimensions:\s+(\d+x\d+)", r.stdout)
+                        return {"status": "success", "resolution": m.group(1) if m else "unknown"}
+
+            return {"status": "error", "message": f"Action '{action}' not supported on {_os}"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+
+# ---------------------------------------------------------------------------
+# Patch ComputerUseAgent to include all new tools
+# ---------------------------------------------------------------------------
+
+# Override _setup_tools to include all deep-control tools
+_original_setup = ComputerUseAgent._setup_tools
+
+
+def _enhanced_setup(self):
+    _original_setup(self)
+    self._tools.extend([
+        AudioControlTool(),
+        PowerControlTool(),
+        NotificationTool(),
+        ServiceManagerTool(),
+        NetworkControlTool(),
+        TerminalExecTool(),
+        DisplayControlTool(),
+    ])
+
+
+ComputerUseAgent._setup_tools = _enhanced_setup
