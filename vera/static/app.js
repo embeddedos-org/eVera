@@ -1233,18 +1233,31 @@
             });
 
             const providerLabels = {
-                ollama: '🟢 Ollama (Offline)',
-                openai: '🔵 OpenAI',
-                anthropic: '🟡 Anthropic (Claude)',
-                google: '🟣 Google (Gemini)',
-                groq: '⚡ Groq',
-                mistral: '🔶 Mistral',
-                deepseek: '🔷 DeepSeek',
-                together: '🌐 Together AI',
+                ollama:     '🟢 Ollama (Offline)',
+                lmstudio:   '🟢 LM Studio (Local)',
+                jan:        '🟢 Jan AI (Local)',
+                llamacpp:   '🟢 llama.cpp (Local)',
+                lan_hosted: '🟡 LAN Server',
+                openai:     '🔵 OpenAI',
+                anthropic:  '🟡 Anthropic (Claude)',
+                google:     '🟣 Google (Gemini)',
+                groq:       '⚡ Groq',
+                mistral:    '🔶 Mistral',
+                deepseek:   '🔷 DeepSeek',
+                together:   '🌐 Together AI',
                 perplexity: '🔍 Perplexity',
             };
+            // Offline providers always appear first
+            const offlineFirst = ['ollama', 'lmstudio', 'jan', 'llamacpp', 'lan_hosted'];
+            const sortedGroups = Object.entries(groups).sort(([a], [b]) => {
+                const ai = offlineFirst.indexOf(a), bi = offlineFirst.indexOf(b);
+                if (ai >= 0 && bi >= 0) return ai - bi;
+                if (ai >= 0) return -1;
+                if (bi >= 0) return 1;
+                return a.localeCompare(b);
+            });
 
-            Object.entries(groups).forEach(([provider, pModels]) => {
+            sortedGroups.forEach(([provider, pModels]) => {
                 const group = document.createElement('optgroup');
                 group.label = providerLabels[provider] || provider.toUpperCase();
                 pModels.forEach(m => {

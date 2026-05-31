@@ -315,11 +315,30 @@ jobs:
             | **Android Auto** | `Vera-Auto-*.apk` | Install on phone → connect to car |
             | **Wear OS** | `Vera-Wear-*.apk` | Install on watch via Play Store or sideload |
 
-            ## 🐍 From Source
+            ## 🚀 One-Command Install (Linux / macOS)
             ```bash
-            git clone https://github.com/srpatcha/eVera.git && cd eVera
-            python -m venv .venv && source .venv/bin/activate
-            pip install -r requirements.txt
-            python main.py --mode server
+            curl -fsSL https://raw.githubusercontent.com/embeddedos-org/eVera/main/install.sh | bash
             ```
+
+            ## 🪟 Windows One-Command Install
+            ```powershell
+            irm https://raw.githubusercontent.com/embeddedos-org/eVera/main/setup.ps1 | iex
+            ```
+
+            ## 🐍 From Source (manual)
+            ```bash
+            git clone https://github.com/embeddedos-org/eVera.git && cd eVera
+            bash setup.sh          # installs Python, Ollama, Playwright, all deps
+            source .venv/bin/activate
+            python main.py --mode server
+            # Open http://localhost:8000
+            ```
+
+            ## 🤖 Offline LLMs (no internet needed)
+            ```bash
+            ollama pull qwen3:8b          # 5 GB — recommended
+            ollama pull llama3.2:3b       # 2 GB — fast
+            ollama pull deepseek-r1:7b    # 5 GB — best reasoning
+            ```
+            Or use **LM Studio**, **Jan AI**, or **llama.cpp** — eVera auto-detects all of them.
           generate_release_notes: true

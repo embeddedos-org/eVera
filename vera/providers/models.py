@@ -188,9 +188,65 @@ MISC_MODELS = [
 ]
 
 # ---------------------------------------------------------------------------
+# LOCAL OPENAI-COMPATIBLE SERVERS — LM Studio, Jan, llama.cpp
+# These expose an OpenAI-compatible REST API at a local URL.
+# Configure VERA_LM_STUDIO_URL / VERA_JAN_URL / VERA_LLAMACPP_URL in .env
+# Default ports: LM Studio=1234, Jan=1337, llama.cpp=8080
+# ---------------------------------------------------------------------------
+LM_STUDIO_MODELS = [
+    ModelConfig("lmstudio/auto",              "lmstudio", ModelTier.EXECUTOR,   128000, offline=True, ram_gb=0,
+                description="LM Studio — auto-detect loaded model", tags=["local", "openai-compat"]),
+    ModelConfig("lmstudio/llama3.2:3b",       "lmstudio", ModelTier.FAST,       128000, offline=True, ram_gb=2,
+                description="LM Studio: Llama 3.2 3B", tags=["local", "fast"]),
+    ModelConfig("lmstudio/llama3.3:70b",      "lmstudio", ModelTier.SPECIALIST, 128000, offline=True, ram_gb=40,
+                description="LM Studio: Llama 3.3 70B", tags=["local", "large"]),
+    ModelConfig("lmstudio/qwen3:8b",          "lmstudio", ModelTier.EXECUTOR,   32768,  offline=True, ram_gb=5,
+                description="LM Studio: Qwen3 8B", tags=["local"]),
+    ModelConfig("lmstudio/deepseek-r1:7b",    "lmstudio", ModelTier.REASONING,  64000,  offline=True, ram_gb=5,
+                description="LM Studio: DeepSeek-R1 7B", tags=["local", "reasoning"]),
+    ModelConfig("lmstudio/phi-4:14b",         "lmstudio", ModelTier.SPECIALIST, 16384,  offline=True, ram_gb=9,
+                description="LM Studio: Phi-4 14B", tags=["local"]),
+    ModelConfig("lmstudio/gemma3:12b",        "lmstudio", ModelTier.SPECIALIST, 128000, offline=True, ram_gb=8,
+                description="LM Studio: Gemma 3 12B", tags=["local"]),
+    ModelConfig("lmstudio/mistral-small3.2:24b","lmstudio", ModelTier.SPECIALIST, 128000, offline=True, ram_gb=15,
+                description="LM Studio: Mistral Small 3.2 24B", tags=["local"]),
+]
+
+JAN_MODELS = [
+    ModelConfig("jan/auto",                   "jan",      ModelTier.EXECUTOR,   128000, offline=True, ram_gb=0,
+                description="Jan AI — auto-detect loaded model", tags=["local", "openai-compat"]),
+    ModelConfig("jan/llama3.2:3b",            "jan",      ModelTier.FAST,       128000, offline=True, ram_gb=2,
+                description="Jan: Llama 3.2 3B", tags=["local", "fast"]),
+    ModelConfig("jan/llama3.3:70b",           "jan",      ModelTier.SPECIALIST, 128000, offline=True, ram_gb=40,
+                description="Jan: Llama 3.3 70B", tags=["local", "large"]),
+    ModelConfig("jan/qwen3:8b",               "jan",      ModelTier.EXECUTOR,   32768,  offline=True, ram_gb=5,
+                description="Jan: Qwen3 8B", tags=["local"]),
+    ModelConfig("jan/deepseek-r1:7b",         "jan",      ModelTier.REASONING,  64000,  offline=True, ram_gb=5,
+                description="Jan: DeepSeek-R1 7B", tags=["local", "reasoning"]),
+    ModelConfig("jan/phi-4:14b",              "jan",      ModelTier.SPECIALIST, 16384,  offline=True, ram_gb=9,
+                description="Jan: Phi-4 14B", tags=["local"]),
+]
+
+LLAMA_CPP_MODELS = [
+    ModelConfig("llamacpp/auto",              "llamacpp", ModelTier.EXECUTOR,   128000, offline=True, ram_gb=0,
+                description="llama.cpp server — auto-detect loaded model", tags=["local", "openai-compat"]),
+    ModelConfig("llamacpp/llama3.2:3b",       "llamacpp", ModelTier.FAST,       128000, offline=True, ram_gb=2,
+                description="llama.cpp: Llama 3.2 3B", tags=["local", "fast"]),
+    ModelConfig("llamacpp/llama3.3:70b",      "llamacpp", ModelTier.SPECIALIST, 128000, offline=True, ram_gb=40,
+                description="llama.cpp: Llama 3.3 70B", tags=["local", "large"]),
+    ModelConfig("llamacpp/qwen3:8b",          "llamacpp", ModelTier.EXECUTOR,   32768,  offline=True, ram_gb=5,
+                description="llama.cpp: Qwen3 8B", tags=["local"]),
+    ModelConfig("llamacpp/deepseek-r1:7b",    "llamacpp", ModelTier.REASONING,  64000,  offline=True, ram_gb=5,
+                description="llama.cpp: DeepSeek-R1 7B", tags=["local", "reasoning"]),
+    ModelConfig("llamacpp/deepseek-r1:32b",   "llamacpp", ModelTier.REASONING,  64000,  offline=True, ram_gb=20,
+                description="llama.cpp: DeepSeek-R1 32B", tags=["local", "reasoning"]),
+    ModelConfig("llamacpp/mistral-small3.2:24b","llamacpp", ModelTier.SPECIALIST, 128000, offline=True, ram_gb=15,
+                description="llama.cpp: Mistral Small 3.2 24B", tags=["local"]),
+]
+
+# ---------------------------------------------------------------------------
 # CLOUD MODELS — Require internet + API keys (WWW mode only)
 # ---------------------------------------------------------------------------
-
 OPENAI_MODELS = [
     ModelConfig("gpt-4o",           "openai", ModelTier.SPECIALIST, 128000, supports_vision=True,  description="GPT-4o — OpenAI flagship"),
     ModelConfig("gpt-4o-mini",      "openai", ModelTier.EXECUTOR,   128000, supports_vision=True,  description="GPT-4o Mini — fast and cheap"),
@@ -267,6 +323,9 @@ ALL_MODELS: list[ModelConfig] = (
     + REASONING_MODELS
     + EMBEDDING_MODELS
     + MISC_MODELS
+    + LM_STUDIO_MODELS
+    + JAN_MODELS
+    + LLAMA_CPP_MODELS
     + OPENAI_MODELS
     + ANTHROPIC_MODELS
     + GOOGLE_MODELS
@@ -318,6 +377,10 @@ PROVIDER_KEY_MAP: dict[str, Optional[str]] = {
     "together":    "together_api_key",
     "perplexity":  "perplexity_api_key",
     "ollama":      None,   # No API key needed — fully offline
+    "lmstudio":    None,   # No API key — local LM Studio server
+    "jan":         None,   # No API key — local Jan AI server
+    "llamacpp":    None,   # No API key — local llama.cpp server
+    "lan_hosted":  None,   # LAN-hosted OpenAI-compatible server
 }
 
 # Task type → preferred provider routing
@@ -338,7 +401,7 @@ TASK_MODEL_ROUTING: dict[str, str] = {
 # LAN mode: offline + any LAN-hosted providers
 # WWW mode: all providers
 ZONE_PROVIDER_POLICY: dict[str, list[str]] = {
-    "local": ["ollama"],
-    "lan":   ["ollama", "lan_hosted"],
+    "local": ["ollama", "lmstudio", "jan", "llamacpp"],
+    "lan":   ["ollama", "lmstudio", "jan", "llamacpp", "lan_hosted"],
     "www":   list(PROVIDER_KEY_MAP.keys()),
 }

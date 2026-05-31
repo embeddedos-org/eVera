@@ -100,8 +100,8 @@ class ProviderManager:
 
     def _is_provider_configured(self, provider: str) -> bool:
         """Check if a provider has its API key configured."""
-        if provider == "ollama":
-            return True  # Always available (local)
+        if provider in ("ollama", "lmstudio", "jan", "llamacpp", "lan_hosted"):
+            return True  # Always available (local/LAN, no API key needed)
         key_field = PROVIDER_KEY_MAP.get(provider)
         if not key_field:
             return False
@@ -202,7 +202,15 @@ class ProviderManager:
                 }
                 if provider == "ollama":
                     kwargs["api_base"] = settings.llm.ollama_url
-
+                elif provider == "lmstudio":
+                    kwargs["api_base"] = f"{settings.llm.lm_studio_url}/v1"
+                    kwargs["api_key"] = "lm-studio"  # LM Studio ignores key but litellm requires one
+                elif provider == "jan":
+                    kwargs["api_base"] = f"{settings.llm.jan_url}/v1"
+                    kwargs["api_key"] = "jan"
+                elif provider == "llamacpp":
+                    kwargs["api_base"] = f"{settings.llm.llamacpp_url}/v1"
+                    kwargs["api_key"] = "llamacpp"
                 await litellm.acompletion(**kwargs)
                 latency = (time.monotonic() - start) * 1000
                 results[provider] = {"status": "healthy", "latency_ms": round(latency)}
@@ -325,7 +333,15 @@ class ProviderManager:
 
         if model_config.provider == "ollama":
             kwargs["api_base"] = settings.llm.ollama_url
-
+        elif model_config.provider == "lmstudio":
+            kwargs["api_base"] = f"{settings.llm.lm_studio_url}/v1"
+            kwargs["api_key"] = "lm-studio"
+        elif model_config.provider == "jan":
+            kwargs["api_base"] = f"{settings.llm.jan_url}/v1"
+            kwargs["api_key"] = "jan"
+        elif model_config.provider == "llamacpp":
+            kwargs["api_base"] = f"{settings.llm.llamacpp_url}/v1"
+            kwargs["api_key"] = "llamacpp"
         if tools:
             kwargs["tools"] = tools
             kwargs["tool_choice"] = "auto"
@@ -458,9 +474,16 @@ class ProviderManager:
         }
         if model_config.provider == "ollama":
             kwargs["api_base"] = settings.llm.ollama_url
-
+        elif model_config.provider == "lmstudio":
+            kwargs["api_base"] = f"{settings.llm.lm_studio_url}/v1"
+            kwargs["api_key"] = "lm-studio"
+        elif model_config.provider == "jan":
+            kwargs["api_base"] = f"{settings.llm.jan_url}/v1"
+            kwargs["api_key"] = "jan"
+        elif model_config.provider == "llamacpp":
+            kwargs["api_base"] = f"{settings.llm.llamacpp_url}/v1"
+            kwargs["api_key"] = "llamacpp"
         response = await litellm.acompletion(**kwargs)
-
         async for chunk in response:
             delta = chunk.choices[0].delta
             if delta and delta.content:
