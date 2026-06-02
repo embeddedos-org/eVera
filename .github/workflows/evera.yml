@@ -121,7 +121,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Windows artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: desktop-windows
           path: electron/dist/*.exe
@@ -164,7 +164,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload macOS artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: desktop-macos
           path: electron/dist/*.dmg
@@ -214,7 +214,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Linux artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: desktop-linux
           path: |
@@ -271,21 +271,21 @@ jobs:
           fi
 
       - name: Upload Android Phone APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: android-phone
           path: mobile/android/app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
 
       - name: Upload Android Auto APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: android-auto
           path: mobile/android/automotive/build/outputs/apk/release/*.apk
           if-no-files-found: warn
 
       - name: Upload Wear OS APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: android-wear
           path: mobile/android/wear/build/outputs/apk/release/*.apk
@@ -353,7 +353,7 @@ jobs:
           fi
 
       - name: Upload iOS archive
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ios-archive
           path: mobile/ios/build/Vera.xcarchive.zip
@@ -389,7 +389,7 @@ jobs:
         run: vsce package --no-dependencies -o evera-ai.vsix
 
       - name: Upload VSIX artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: vscode-extension
           path: vscode-extension/evera-ai.vsix
