@@ -35,7 +35,7 @@ yfinance>=0.2.30
 # System control
 pyautogui>=0.9.54
 psutil>=5.9.0
-pyperclip>=1.8.0
+pyperclip>=1.11.0
 
 # Build
 pyinstaller>=6.0
