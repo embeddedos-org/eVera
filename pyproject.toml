@@ -76,7 +76,7 @@ dev = [
     "httpx>=0.27",
     "ruff>=0.3",
     "safety>=3.0",
-    "bandit>=1.7",
+    "bandit>=1.9.4",
     "pyinstaller>=6.0",
 ]
 
