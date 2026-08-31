@@ -64,7 +64,7 @@ media = [
     "Pillow>=10.0",
     "rembg>=2.0",
     "google-api-python-client>=2.0",
-    "google-auth-oauthlib>=1.0",
+    "google-auth-oauthlib>=1.4.1",
 ]
 all = [
     "vera[voice,browser,trading,media]",
