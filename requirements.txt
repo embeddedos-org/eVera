@@ -86,7 +86,7 @@ reportlab>=4.0.0
 speedtest-cli>=2.1.3
 
 # DevOps Agent
-paramiko>=3.3.0
+paramiko>=5.0.0
 
 # Computer Use Agent (pyautogui, pyperclip already included)
 pytesseract>=0.3.10
