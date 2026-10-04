@@ -69,6 +69,9 @@ jobs:
         continue-on-error: true
 
       - name: Run unit tests
+        # bash: the multi-line pytest invocation uses a backslash
+        # continuation, which PowerShell parses as a syntax error.
+        shell: bash
         run: |
           python -m pytest tests/unit/ -v --tb=short \
             --cov=. --cov-report=xml --cov-report=term-missing
