@@ -113,12 +113,12 @@ class TestSystemInfoEndpoint:
 
     def test_system_info_in_app(self):
         """Verify the endpoint is registered in app.py."""
-        app_src = pathlib.Path('vera/app.py').read_text()
+        app_src = pathlib.Path('vera/app.py').read_text(encoding='utf-8')
         assert '/api/system/info' in app_src
 
     def test_system_info_uses_psutil(self):
         """Verify psutil is used for system metrics in app.py."""
-        app_src = pathlib.Path('vera/app.py').read_text()
+        app_src = pathlib.Path('vera/app.py').read_text(encoding='utf-8')
         assert 'psutil' in app_src
 
     def test_psutil_available(self):
