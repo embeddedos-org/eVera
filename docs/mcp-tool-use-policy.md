@@ -1,0 +1,68 @@
+# MCP Tool-Use Policy
+
+eVera tools that speak the Model Context Protocol (MCP) — or that consume
+output from MCP servers — follow this policy. It exists because the threat
+landscape moved in October 2026: the risk is now understood to sit **in the
+MCP protocol itself**, not just in individual server implementations.
+
+## Threat landscape (October 2026)
+
+- **ClawSecure AI Agent Threat Report Vol 1** (Sept 24, reported Oct 6):
+  cracked Linear MCP, Notion, and Dropbox Dash. Their conclusion: *"the gap
+  sits in the MCP protocol itself, not in any one company's code."*
+- **Unpatched US federal MCP servers** (reported Oct 6): five federal MCP
+  servers — including one logging veterans' SSNs in **unredacted error
+  responses** — remained unpatched six weeks after fixes shipped elsewhere.
+- **Chain-of-trust analysis** (Oct 6): MCP servers store credentials for every
+  agent on the network, and agents trust each other by default. A single
+  compromised agent becomes a launchpad into every connected system.
+- The MCP specification itself carries **no normative security requirements**
+  (per the protocol-pivoting research disclosures); intra-network trust is
+  implicit unless we explicitly remove it.
+
+## Policy
+
+1. **Credential isolation.** MCP servers never receive eVera credentials.
+   Secrets live in the agent's credential store; servers get scoped,
+   short-lived tokens minted per task, never the master keys.
+2. **Server allowlist.** eVera connects only to explicitly allowlisted MCP
+   servers. A server not on the list is treated as hostile: no connection,
+   no tool discovery, no prompt-injection surface.
+3. **Pinned versions.** Each allowlisted server is pinned to a reviewed
+   version (digest, not just tag). Upgrades are a deliberate, reviewed change
+   — never silent auto-update.
+4. **Approval on config changes.** Adding/removing/allowlisting a server, or
+   changing its pin, requires explicit approval through the Safety Policy
+   Engine (`CONFIRM` or stricter). See `docs/security.md`.
+5. **No implicit intra-network trust.** Data arriving over MCP — tool results,
+   prompts, error messages — is **untrusted input**, even when it came from
+   "inside" our own tool mesh. It is validated and sanitized before it can
+   influence agent decisions or reach other tools.
+6. **Upstream-response redaction.** Error responses and tool outputs are
+   scrubbed for PII/secrets **before** logging, display, or forwarding. The
+   federal SSN-in-error-response incident is the case study: redaction is a
+   transport requirement, not a logging afterthought.
+
+## Mapping to the Safety Policy Engine
+
+| Policy item | Engine mapping |
+|---|---|
+| New MCP server allowlist entry | `CONFIRM` (human approval) |
+| Server version pin change | `CONFIRM` |
+| Tool call to an allowlisted server | `ALLOW` per `agent.tool` rule, subject to items 5–6 |
+| Any MCP traffic from a non-allowlisted server | `DENY` |
+
+## Track 1 note: always-on tier
+
+The on-device agent needs an **always-on low-power tier**, not one big model.
+The shipping pattern to follow is the dual-NPU split (performance NPU for
+bursts + efficiency NPU for sensing/invocation/scheduling at a fraction of the
+power): the local-model roster should pair a tiny always-on model with a
+larger on-demand model, selected by power state. See `docs/track1/`.
+
+## References
+
+- ClawSecure AI Agent Threat Report Vol 1 (Sept 2026)
+- Researcher disclosure: same MCP flaw class at Google/JPMorgan/two governments
+- eVera Safety Policy Engine: `docs/security.md`
+- Agent fabric posture: embeddedos-org daily plan, "Agent fabric" section

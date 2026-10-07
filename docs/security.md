@@ -170,3 +170,13 @@ Enterprise-grade user management:
 - Password hashing: PBKDF2 with SHA-256
 - Full audit logging of all user actions
 - Per-user API key generation
+
+---
+
+## MCP Tool-Use Policy
+
+Tool use over the Model Context Protocol follows the hostile-protocol posture in
+[docs/mcp-tool-use-policy.md](mcp-tool-use-policy.md): credential isolation from MCP
+servers, server allowlists, pinned versions, approval on config changes, no implicit
+intra-network trust, and upstream-response redaction. The October 2026 threat reports
+(protocol-level MCP flaws, unpatched federal servers) are the reason.
