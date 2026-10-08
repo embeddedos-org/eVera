@@ -9,7 +9,6 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from config import settings
 from vera.app import create_app
 
 

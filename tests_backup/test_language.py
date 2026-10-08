@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 
 from vera.brain.language import (
     correct_spelling,

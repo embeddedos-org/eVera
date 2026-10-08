@@ -262,7 +262,6 @@ INTENT_AGENT_MAP: dict[str, str] = {
     "burnout": "wellness",
     "screen_time": "wellness",
     "wellness": "wellness",
-    "rest": "wellness",
     # Digest
     "digest": "digest",
     "news": "digest",
@@ -408,7 +407,6 @@ INTENT_AGENT_MAP: dict[str, str] = {
     "migration": "database",
     "schema": "database",
     "backup_db": "database",
-    "translate": "translation",
     "translation": "translation",
     "dictionary": "translation",
     "definition": "translation",
@@ -423,7 +421,6 @@ INTENT_AGENT_MAP: dict[str, str] = {
     "webhook": "automation",
     "trigger": "automation",
     "ifttt": "automation",
-    "calendar": "calendar",
     "event": "calendar",
     "availability": "calendar",
     "ping": "network",

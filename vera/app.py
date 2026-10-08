@@ -35,13 +35,11 @@ from vera.network_zones import (
     NetworkZone,
     check_zone_access,
     check_ws_zone_access,
-    classify_ip,
     classify_request,
     build_zone_headers,
     get_client_ip,
     get_zone_status,
     rate_limiter,
-    ZoneRateLimiter,
 )
 
 logger = logging.getLogger(__name__)
@@ -893,7 +891,6 @@ def create_app(brain: VeraBrain | None = None) -> FastAPI:
 
                 if msg_type == "transcript":
                     transcript = msg.get("data", msg.get("transcript", ""))
-                    model_override = msg.get("model_override") or msg.get("model")
 
                     # Handle yes/no as confirmation if there's a pending action
                     lower = transcript.strip().lower()

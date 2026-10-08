@@ -11,7 +11,6 @@ import os
 import json
 import time
 import subprocess
-import platform
 from typing import Any
 from pathlib import Path
 
@@ -130,8 +129,8 @@ class OfflineTranslationTool(Tool):
             from_code = source[:2].lower() if source != "auto" else "en"
             to_code = target[:2].lower()
             installed_languages = argostranslate.translate.get_installed_languages()
-            from_lang = next((l for l in installed_languages if l.code == from_code), None)
-            to_lang = next((l for l in installed_languages if l.code == to_code), None)
+            from_lang = next((lang for lang in installed_languages if lang.code == from_code), None)
+            to_lang = next((lang for lang in installed_languages if lang.code == to_code), None)
             if from_lang and to_lang:
                 translation = from_lang.get_translation(to_lang)
                 if translation:
@@ -248,7 +247,6 @@ class SmartFileSearchTool(Tool):
         )
 
     async def execute(self, **kw: Any) -> dict[str, Any]:
-        import glob
         query = kw.get("query", "")
         search_dir = kw.get("search_dir", str(Path.home()))
         search_type = kw.get("search_type", "name")
@@ -265,7 +263,6 @@ class SmartFileSearchTool(Tool):
 
             elif search_type == "content":
                 # grep-based content search
-                ext_flag = f"--include=*.{file_type}" if file_type else ""
                 cmd = ["grep", "-rl", query, search_dir]
                 if file_type:
                     cmd = ["grep", "-rl", f"--include=*.{file_type}", query, search_dir]

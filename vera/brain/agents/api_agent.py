@@ -42,7 +42,7 @@ class APIRequestTool(Tool):
             elapsed = round((time.time() - t0) * 1000, 2)
             try:
                 resp_body = r.json()
-            except:
+            except Exception:
                 resp_body = r.text[:3000]
             return {
                 "status": "success",
@@ -130,7 +130,7 @@ class APILoadTestTool(Tool):
                         t0 = time.time()
                         await c.request(method, url)
                         times.append(time.time() - t0)
-                except:
+                except Exception:
                     errors += 1
 
             for batch in range(0, n, conc):

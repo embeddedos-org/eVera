@@ -224,7 +224,7 @@ def test_websocket():
 
 
 try:
-    import websocket
+    import websocket  # noqa: F401 -- availability check: the test below needs websocket-client
 
     test("WebSocket connect + greeting", test_websocket)
 except ImportError:

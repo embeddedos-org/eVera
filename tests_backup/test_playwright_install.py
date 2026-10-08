@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 
 class TestEnsurePlaywright:
@@ -32,9 +31,8 @@ class TestEnsurePlaywright:
         browser._playwright_ready = False
 
         with patch.dict("sys.modules", {"playwright": None}):
-            with patch("subprocess.check_call") as mock_call:
+            with patch("subprocess.check_call"):
                 # Simulate import failure then success
-                import importlib
 
                 original_import = __builtins__.__import__ if hasattr(__builtins__, "__import__") else __import__
 

@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -242,7 +241,6 @@ class TestEndpoints:
     @pytest.fixture
     def client(self):
         """Create a test client with mocked brain."""
-        from unittest.mock import PropertyMock
 
         from fastapi.testclient import TestClient
 

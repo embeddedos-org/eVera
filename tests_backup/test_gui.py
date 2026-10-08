@@ -34,7 +34,7 @@ class TestGuiRunner:
             return "done"
 
         # With a very short timeout, should return None
-        result = await run_in_gui_thread(lambda: (None, asyncio.sleep(0))[0], timeout=0.01)
+        await run_in_gui_thread(lambda: (None, asyncio.sleep(0))[0], timeout=0.01)
         # This test verifies the timeout mechanism exists
 
 

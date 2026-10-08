@@ -234,7 +234,7 @@ class WorkflowEngine:
             # and references to step_outputs only — no attribute access, no
             # function calls, no arbitrary builtins.
             try:
-                from simpleeval import SimpleEval, NameNotDefined
+                from simpleeval import SimpleEval
                 evaluator = SimpleEval(names=dict(step_outputs))
                 # Disable function calls and attribute access for safety
                 evaluator.functions = {}

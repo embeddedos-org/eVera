@@ -29,7 +29,6 @@ class ScreenCaptureTool(Tool):
         )
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
-        region = kwargs.get("region", "full")
         screenshot_path = Path(tempfile.gettempdir()) / "vera_screen.png"
 
         try:

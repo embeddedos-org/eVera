@@ -1,7 +1,5 @@
 """Tests for LocalAgent, WWWAgent, system info endpoint, and model registry."""
 import pathlib
-import pytest
-from unittest.mock import patch, MagicMock
 
 
 class TestLocalAgent:

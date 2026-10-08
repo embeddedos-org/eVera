@@ -102,7 +102,7 @@ class ProactiveScheduler:
             await coro()
             duration_ms = (time.monotonic() - t0) * 1000
             metrics.record_scheduler_run(loop_name, success=True, duration_ms=duration_ms)
-        except Exception as e:
+        except Exception:
             duration_ms = (time.monotonic() - t0) * 1000
             metrics.record_scheduler_run(loop_name, success=False, duration_ms=duration_ms)
             raise
@@ -379,7 +379,6 @@ class ProactiveScheduler:
                 run_day = schedule.get("day", "monday").lower()
                 run_time = schedule.get("time", "08:00")
                 h, m = map(int, run_time.split(":"))
-                day_names = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
                 if now.strftime("%A").lower() == run_day and now.hour == h and now.minute == m:
                     last_run = task.get("last_run", "")
                     if last_run != now.strftime("%Y-%m-%d"):

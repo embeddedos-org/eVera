@@ -320,7 +320,7 @@ def main():
         check(f"All tests pass: {summary}", True)
     else:
         # Try to extract which tests failed
-        failed_tests = [l for l in (stdout + stderr).split("\n") if "FAILED" in l]
+        failed_tests = [line for line in (stdout + stderr).split("\n") if "FAILED" in line]
         if failed_tests:
             check(
                 "Unit tests", False, f"{len(failed_tests)} failed:\n" + "\n".join(f"    {t}" for t in failed_tests[:10])
@@ -337,7 +337,7 @@ def main():
     if ok:
         check("Ruff lint: no errors", True)
     else:
-        error_count = len([l for l in stdout.split("\n") if l.strip() and not l.startswith("—")])
+        error_count = len([line for line in stdout.split("\n") if line.strip() and not line.startswith("—")])
         warn(f"Ruff lint: {error_count} issues", "Run 'ruff check . --fix' to auto-fix")
 
     # ============================================================

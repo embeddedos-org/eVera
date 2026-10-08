@@ -710,7 +710,6 @@ class TestGetStatusEnhanced:
 
     def test_get_status_has_version(self):
         """get_status should return a version field."""
-        from unittest.mock import PropertyMock
 
         brain_mock = MagicMock()
         brain_mock.memory_vault.get_stats.return_value = {}

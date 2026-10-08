@@ -7,7 +7,7 @@ class OSMNominatimClient:
     def __init__(self, user_agent="eVera-Autonomous-Agent/1.0"):
         self.user_agent = user_agent
         self.base_url = "https://nominatim.openstreetmap.org/reverse"
-        
+
     def reverse_geocode(self, lat, lon):
         """
         Reverse geocode latitude/longitude to a real-world address using OpenStreetMap Nominatim.
@@ -15,7 +15,7 @@ class OSMNominatimClient:
         """
         url = f"{self.base_url}?format=json&lat={lat}&lon={lon}&zoom=18&addressdetails=1"
         req = urllib.request.Request(
-            url, 
+            url,
             headers={"User-Agent": self.user_agent}
         )
         try:

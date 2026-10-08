@@ -9,11 +9,10 @@ Uses FastAPI TestClient with mocked VeraBrain (no real LLM needed).
 Simulates zones via X-Forwarded-For header to test IP classification.
 """
 
-import json
 import os
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 # ── Mock heavy dependencies before any imports ──
 mock_modules = {

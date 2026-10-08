@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import platform
 import subprocess
 from datetime import datetime
@@ -521,7 +520,6 @@ class SmartTradeTool(Tool):
         self._paper = PaperTradeTool()
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
-        action = kwargs.get("action", "")
         symbol = kwargs.get("symbol", "")
         qty = kwargs.get("quantity", 0)
 
@@ -552,7 +550,7 @@ class SmartTradeTool(Tool):
 
         # IBKR fallback
         try:
-            from ib_insync import IB
+            from ib_insync import IB  # noqa: F401 -- availability check before the IBKR fallback
 
             result = await self._ibkr.execute(**kwargs)
             if result.get("status") == "success":

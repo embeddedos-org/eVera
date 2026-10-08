@@ -4,11 +4,10 @@ Mocks VeraBrain and its dependencies so tests run without
 litellm, langgraph, numpy, or any LLM provider.
 """
 
-import json
 import os
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 # ── Mock heavy dependencies before any imports ──
 # These modules require numpy, litellm, langgraph etc.
