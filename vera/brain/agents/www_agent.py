@@ -60,7 +60,7 @@ class WebSearchTool(Tool):
             return {"status": "success", "query": query, "results": results, "count": len(results)}
         except ImportError:
             return await self._fallback_search(query, max_results)
-        except Exception as e:
+        except Exception:
             return await self._fallback_search(query, max_results)
 
     async def _fallback_search(self, query: str, max_results: int) -> dict[str, Any]:
@@ -267,7 +267,7 @@ class NewsTool(Tool):
             return {"status": "success", "topic": query, "articles": results, "count": len(results)}
         except ImportError:
             return await self._rss_news(query, max_results)
-        except Exception as e:
+        except Exception:
             return await self._rss_news(query, max_results)
 
     async def _rss_news(self, query: str, max_results: int) -> dict[str, Any]:
@@ -313,7 +313,6 @@ class WeatherTool(Tool):
     async def execute(self, **kw: Any) -> dict[str, Any]:
         location = kw.get("location", "")
         days = int(kw.get("days", 3))
-        units = kw.get("unit", "metric")
         if not location:
             return {"status": "error", "message": "location is required"}
         try:

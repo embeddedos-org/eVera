@@ -115,7 +115,6 @@ class Tool:
     def to_openai_schema(self) -> dict[str, Any]:
         """Convert to OpenAI function calling schema."""
         properties = {}
-        required = []
         for param_name, param_info in self.parameters.items():
             if isinstance(param_info, dict):
                 prop_type = param_info.get("type", "string")

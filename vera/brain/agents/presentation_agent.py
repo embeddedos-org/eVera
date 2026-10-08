@@ -28,7 +28,6 @@ class CreateSlidesTool(Tool):
             import json
 
             from pptx import Presentation
-            from pptx.util import Inches
 
             prs = Presentation()
             slide = prs.slides.add_slide(prs.slide_layouts[0])

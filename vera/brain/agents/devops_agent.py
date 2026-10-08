@@ -42,9 +42,9 @@ class DockerTool(Tool):
                 return {
                     "status": "success",
                     "containers": [
-                        dict(zip(["id", "name", "status", "image"], l.split("\t")))
-                        for l in r.stdout.strip().split("\n")
-                        if l
+                        dict(zip(["id", "name", "status", "image"], line.split("\t")))
+                        for line in r.stdout.strip().split("\n")
+                        if line
                     ],
                 }
             elif a == "images":
@@ -55,7 +55,7 @@ class DockerTool(Tool):
                 )
                 return {
                     "status": "success",
-                    "images": [dict(zip(["name", "size"], l.split("\t"))) for l in r.stdout.strip().split("\n") if l],
+                    "images": [dict(zip(["name", "size"], line.split("\t"))) for line in r.stdout.strip().split("\n") if line],
                 }
             elif a == "run":
                 r = subprocess.run(

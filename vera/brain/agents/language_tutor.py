@@ -7,9 +7,7 @@ practice, grammar, pronunciation, and progressive learning.
 
 from __future__ import annotations
 
-import json
 import random
-from dataclasses import dataclass
 
 from vera.brain.agents.base import BaseAgent, Tool
 from vera.brain.state import VeraState

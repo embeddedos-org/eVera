@@ -7,8 +7,7 @@ normalize, and metrics are wired through the full request lifecycle.
 
 from __future__ import annotations
 
-import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient

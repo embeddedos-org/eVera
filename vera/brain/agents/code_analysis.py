@@ -10,7 +10,6 @@ just standalone functions that call the LLM with structured prompts.
 from __future__ import annotations
 
 import logging
-import re
 from pathlib import Path
 from typing import Any
 
@@ -27,7 +26,7 @@ def compute_complexity(content: str, file_path: str = "") -> str:
     @return 'low', 'medium', or 'high'.
     """
     lines = content.splitlines()
-    loc = len([l for l in lines if l.strip() and not l.strip().startswith("#")])
+    loc = len([line for line in lines if line.strip() and not line.strip().startswith("#")])
 
     max_indent = 0
     for line in lines:

@@ -36,7 +36,7 @@ class PortScanTool(Tool):
                     if s.connect_ex((host, port)) == 0:
                         open_p.append(port)
                     s.close()
-                except:
+                except Exception:
                     pass
             return {"status": "success", "host": host, "open_ports": open_p}
         except Exception as e:
@@ -173,7 +173,7 @@ class VulnScanTool(Tool):
         try:
             r = subprocess.run(["pip", "audit"], capture_output=True, text=True)
             return {"status": "success" if r.returncode == 0 else "warning", "output": r.stdout[:3000]}
-        except:
+        except Exception:
             return {"status": "error", "message": "pip install pip-audit"}
 
 

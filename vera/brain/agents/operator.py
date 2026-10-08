@@ -1082,7 +1082,7 @@ class WindowManageTool(Tool):
             else:
                 if action == "list":
                     result = subprocess.run(["wmctrl", "-l"], capture_output=True, text=True, timeout=10)
-                    windows = [{"title": " ".join(l.split()[3:])} for l in result.stdout.split("\n") if l.strip()]
+                    windows = [{"title": " ".join(line.split()[3:])} for line in result.stdout.split("\n") if line.strip()]
                     return {"status": "success", "windows": windows[:30]}
                 cmds = {"focus": ["wmctrl", "-a", title], "close": ["wmctrl", "-c", title]}
                 if action in cmds:

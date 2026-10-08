@@ -98,7 +98,6 @@ class TestTradingSetupTool:
         from vera.brain.agents.brokers import TradingSetupTool
 
         tool = TradingSetupTool()
-        env_file = tmp_path / ".env"
         with patch("vera.utils.env_writer.update_env_file") as mock_update:
             result = await tool.execute(
                 step="credentials",

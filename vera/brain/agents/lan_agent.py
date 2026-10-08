@@ -17,7 +17,6 @@ import asyncio
 import ipaddress
 import logging
 import socket
-import subprocess
 import sys
 from typing import Any
 

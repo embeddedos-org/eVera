@@ -70,7 +70,7 @@ print(f"[Tests] {len(tests)} test files")
 
 # 7. Safety rules
 with open("vera/safety/policy.py", encoding="utf-8") as f:
-    rules = [l for l in f.readlines() if "PolicyAction." in l and ":" in l and "#" not in l.split(":")[0]]
+    rules = [line for line in f.readlines() if "PolicyAction." in line and ":" in line and "#" not in line.split(":")[0]]
 print(f"[Safety] {len(rules)} policy rules")
 
 # 8. Scheduler loops

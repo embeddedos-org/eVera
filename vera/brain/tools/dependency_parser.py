@@ -29,7 +29,7 @@ def parse_dependencies(
     @param max_files: Maximum files to process.
     @return {nodes: [{id, label, type, complexity, path}], edges: [{source, target, type}]}
     """
-    from vera.brain.agents.codebase_indexer import _load_gitignore, _should_ignore
+    from vera.brain.agents.codebase_indexer import _load_gitignore
 
     root = Path(root_path).resolve()
     ignore = _load_gitignore(root)

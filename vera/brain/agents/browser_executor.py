@@ -14,7 +14,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-from vera.brain.agents.browser_planner import BrowserPlan, BrowserPlanner, BrowserStep
+from vera.brain.agents.browser_planner import BrowserPlan, BrowserPlanner
 from vera.providers.manager import ProviderManager
 
 logger = logging.getLogger(__name__)

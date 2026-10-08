@@ -373,7 +373,7 @@ class AssembleVideoTool(Tool):
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
         try:
-            from moviepy import AudioFileClip, CompositeVideoClip, ImageClip, concatenate_videoclips
+            from moviepy import AudioFileClip, ImageClip, concatenate_videoclips
         except ImportError:
             return {"status": "error", "message": "moviepy not installed. Run: pip install moviepy"}
 
@@ -578,7 +578,7 @@ class AddBackgroundMusicTool(Tool):
             return {"status": "error", "message": f"Music file not found: {music_path}"}
 
         try:
-            from moviepy import AudioFileClip, CompositeAudioClip, VideoFileClip, afx
+            from moviepy import AudioFileClip, CompositeAudioClip, VideoFileClip
         except ImportError:
             return {"status": "error", "message": "moviepy not installed. Run: pip install moviepy"}
 

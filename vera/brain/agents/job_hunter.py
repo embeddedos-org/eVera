@@ -110,7 +110,7 @@ class SearchJobsTool(Tool):
                 {"title": r.get("title", ""), "url": r.get("href", ""), "snippet": r.get("body", "")} for r in results
             ]
             return {"status": "success", "query": query, "jobs": jobs, "count": len(jobs)}
-        except Exception as e:
+        except Exception:
             try:
                 import httpx
 
@@ -698,7 +698,7 @@ class SetPreferencesTool(Tool):
             settings.job_hunter.target_titles = [t.strip() for t in titles.split(",")]
             updated["target_titles"] = settings.job_hunter.target_titles
         if locations := kwargs.get("target_locations"):
-            settings.job_hunter.target_locations = [l.strip() for l in locations.split(",")]
+            settings.job_hunter.target_locations = [loc.strip() for loc in locations.split(",")]
             updated["target_locations"] = settings.job_hunter.target_locations
         if salary := kwargs.get("min_salary"):
             settings.job_hunter.min_salary = int(salary)

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -68,7 +67,6 @@ class TestIsPathSafe:
         assert ".env" in reason
 
     def test_extra_paths_respected(self):
-        from config import settings
         from vera.brain.agents.coder import ALLOWED_ROOTS
 
         test_path = Path("/opt/custom/project")

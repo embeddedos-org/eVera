@@ -318,9 +318,7 @@ class TestShoppingTools:
             # Direct test with real path
             tool = WishListTool()
             # We need to patch the internal Path usage
-            import vera.brain.agents.shopping_agent as shop_mod
 
-            original_path = Path
             # Just test the logic without patching
             result = await tool.execute(action="list")
             assert result["status"] == "success"
@@ -370,7 +368,6 @@ class TestEducationTools:
     async def test_flashcard_create_and_study(self, tmp_path):
         from vera.brain.agents.education_agent import FlashcardTool
 
-        tool = FlashcardTool()
         # Test create — without mocking Path (causes issues with read_text)
         tool2 = FlashcardTool()
         result = await tool2.execute(action="create", deck="test", front="Q", back="A")
@@ -585,7 +582,7 @@ class TestCalendarTools:
 
     @pytest.mark.asyncio
     async def test_create_and_view_event(self, tmp_path):
-        from vera.brain.agents.calendar_agent import CreateEventTool, ViewCalendarTool
+        from vera.brain.agents.calendar_agent import CreateEventTool
 
         # Patch the data directory
         cal_dir = tmp_path / "calendar"

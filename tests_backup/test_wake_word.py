@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from vera.perception.wake_word import _MAX_DURATION_S, _MIN_DURATION_S, WakeWordDetector
+from vera.perception.wake_word import WakeWordDetector
 
 
 def _make_audio_bytes(duration_s: float, sample_rate: int = 16000) -> bytes:

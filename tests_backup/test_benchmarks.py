@@ -16,10 +16,8 @@ All:  pytest tests/test_benchmarks.py -v -m "not slow"
 from __future__ import annotations
 
 import asyncio
-import json
 import statistics
 import time
-from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 

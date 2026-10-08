@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import email
 from email.mime.text import MIMEText
 from unittest.mock import MagicMock, patch
 

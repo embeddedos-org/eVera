@@ -9,12 +9,9 @@ import importlib
 import json
 import os
 import re
-import sqlite3
 import sys
 import tempfile
-import time
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
 
 # Ensure project root is in path
 ROOT = Path(__file__).parent
@@ -126,7 +123,7 @@ check(f"All {len(key_files)} key files exist", len(missing) == 0, f"Missing: {mi
 # ═══════════════════════════════════════════════════════════
 section("2. Configuration (config.py)")
 
-from config import LLMSettings, MemorySettings, SafetySettings, ServerSettings, Settings, VoiceSettings  # noqa: E402
+from config import Settings  # noqa: E402
 
 s = Settings()
 check("Settings loads with defaults", s is not None)
@@ -144,7 +141,7 @@ check("Data dir is Path", isinstance(s.data_dir, Path))
 section("3. Memory System")
 
 try:
-    from vera.memory.working import Turn, WorkingMemory
+    from vera.memory.working import WorkingMemory
 
     wm_available = True
 except ImportError:
@@ -218,7 +215,7 @@ else:
 # ═══════════════════════════════════════════════════════════
 section("4. Safety System (policy.py)")
 
-from vera.safety.policy import PolicyAction, PolicyDecision, PolicyService  # noqa: E402
+from vera.safety.policy import PolicyAction, PolicyService  # noqa: E402
 
 ps = PolicyService()
 check("PolicyService creates", ps is not None)
