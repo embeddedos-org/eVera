@@ -19,6 +19,14 @@ MCP protocol itself**, not just in individual server implementations.
 - The MCP specification itself carries **no normative security requirements**
   (per the protocol-pivoting research disclosures); intra-network trust is
   implicit unless we explicitly remove it.
+- **CVE-2026-105697 (CVSS 9.9, disclosed Oct 5):** Langflow's MCP server
+  configuration executed the user-typed `command` wrapped in `bash -c`
+  with no allowlist -- a config file became arbitrary OS command
+  execution on the host (patch: 1.10.3). This is *exactly* what this
+  policy's command-allowlist rule forbids: an agent platform that runs
+  user-supplied commands from configuration is the threat model, and
+  Langflow is the CVSS 9.9 validation that the rule is load-bearing,
+  not bureaucratic.
 
 ## Policy
 
