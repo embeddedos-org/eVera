@@ -435,7 +435,7 @@ INTENT_AGENT_MAP: dict[str, str] = {
     "vlookup": "spreadsheet",
     "api": "api",
     "endpoint": "api",
-    "rest": "api",
+    "rest": "wellness",
     "swagger": "api",
     "curl": "api",
     "3d": "threed",
@@ -472,6 +472,14 @@ KEYWORD_PATTERNS: list[tuple[re.Pattern, str, str]] = [
         "manage_files",
     ),
     (re.compile(r"\b(?:run|execute)\s+(?:a\s+)?(?:script|command|program)\b", re.I), "operator", "execute_script"),
+    # API — "rest api" / "restful api" / "rest endpoint" routes to the API agent.
+    # A bare "rest" is wellness (INTENT_AGENT_MAP); these regexes run before
+    # the word fallback, so explicit API phrasing wins. (Closes #52.)
+    (
+        re.compile(r"\brest(?:ful)?\s+api\b|\brest\s+endpoint\b", re.I),
+        "api",
+        "rest_api",
+    ),
     # Home controller
     (
         re.compile(r"\b(?:turn|switch)\s+(?:on|off)\s+(?:the\s+)?(?:light|lamp|fan|tv|television)\b", re.I),

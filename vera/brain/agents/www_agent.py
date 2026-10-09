@@ -306,8 +306,10 @@ class WeatherTool(Tool):
             parameters={
                 "location": {"type": "str", "description": "City name or coordinates e.g. 'New York', 'London', '40.7128,-74.0060'"},
                 "days": {"type": "int", "description": "Forecast days 1-7 (default 3)"},
-                "units": {"type": "str", "description": "metric|imperial (default metric)"},
             },
+            # Note: every response carries both metric (C, km/h) and imperial
+            # (F) values, so no unit selection is needed. A `units` parameter
+            # was declared here and ignored (Closes #52); it is removed.
         )
 
     async def execute(self, **kw: Any) -> dict[str, Any]:

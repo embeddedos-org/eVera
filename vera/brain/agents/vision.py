@@ -24,8 +24,8 @@ class ScreenCaptureTool(Tool):
     def __init__(self) -> None:
         super().__init__(
             name="capture_screen",
-            description="Capture a screenshot of the current screen",
-            parameters={"region": {"type": "str", "description": "Region: full or window (default: full)"}},
+            description="Capture a screenshot of the current screen (full screen)",
+            parameters={},
         )
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:

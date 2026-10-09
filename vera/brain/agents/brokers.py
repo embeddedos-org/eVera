@@ -523,6 +523,15 @@ class SmartTradeTool(Tool):
         symbol = kwargs.get("symbol", "")
         qty = kwargs.get("quantity", 0)
 
+        # The tool declares `action`, so honour it: fail closed on anything
+        # that is not buy/sell before the safety estimate runs. (Closes #52.)
+        action = kwargs.get("action", "").lower()
+        if action not in ("buy", "sell"):
+            return {
+                "status": "error",
+                "message": f"Invalid action '{kwargs.get('action', '')}': must be 'buy' or 'sell'",
+            }
+
         # Estimate trade value for safety check
         try:
             from vera.brain.agents.income import GetStockPriceTool
