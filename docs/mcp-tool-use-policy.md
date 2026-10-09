@@ -7,6 +7,19 @@ MCP protocol itself**, not just in individual server implementations.
 
 ## Threat landscape (October 2026)
 
+- **Six MCP attack classes (Enterprise MCP Guide, Oct 8):** prompt
+  injection, tool description poisoning, OAuth token theft, excessive
+  tool permissions, shadow MCP servers, and tool impersonation.
+  Against eVera's on-device posture:
+  - *Prompt injection / tool description poisoning* — the tool-policy
+    allowlist and the "command in config" ban (Langflow rule above)
+    are the controls; poisoned descriptions are untrusted input.
+  - *OAuth token theft / excessive tool permissions* — eVera's Safety
+    Policy Engine scopes every tool call; no tool runs with ambient
+    authority.
+  - *Shadow MCP servers / tool impersonation* — server identity must
+    be pinned before a tool is trusted; an unlisted server is hostile
+    until verified, per this policy's server-allowlist rule.
 - **ClawSecure AI Agent Threat Report Vol 1** (Sept 24, reported Oct 6):
   cracked Linear MCP, Notion, and Dropbox Dash. Their conclusion: *"the gap
   sits in the MCP protocol itself, not in any one company's code."*
