@@ -63,6 +63,14 @@ MCP protocol itself**, not just in individual server implementations.
    scrubbed for PII/secrets **before** logging, display, or forwarding. The
    federal SSN-in-error-response incident is the case study: redaction is a
    transport requirement, not a logging afterthought.
+7. **No executable commands from configuration.** MCP server configs
+   (stdio transport `command`/`args`) are never a source of
+   executables: the command must come from the allowlist, and a config
+   naming an unlisted executable is rejected before any process
+   spawns. The Langflow CVE-2026-105697 case study above is why this is
+   a numbered rule, not a guideline — a config file became arbitrary
+   OS command execution (CVSS 9.9) because the platform ran
+   user-supplied commands wrapped in `bash -c`.
 
 ## Mapping to the Safety Policy Engine
 
@@ -72,6 +80,7 @@ MCP protocol itself**, not just in individual server implementations.
 | Server version pin change | `CONFIRM` |
 | Tool call to an allowlisted server | `ALLOW` per `agent.tool` rule, subject to items 5–6 |
 | Any MCP traffic from a non-allowlisted server | `DENY` |
+| Unlisted executable in a server config | `DENY` before spawn |
 
 ## Track 1 note: always-on tier
 
