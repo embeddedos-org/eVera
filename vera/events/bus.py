@@ -103,7 +103,7 @@ class EventBus:
         while self._running:
             try:
                 event_type, data = await asyncio.wait_for(self._queue.get(), timeout=0.1)
-            except TimeoutError:
+            except asyncio.TimeoutError:
                 continue
 
             self._event_log.append(
