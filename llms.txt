@@ -1,0 +1,28 @@
+# eVera
+
+> llms.txt for the eVera repository (embeddedos-org/eVera).
+> Status: the autonomous agent of the EmbeddedOS ecosystem
+> (private repo) — designed as an on-device system service
+> driving the local MCP fabric, with a policy service, an
+> event bus, and unit-test coverage tracked in issue #46.
+
+eVera is the device agent of EmbeddedOS: it perceives, plans
+and acts on the device itself under a policy envelope, rather
+than as a cloud chatbot with device APIs.
+
+## Docs
+
+- [🏗️ Architecture](docs/architecture.md)
+- [🤖 Agents Reference](docs/agents.md)
+- [🔌 API Reference](docs/api_reference.md)
+- [⚙️ Configuration Reference](docs/configuration.md)
+- [🚀 Getting Started](docs/getting_started.md)
+- [MCP Tool-Use Policy](docs/mcp-tool-use-policy.md)
+- [eVera as the on-device system service (Track 1)](docs/track1/on-device-system-service.md)
+- [🛡️ Security](docs/security.md)
+- [Mobile Device Control — WebSocket Protocol](docs/mobile_protocol.md)
+
+## Machine-readable
+
+- [llms.txt](llms.txt) — this file
+- [llms-full.txt](llms-full.txt) — the docs above concatenated as one document
