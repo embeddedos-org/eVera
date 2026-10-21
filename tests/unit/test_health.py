@@ -27,6 +27,14 @@ from types import SimpleNamespace
 
 import pytest
 
+if sys.version_info < (3, 11):
+    # health.py does `from datetime import UTC` (3.11+), matching the
+    # package floor (pyproject requires-python >=3.11). The CI matrix
+    # still carries 3.10 jobs; that inconsistency is issue #59. On
+    # 3.10 this module is out of scope by the package's own floor —
+    # skip honestly rather than fail collection.
+    pytest.skip("vera.monitoring.health requires Python 3.11+ (issue #59)", allow_module_level=True)
+
 from vera.monitoring.health import deep_health_check
 
 
