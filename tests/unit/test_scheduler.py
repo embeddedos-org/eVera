@@ -268,3 +268,403 @@ class TestStartStop:
         scheduler = make_scheduler(monkeypatch)
         await scheduler.stop()
         assert scheduler._running is False
+
+
+# ---------------------------------------------------------------------------
+# S2: file-state checkers (docs/scheduler-coverage-scoping.md)
+#
+# The six _check_* workers below own no imports beyond the module's
+# stdlib set: all state is JSON files under DATA_DIR, patched per
+# test to a tmp dir, and a recording handler captures _notify
+# output. Write-back is asserted wherever a checker mutates the
+# file it read — those mutations are the behaviour being pinned.
+# ---------------------------------------------------------------------------
+
+import json
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import vera.scheduler as scheduler_module
+
+
+@pytest.fixture
+def data_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    monkeypatch.setattr(scheduler_module, "DATA_DIR", tmp_path)
+    return tmp_path
+
+
+@pytest.fixture
+def recorder():
+    """Return (handler, received) — an async handler and its inbox."""
+    received: list[dict] = []
+
+    async def record(notification: dict) -> None:
+        received.append(notification)
+
+    return record, received
+
+
+def make_checking_scheduler(record) -> ProactiveScheduler:
+    scheduler = ProactiveScheduler()
+    scheduler.add_notification_handler(record)
+    return scheduler
+
+
+def write_json(path: Path, payload) -> None:
+    path.write_text(json.dumps(payload))
+
+
+def read_json(path: Path):
+    return json.loads(path.read_text())
+
+
+def iso(dt: datetime) -> str:
+    return dt.isoformat()
+
+
+class TestCheckReminders:
+    async def test_missing_file_is_silent(self, data_dir, recorder):
+        record, received = recorder
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_reminders()
+        assert received == []
+
+    async def test_malformed_json_is_silent(self, data_dir, recorder):
+        record, received = recorder
+        (data_dir / "reminders.json").write_text("{not json")
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_reminders()
+        assert received == []
+
+    async def test_due_reminder_fires_and_is_dismissed_on_disk(self, data_dir, recorder):
+        record, received = recorder
+        path = data_dir / "reminders.json"
+        due = {"text": "stretch", "trigger_at": iso(datetime.now() - timedelta(minutes=5))}
+        future = {"text": "later", "trigger_at": iso(datetime.now() + timedelta(hours=1))}
+        dismissed = {
+            "text": "old",
+            "trigger_at": iso(datetime.now() - timedelta(days=1)),
+            "dismissed": True,
+        }
+        write_json(path, [due, future, dismissed])
+
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_reminders()
+
+        assert len(received) == 1
+        assert received[0]["type"] == "reminder"
+        assert "stretch" in received[0]["message"]
+        # Write-back: only the fired reminder is marked dismissed.
+        on_disk = read_json(path)
+        assert on_disk[0]["dismissed"] is True
+        assert "dismissed" not in on_disk[1]
+        assert on_disk[2]["dismissed"] is True
+
+    async def test_nothing_due_leaves_file_untouched(self, data_dir, recorder):
+        record, received = recorder
+        path = data_dir / "reminders.json"
+        original = json.dumps(
+            [{"text": "later", "trigger_at": iso(datetime.now() + timedelta(hours=2))}]
+        )
+        path.write_text(original)
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_reminders()
+        assert received == []
+        assert path.read_text() == original
+
+
+class TestCheckUpcomingEvents:
+    async def test_missing_and_malformed_are_silent(self, data_dir, recorder):
+        record, received = recorder
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_upcoming_events()
+        (data_dir / "calendar.json").write_text("][")
+        await scheduler._check_upcoming_events()
+        assert received == []
+
+    async def test_event_within_15_minutes_fires_and_marks_notified(self, data_dir, recorder):
+        record, received = recorder
+        path = data_dir / "calendar.json"
+        now = datetime.now()
+        soon = {
+            "title": "standup",
+            "date": now.strftime("%Y-%m-%d"),
+            "time": (now + timedelta(minutes=10)).strftime("%H:%M"),
+        }
+        far = {
+            "title": "later today",
+            "date": now.strftime("%Y-%m-%d"),
+            "time": (now + timedelta(hours=3)).strftime("%H:%M"),
+        }
+        past = {
+            "title": "already started",
+            "date": now.strftime("%Y-%m-%d"),
+            "time": (now - timedelta(minutes=30)).strftime("%H:%M"),
+        }
+        other_day = {
+            "title": "tomorrow",
+            "date": (now + timedelta(days=1)).strftime("%Y-%m-%d"),
+            "time": (now + timedelta(minutes=5)).strftime("%H:%M"),
+        }
+        no_time = {"title": "all day", "date": now.strftime("%Y-%m-%d")}
+        already = dict(soon, title="pinged", notified=True)
+        bad_time = {"title": "broken", "date": now.strftime("%Y-%m-%d"), "time": "25:99"}
+        write_json(path, [soon, far, past, other_day, no_time, already, bad_time])
+
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_upcoming_events()
+
+        assert len(received) == 1
+        assert received[0]["type"] == "calendar"
+        assert "standup" in received[0]["message"]
+        on_disk = read_json(path)
+        assert on_disk[0]["notified"] is True
+        assert "notified" not in on_disk[1]
+        assert on_disk[5]["notified"] is True
+
+    async def test_file_is_rewritten_even_when_nothing_fires(self, data_dir, recorder):
+        # Pin: unlike the other checkers, _check_upcoming_events
+        # writes the file back unconditionally at the end.
+        record, received = recorder
+        path = data_dir / "calendar.json"
+        events = [{"title": "far", "date": "2999-01-01", "time": "09:00"}]
+        path.write_text(json.dumps(events))
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_upcoming_events()
+        assert received == []
+        assert read_json(path) == events
+
+
+class TestCheckScheduledTasks:
+    async def test_missing_and_malformed_are_silent(self, data_dir, recorder):
+        record, received = recorder
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_scheduled_tasks()
+        (data_dir / "scheduled_tasks.json").write_text("nope")
+        await scheduler._check_scheduled_tasks()
+        assert received == []
+
+    async def test_interval_task_due_fires_and_writes_back(self, data_dir, recorder):
+        record, received = recorder
+        path = data_dir / "scheduled_tasks.json"
+        due = {
+            "name": "sync",
+            "description": "sync things",
+            "enabled": True,
+            "schedule": {"type": "interval", "minutes": 30},
+            "last_run_ts": (datetime.now() - timedelta(hours=2)).timestamp(),
+            "run_count": 4,
+        }
+        not_due = {
+            "name": "fresh",
+            "schedule": {"type": "interval", "minutes": 30},
+            "last_run_ts": datetime.now().timestamp(),
+        }
+        disabled = {
+            "name": "off",
+            "enabled": False,
+            "schedule": {"type": "interval", "minutes": 1},
+            "last_run_ts": 0,
+        }
+        unknown = {"name": "mystery", "schedule": {"type": "cron"}, "last_run_ts": 0}
+        write_json(path, [due, not_due, disabled, unknown])
+
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_scheduled_tasks()
+
+        assert len(received) == 1
+        assert received[0]["type"] == "scheduled_task"
+        assert "sync" in received[0]["message"]
+        on_disk = read_json(path)
+        assert on_disk[0]["run_count"] == 5
+        assert on_disk[0]["last_run"] == datetime.now().strftime("%Y-%m-%d")
+        assert on_disk[0]["last_run_ts"] > due["last_run_ts"]
+        assert "run_count" not in on_disk[1]
+
+    async def test_daily_task_at_current_time_fires_once_per_day(self, data_dir, recorder):
+        record, received = recorder
+        path = data_dir / "scheduled_tasks.json"
+        now = datetime.now()
+        task = {
+            "name": "report",
+            "schedule": {"type": "daily", "time": now.strftime("%H:%M")},
+        }
+        write_json(path, [task])
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_scheduled_tasks()
+        assert len(received) == 1
+        # Second pass in the same minute: last_run is today, silent.
+        await scheduler._check_scheduled_tasks()
+        assert len(received) == 1
+
+    async def test_weekly_task_on_matching_day_fires(self, data_dir, recorder):
+        record, received = recorder
+        path = data_dir / "scheduled_tasks.json"
+        now = datetime.now()
+        task = {
+            "name": "weekly report",
+            "schedule": {
+                "type": "weekly",
+                "day": now.strftime("%A"),
+                "time": now.strftime("%H:%M"),
+            },
+        }
+        other_day = {
+            "name": "not today",
+            "schedule": {
+                "type": "weekly",
+                "day": (now + timedelta(days=1)).strftime("%A"),
+                "time": now.strftime("%H:%M"),
+            },
+        }
+        write_json(path, [task, other_day])
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_scheduled_tasks()
+        assert len(received) == 1
+        assert "weekly report" in received[0]["message"]
+
+
+class TestCheckScheduledPosts:
+    async def test_missing_and_malformed_are_silent(self, data_dir, recorder):
+        record, received = recorder
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_scheduled_posts()
+        (data_dir / "scheduled_posts.json").write_text("{")
+        await scheduler._check_scheduled_posts()
+        assert received == []
+
+    async def test_due_post_fires_and_moves_to_ready_to_publish(self, data_dir, recorder):
+        record, received = recorder
+        path = data_dir / "scheduled_posts.json"
+        due = {
+            "platform": "mastodon",
+            "content": "hello world",
+            "status": "scheduled",
+            "schedule_at": iso(datetime.now() - timedelta(minutes=1)),
+        }
+        future = dict(due, content="later", schedule_at=iso(datetime.now() + timedelta(hours=1)))
+        published = dict(due, content="done", status="published")
+        broken = {"status": "scheduled"}  # no schedule_at: skipped
+        bad_date = dict(due, content="bad", schedule_at="not-a-date")
+        write_json(path, [due, future, published, broken, bad_date])
+
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_scheduled_posts()
+
+        assert len(received) == 1
+        assert received[0]["type"] == "content_publish"
+        assert "mastodon" in received[0]["message"]
+        on_disk = read_json(path)
+        assert on_disk[0]["status"] == "ready_to_publish"
+        assert "notified_at" in on_disk[0]
+        assert on_disk[1]["status"] == "scheduled"
+
+
+class TestCheckSpendingAlerts:
+    def finance(self, budgets, transactions):
+        return {"budgets": budgets, "transactions": transactions}
+
+    def txn(self, amount, category="Food", when=None):
+        when = when or datetime.now()
+        return {"amount": amount, "category": category, "date": when.strftime("%Y-%m-%d")}
+
+    async def test_missing_malformed_and_budgetless_are_silent(self, data_dir, recorder):
+        record, received = recorder
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_spending_alerts()
+        write_json(data_dir / "finance.json", self.finance({}, [self.txn(-500)]))
+        await scheduler._check_spending_alerts()
+        (data_dir / "finance.json").write_text("###")
+        await scheduler._check_spending_alerts()
+        assert received == []
+
+    async def test_warning_band_and_exceeded_band(self, data_dir, recorder):
+        record, received = recorder
+        budgets = {"Food": 100, "Travel": 100, "Books": 100}
+        transactions = [
+            self.txn(-85, "Food"),  # 85% -> warning
+            self.txn(-120, "Travel"),  # 120% -> exceeded
+            self.txn(-10, "Books"),  # 10% -> silent
+            self.txn(500, "Food"),  # income: ignored
+            self.txn(-999, "Food", when=datetime.now().replace(day=1) - timedelta(days=1)),
+        ]
+        write_json(data_dir / "finance.json", self.finance(budgets, transactions))
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_spending_alerts()
+
+        by_type = {n["data"]["category"]: n["type"] for n in received}
+        assert by_type == {"Food": "budget_warning", "Travel": "budget_alert"}
+
+    async def test_zero_budget_never_alerts(self, data_dir, recorder):
+        record, received = recorder
+        write_json(
+            data_dir / "finance.json",
+            self.finance({"Food": 0}, [self.txn(-50, "Food")]),
+        )
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_spending_alerts()
+        assert received == []
+
+    async def test_uncategorised_spending_counts_as_other(self, data_dir, recorder):
+        record, received = recorder
+        txn = {"amount": -95, "date": datetime.now().strftime("%Y-%m-%d")}
+        write_json(data_dir / "finance.json", self.finance({"Other": 100}, [txn]))
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_spending_alerts()
+        assert len(received) == 1
+        assert received[0]["data"]["category"] == "Other"
+
+
+class TestCheckBreakNeeded:
+    async def test_missing_and_malformed_are_silent(self, data_dir, recorder):
+        record, received = recorder
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_break_needed(60)
+        (data_dir / "wellness.json").write_text("x")
+        await scheduler._check_break_needed(60)
+        assert received == []
+
+    async def test_no_active_session_is_silent(self, data_dir, recorder):
+        record, received = recorder
+        ended = {"start": iso(datetime.now() - timedelta(hours=5)), "end": iso(datetime.now())}
+        write_json(data_dir / "wellness.json", {"sessions": [ended], "breaks": []})
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_break_needed(30)
+        assert received == []
+
+    async def test_long_active_session_fires(self, data_dir, recorder):
+        record, received = recorder
+        active = {"start": iso(datetime.now() - timedelta(minutes=95))}
+        write_json(data_dir / "wellness.json", {"sessions": [active], "breaks": []})
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_break_needed(60)
+        assert len(received) == 1
+        assert received[0]["type"] == "break_reminder"
+        assert received[0]["data"]["minutes_worked"] >= 95
+
+    async def test_short_session_and_recent_break_are_silent(self, data_dir, recorder):
+        record, received = recorder
+        scheduler = make_checking_scheduler(record)
+        active = {"start": iso(datetime.now() - timedelta(minutes=20))}
+        write_json(data_dir / "wellness.json", {"sessions": [active], "breaks": []})
+        await scheduler._check_break_needed(60)
+        # A recent break resets the clock even for an old session.
+        old_session = {"start": iso(datetime.now() - timedelta(hours=4))}
+        recent_break = {"start": iso(datetime.now() - timedelta(minutes=10))}
+        write_json(
+            data_dir / "wellness.json",
+            {"sessions": [old_session], "breaks": [recent_break]},
+        )
+        await scheduler._check_break_needed(60)
+        assert received == []
+
+    async def test_malformed_break_start_falls_back_to_session_start(self, data_dir, recorder):
+        record, received = recorder
+        active = {"start": iso(datetime.now() - timedelta(minutes=90))}
+        write_json(
+            data_dir / "wellness.json",
+            {"sessions": [active], "breaks": [{"start": "not-a-time"}]},
+        )
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_break_needed(60)
+        assert len(received) == 1
