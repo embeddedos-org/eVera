@@ -614,6 +614,23 @@ class TestCheckSpendingAlerts:
         assert len(received) == 1
         assert received[0]["data"]["category"] == "Other"
 
+    async def test_first_of_month_transactions_count(self, data_dir, recorder):
+        # Regression test for #62: a transaction dated the 1st of the current
+        # month must count. The old timestamp comparison dropped it on every
+        # day of the month, and dropped all of today's transactions on the 1st.
+        record, received = recorder
+        first = datetime.now().replace(day=1)
+        write_json(
+            data_dir / "finance.json",
+            self.finance({"Food": 100}, [self.txn(-85, "Food", when=first)]),
+        )
+        scheduler = make_checking_scheduler(record)
+        await scheduler._check_spending_alerts()
+
+        assert len(received) == 1
+        assert received[0]["data"]["category"] == "Food"
+        assert received[0]["type"] == "budget_warning"
+
 
 class TestCheckBreakNeeded:
     async def test_missing_and_malformed_are_silent(self, data_dir, recorder):

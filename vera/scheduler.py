@@ -484,8 +484,11 @@ class ProactiveScheduler:
         if not budgets:
             return
 
-        # Calculate this month's spending by category
-        month_start = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+        # Calculate this month's spending by category. Transaction dates are
+        # date-only strings ("YYYY-MM-DD"), so the month start must be one too:
+        # comparing against a full ISO timestamp ("YYYY-MM-01T00:00:00") drops
+        # every transaction dated the 1st, since the shorter string sorts first.
+        month_start = datetime.now().strftime("%Y-%m-01")
         monthly_txns = [t for t in transactions if t.get("date", "") >= month_start and t.get("amount", 0) < 0]
 
         by_category: dict[str, float] = {}
