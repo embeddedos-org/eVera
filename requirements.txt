@@ -60,7 +60,7 @@ websocket-client>=1.6.0
 # === NEW POWER AGENT DEPENDENCIES (v1.0) ===
 
 # Music Agent
-spotipy>=2.23.0
+spotipy>=2.26.0
 librosa>=0.10.0
 pydub>=0.25.0
 
