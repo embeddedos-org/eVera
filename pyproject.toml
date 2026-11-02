@@ -21,7 +21,7 @@ classifiers = [
     "Topic :: Home Automation",
 ]
 dependencies = [
-    "pydantic>=2.0",
+    "pydantic>=2.14.2",
     "pydantic-settings>=2.0",
     "python-dotenv>=1.2.4",
     "litellm>=1.106.6,<1.107.0",
