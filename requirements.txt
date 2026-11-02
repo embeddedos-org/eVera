@@ -4,7 +4,7 @@
 # Core API
 fastapi>=0.100.0
 uvicorn[standard]>=0.54.0
-pydantic>=2.0.0
+pydantic>=2.14.2
 pydantic-settings>=2.0.0
 python-dotenv>=1.2.4
 python-multipart>=0.0.7
