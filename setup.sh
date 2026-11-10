@@ -109,7 +109,7 @@ if [ "$MINIMAL" = true ]; then
   # Install core only — skip heavy ML/audio/trading deps
   "$PIP" install \
     fastapi uvicorn pydantic pydantic-settings python-dotenv python-multipart websockets \
-    litellm langgraph langchain-core \
+    litellm>=1.106.6,<1.107.0 langgraph langchain-core \
     httpx duckduckgo-search beautifulsoup4 \
     pyautogui psutil pyperclip \
     Pillow PyPDF2 python-docx chardet \

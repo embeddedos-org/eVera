@@ -122,7 +122,7 @@ def install_core(pip):
         "pydantic-settings>=2.0.0",
         "python-dotenv>=1.0.0",
         "websockets>=12.0",
-        "litellm>=1.0.0",
+        "litellm>=1.106.6,<1.107.0",
         "httpx>=0.27.0",
         "cryptography>=41.0",
     ]
