@@ -215,8 +215,11 @@ class ListTodosTool(Tool):
         if action == "add":
             if not text:
                 return {"status": "error", "message": "No todo text provided"}
+            # Next number after the highest ID in use; len() + 1 reused a
+            # live ID once an earlier item had been deleted.
+            used = [int(t["id"]) for t in todos if str(t.get("id", "")).isdigit()]
             todo = {
-                "id": str(len(todos) + 1),
+                "id": str(max(used, default=0) + 1),
                 "text": text,
                 "category": category if category != "all" else "personal",
                 "done": False,
