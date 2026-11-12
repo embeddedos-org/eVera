@@ -137,6 +137,9 @@ class ProactiveScheduler:
                 continue
 
             trigger_at = datetime.fromisoformat(reminder["trigger_at"])
+            if trigger_at.tzinfo is not None:
+                # Compare in naive local time, like datetime.now() above.
+                trigger_at = trigger_at.astimezone().replace(tzinfo=None)
             if trigger_at <= now:
                 await self._notify(
                     {
