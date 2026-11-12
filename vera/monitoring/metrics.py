@@ -57,6 +57,7 @@ class MetricsCollector:
         self._llm_tokens: dict[tuple[str, str, str], int] = defaultdict(int)
         self._scheduler: dict[str, _Counter] = defaultdict(_Counter)
         self._scheduler_last_run: dict[str, float] = {}
+        self._scheduler_streak: dict[str, int] = defaultdict(int)
         self._agents: dict[str, _Counter] = defaultdict(_Counter)
         self._recent_errors: deque[_ErrorEntry] = deque(maxlen=100)
 
@@ -89,7 +90,10 @@ class MetricsCollector:
         with self._lock:
             self._scheduler[loop_name].record(duration_ms, error=not success)
             self._scheduler_last_run[loop_name] = time.time()
-            if not success:
+            if success:
+                self._scheduler_streak[loop_name] = 0
+            else:
+                self._scheduler_streak[loop_name] += 1
                 self._recent_errors.append(_ErrorEntry(time.time(), f"Scheduler failure: {loop_name}"))
 
     def record_agent_dispatch(self, agent_name: str, latency_ms: float, error: bool = False) -> None:
@@ -116,6 +120,7 @@ class MetricsCollector:
                     name: {
                         **c.to_dict(),
                         "last_run": self._scheduler_last_run.get(name),
+                        "consecutive_failures": self._scheduler_streak.get(name, 0),
                     }
                     for name, c in self._scheduler.items()
                 },
@@ -143,10 +148,12 @@ class MetricsCollector:
             return total_latency / total_count if total_count else 0.0
 
     def get_scheduler_consecutive_failures(self, loop_name: str) -> int:
-        """Return the error count for a scheduler loop."""
+        """Return how many runs of a scheduler loop have failed in a row.
+
+        A successful run resets the count to zero.
+        """
         with self._lock:
-            counter = self._scheduler.get(loop_name)
-            return counter.errors if counter else 0
+            return self._scheduler_streak.get(loop_name, 0)
 
     def reset(self) -> None:
         """Reset all metrics. Used for testing."""
@@ -157,5 +164,6 @@ class MetricsCollector:
             self._llm_tokens.clear()
             self._scheduler.clear()
             self._scheduler_last_run.clear()
+            self._scheduler_streak.clear()
             self._agents.clear()
             self._recent_errors.clear()
