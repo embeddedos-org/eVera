@@ -110,18 +110,19 @@ class AlertManager:
         else:
             self._resolve(alert_name)
 
-        # 4. Scheduler failures
+        # 4. Scheduler failures (consecutive; a successful run resets the count)
         metrics_data = self._metrics.get_metrics()
         for loop_name, data in metrics_data.get("scheduler", {}).items():
             alert_name = f"scheduler_fail_{loop_name}"
-            if data.get("errors", 0) >= self._scheduler_fail_threshold:
+            streak = data.get("consecutive_failures", 0)
+            if streak >= self._scheduler_fail_threshold:
                 if alert_name not in self._active_alert_names:
                     alert = Alert(
                         name=alert_name,
                         severity="warning",
                         message=(
                             f"Scheduler loop '{loop_name}' has "
-                            f"{data['errors']} failures "
+                            f"{streak} consecutive failures "
                             f"(threshold: {self._scheduler_fail_threshold})"
                         ),
                     )
