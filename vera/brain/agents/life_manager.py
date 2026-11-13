@@ -184,9 +184,14 @@ class CreateReminderTool(Tool):
 
         # ISO format
         try:
-            return datetime.fromisoformat(when_str)
+            parsed = datetime.fromisoformat(when_str)
         except ValueError:
             return datetime.now() + timedelta(hours=1)
+        # Reminders are stored and compared as naive local time, so turn
+        # "...Z" or "+05:30" into the same instant in local time.
+        if parsed.tzinfo is not None:
+            parsed = parsed.astimezone().replace(tzinfo=None)
+        return parsed
 
 
 class ListTodosTool(Tool):
