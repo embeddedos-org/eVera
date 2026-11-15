@@ -124,6 +124,15 @@ MOOD_LEXICON: dict[str, list[str]] = {
 
 NEGATIVE_MOODS = {"stressed", "anxious", "sad", "frustrated", "tired"}
 
+# Match each keyword as a whole word or phrase (plus a common inflection),
+# so "ugh" does not fire inside "through", "mad" inside "made" or "down"
+# inside "download".
+_KEYWORD_SUFFIX = r"(?:s|es|d|ed|ing|ful)?"
+MOOD_PATTERNS: dict[str, list[re.Pattern[str]]] = {
+    mood: [re.compile(r"\b" + re.escape(kw) + _KEYWORD_SUFFIX + r"\b") for kw in keywords]
+    for mood, keywords in MOOD_LEXICON.items()
+}
+
 SENTIMENT_SYSTEM_PROMPT = """\
 Classify the user's emotional state from their message. Return JSON only:
 {
@@ -147,14 +156,14 @@ class SentimentResult:
 def keyword_sentiment(text: str) -> tuple[str, float]:
     """Score text against the mood lexicon, return (mood, confidence).
 
-    Counts keyword hits per mood category. Returns the highest-scoring
+    Counts whole-word keyword hits per mood category. Returns the highest-scoring
     mood and a confidence based on hit ratio.
     """
     text_lower = text.lower()
     scores: dict[str, int] = {}
 
-    for mood, keywords in MOOD_LEXICON.items():
-        count = sum(1 for kw in keywords if kw in text_lower)
+    for mood, patterns in MOOD_PATTERNS.items():
+        count = sum(1 for pattern in patterns if pattern.search(text_lower))
         if count > 0:
             scores[mood] = count
 
