@@ -12,6 +12,9 @@ from collections import defaultdict, deque
 from dataclasses import dataclass
 from typing import Any
 
+# Most recent requests kept for the windowed error rate (bounds memory).
+_REQUEST_LOG_MAXLEN = 10_000
+
 
 @dataclass
 class _Counter:
@@ -60,6 +63,8 @@ class MetricsCollector:
         self._scheduler_streak: dict[str, int] = defaultdict(int)
         self._agents: dict[str, _Counter] = defaultdict(_Counter)
         self._recent_errors: deque[_ErrorEntry] = deque(maxlen=100)
+        # (monotonic time, is_5xx) per request, for get_request_error_rate()
+        self._request_log: deque[tuple[float, bool]] = deque(maxlen=_REQUEST_LOG_MAXLEN)
 
     # --- Recording methods ---
 
@@ -67,6 +72,7 @@ class MetricsCollector:
         with self._lock:
             key = (method, path, status_code)
             self._requests[key].record(latency_ms, error=(status_code >= 500))
+            self._request_log.append((time.monotonic(), status_code >= 500))
             if status_code >= 500:
                 self._recent_errors.append(_ErrorEntry(time.time(), f"HTTP {status_code} {method} {path}"))
 
@@ -129,11 +135,14 @@ class MetricsCollector:
             }
 
     def get_request_error_rate(self, window_seconds: float = 300.0) -> float:
-        """Calculate 5xx error rate over the recent window."""
+        """Calculate 5xx error rate over the requests of the last ``window_seconds``.
+
+        Returns 0.0 when no request falls inside the window.
+        """
         with self._lock:
-            total = sum(c.count for c in self._requests.values())
-            errors = sum(c.errors for c in self._requests.values())
-            return errors / total if total else 0.0
+            cutoff = time.monotonic() - window_seconds
+            recent = [is_error for ts, is_error in self._request_log if ts >= cutoff]
+            return sum(recent) / len(recent) if recent else 0.0
 
     def get_llm_error_rate(self) -> float:
         with self._lock:
@@ -167,3 +176,4 @@ class MetricsCollector:
             self._scheduler_streak.clear()
             self._agents.clear()
             self._recent_errors.clear()
+            self._request_log.clear()
