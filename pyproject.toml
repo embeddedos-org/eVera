@@ -62,7 +62,7 @@ trading = [
 media = [
     "moviepy>=2.0",
     "Pillow>=10.0",
-    "rembg>=2.0",
+    "rembg>=2.0.87",
     "google-api-python-client>=2.0",
     "google-auth-oauthlib>=1.0",
 ]
