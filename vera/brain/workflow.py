@@ -286,7 +286,11 @@ class WorkflowEngine:
                 step_id = parts[1]
                 if step_id in outputs:
                     value = outputs[step_id]
-                    for part in parts[2:]:
+                    # "output" names the step's result itself, so
+                    # {{steps.1.output}} is that result and
+                    # {{steps.1.output.response}} is one of its fields.
+                    fields = parts[3:] if parts[2:3] == ["output"] else parts[2:]
+                    for part in fields:
                         if isinstance(value, dict):
                             value = value.get(part, "")
                     return str(value)
