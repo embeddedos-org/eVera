@@ -27,7 +27,7 @@ family, hobbies, etc.)
 - Do NOT extract opinions about third parties, conversational filler, or questions
 - Do NOT re-extract facts already listed in "Known facts"
 - If a known fact has changed, include the updated value
-- If no new facts are found, return an empty JSON object: {}
+- If no new facts are found, return an empty JSON object: {{}}
 - Return ONLY valid JSON, no explanation
 
 Known facts:
