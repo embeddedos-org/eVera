@@ -112,6 +112,16 @@ def _parse_python(
     rel = str(filepath.relative_to(root))
     file_id = _make_id(rel)
 
+    # Methods are part of their class node, not functions of the file.
+    # ast.walk() does not record parents, so collect them up front.
+    methods = {
+        item
+        for cls in ast.walk(tree)
+        if isinstance(cls, ast.ClassDef)
+        for item in cls.body
+        if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef):
             cls_id = f"{file_id}__class_{node.name}"
@@ -146,7 +156,7 @@ def _parse_python(
                     edges.append({"source": cls_id, "target": base_id, "type": "inherits"})
 
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            if isinstance(getattr(node, "_parent", None), ast.ClassDef):
+            if node in methods:
                 continue
             fn_id = f"{file_id}__fn_{node.name}"
             if fn_id not in seen_ids:
