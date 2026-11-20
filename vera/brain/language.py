@@ -234,17 +234,21 @@ def detect_language(text: str) -> str:
         if 0x0600 <= code <= 0x06FF:
             return "ar"  # Arabic
 
-    # Check for common language indicators in Latin text
+    # Check for common language indicators in Latin text. Indicators are
+    # whole words, so "which" does not count as German "ich" nor "income"
+    # as Italian "come"; words that are also everyday English ("come",
+    # "comment") are not used as indicators at all.
     lower = text.lower()
-    if any(w in lower for w in ["¿", "¡", "está", "hola", "cómo", "qué", "gracias"]):
+    words = set(re.findall(r"\w+", lower))
+    if "¿" in lower or "¡" in lower or words & {"está", "hola", "cómo", "qué", "gracias"}:
         return "es"
-    if any(w in lower for w in ["bonjour", "merci", "comment", "oui", "très"]):
+    if words & {"bonjour", "merci", "oui", "très"}:
         return "fr"
-    if any(w in lower for w in ["danke", "bitte", "guten", "wie", "ich"]):
+    if words & {"danke", "bitte", "guten", "wie", "ich"}:
         return "de"
-    if any(w in lower for w in ["obrigado", "como", "você", "muito"]):
+    if words & {"obrigado", "como", "você", "muito"}:
         return "pt"
-    if any(w in lower for w in ["grazie", "come", "molto", "buongiorno"]):
+    if words & {"grazie", "molto", "buongiorno"}:
         return "it"
 
     return "en"
