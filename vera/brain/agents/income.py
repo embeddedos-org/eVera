@@ -160,8 +160,10 @@ class GetStockHistoryTool(Tool):
                     }
                 )
 
-            start_price = data_points[0]["close"] if data_points else 0
-            end_price = data_points[-1]["close"] if data_points else 0
+            # Only the last 30 rows are listed, but the return is for the
+            # whole period that was asked for, so use the full history.
+            start_price = round(float(hist["Close"].iloc[0]), 2)
+            end_price = round(float(hist["Close"].iloc[-1]), 2)
             total_return = round(((end_price / max(start_price, 0.01)) - 1) * 100, 2)
 
             return {
