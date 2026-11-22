@@ -61,3 +61,46 @@ def test_methods_are_not_listed_as_file_functions(tmp_path):
         "shapes_py__fn_make_shape",
         "shapes_py__fn_load_shapes",
     }
+
+
+COMPOUND_SOURCE = """\
+class Shape:
+    if True:
+        def area(self):
+            return 0
+
+    try:
+        def maybe(self):
+            return 1
+    except Exception:
+        def fallback(self):
+            return 2
+
+    def outer(self):
+        def inner():
+            return 3
+        return inner
+
+
+def make_shape():
+    return Shape()
+"""
+
+
+def test_class_body_compound_methods_are_not_listed_as_file_functions(tmp_path):
+    (tmp_path / "shapes.py").write_text(COMPOUND_SOURCE)
+    graph = parse_dependencies(str(tmp_path))
+    functions = _ids(graph, "function")
+    assert "shapes_py__fn_make_shape" in functions
+    assert "shapes_py__fn_area" not in functions
+    assert "shapes_py__fn_maybe" not in functions
+    assert "shapes_py__fn_fallback" not in functions
+    contained = {
+        e["target"]
+        for e in graph["edges"]
+        if e["source"] == "shapes_py" and e["type"] == "contains"
+    }
+    assert "shapes_py__class_Shape" in contained
+    assert "shapes_py__fn_area" not in contained
+    assert "shapes_py__fn_maybe" not in contained
+    assert "shapes_py__fn_fallback" not in contained

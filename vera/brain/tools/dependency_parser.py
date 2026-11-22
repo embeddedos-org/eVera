@@ -95,6 +95,44 @@ def _make_id(rel_path: str) -> str:
     return rel_path.replace(os.sep, "/").replace("/", "_").replace(".", "_")
 
 
+def _compound_bodies(node: ast.AST) -> list[list[ast.stmt]]:
+    """Statement lists inside a class-body compound statement."""
+    if isinstance(node, ast.If):
+        return [node.body, node.orelse]
+    if isinstance(node, (ast.For, ast.AsyncFor, ast.While)):
+        return [node.body, node.orelse]
+    if isinstance(node, (ast.With, ast.AsyncWith)):
+        return [node.body]
+    if isinstance(node, ast.Try) or isinstance(node, getattr(ast, "TryStar", ast.Try)):
+        bodies = [node.body]
+        bodies.extend(handler.body for handler in node.handlers)
+        bodies.extend((node.orelse, node.finalbody))
+        return bodies
+    if isinstance(node, ast.Match):
+        return [case.body for case in node.cases]
+    return []
+
+
+def _class_methods(cls: ast.ClassDef) -> set[ast.AST]:
+    """Function defs that belong to a class, including those in class-body compounds.
+
+    Does not descend into method bodies, so a local function inside a method
+    is left for the file-level walk to handle as before.
+    """
+    methods: set[ast.AST] = set()
+
+    def visit(stmts: list[ast.stmt]) -> None:
+        for item in stmts:
+            if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                methods.add(item)
+            else:
+                for body in _compound_bodies(item):
+                    visit(body)
+
+    visit(cls.body)
+    return methods
+
+
 def _parse_python(
     filepath: Path,
     root: Path,
@@ -114,13 +152,10 @@ def _parse_python(
 
     # Methods are part of their class node, not functions of the file.
     # ast.walk() does not record parents, so collect them up front.
-    methods = {
-        item
-        for cls in ast.walk(tree)
-        if isinstance(cls, ast.ClassDef)
-        for item in cls.body
-        if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef))
-    }
+    methods = set()
+    for cls in ast.walk(tree):
+        if isinstance(cls, ast.ClassDef):
+            methods.update(_class_methods(cls))
 
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef):
