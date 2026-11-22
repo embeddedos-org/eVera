@@ -80,6 +80,25 @@ class ViewCalendarTool(Tool):
         }
 
 
+def _minutes(value: Any) -> int | None:
+    """Minutes after midnight for an "HH:MM" (or "HH:MM:SS") time, or None if it is not one."""
+    for fmt in ("%H:%M", "%H:%M:%S"):
+        try:
+            t = datetime.strptime(str(value).strip(), fmt)
+        except ValueError:
+            continue
+        return t.hour * 60 + t.minute
+    return None
+
+
+def _duration(value: Any) -> int:
+    """An event's length in minutes; create_event's 60 when it is missing or unreadable."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 60
+
+
 class AvailabilityTool(Tool):
     def __init__(self):
         super().__init__(
@@ -93,15 +112,36 @@ class AvailabilityTool(Tool):
         )
 
     async def execute(self, **kw: Any) -> dict[str, Any]:
+        window_start = _minutes(kw.get("start_time") or "00:00")
+        # No end time means the rest of the day, up to midnight.
+        window_end = _minutes(kw["end_time"]) if kw.get("end_time") else 24 * 60
+        if kw.get("end_time") and str(kw["end_time"]).strip() == "24:00":
+            window_end = 24 * 60
+        if window_start is None or window_end is None:
+            return {"status": "error", "message": "start_time and end_time must be HH:MM"}
+        if window_end == 23 * 60 + 59:
+            window_end = 24 * 60  # "23:59" (the old default) means the end of the day
+        if window_end < window_start:
+            # A window across midnight would need the next day's events too.
+            return {"status": "error", "message": "end_time must not be before start_time (one day only)"}
+        if window_end == window_start:
+            window_end += 1  # "am I free at 10:00?": a one-minute window
+
         fp = Path("data/calendar") / f"{kw.get('date', '')}.json"
         if not fp.exists():
             return {"status": "success", "available": True}
         events = json.loads(fp.read_text())
-        conflicts = [
-            e
-            for e in events
-            if e.get("time", "") >= kw.get("start_time", "00:00") and e.get("time", "") <= kw.get("end_time", "23:59")
-        ]
+
+        # An event conflicts when it overlaps the window, not only when it
+        # starts inside it: a 09:00 meeting of 120 minutes blocks 10:00-10:30.
+        conflicts = []
+        for e in events:
+            start = _minutes(e.get("time", ""))
+            if start is None:
+                continue
+            end = start + max(_duration(e.get("duration")), 1)
+            if start < window_end and end > window_start:
+                conflicts.append(e)
         return {"status": "success", "available": len(conflicts) == 0, "conflicts": conflicts}
 
 
