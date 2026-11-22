@@ -78,19 +78,28 @@ class CurrencyConvertTool(Tool):
         )
 
     async def execute(self, **kw: Any) -> dict[str, Any]:
+        # The rates table is keyed by upper-case ISO codes ("EUR").
+        src = str(kw.get("from_currency") or "USD").strip().upper()
+        dst = str(kw.get("to_currency") or "EUR").strip().upper()
         try:
+            amount = float(kw.get("amount", 1))
             import httpx
 
             async with httpx.AsyncClient(timeout=10) as c:
-                r = await c.get(f"https://api.exchangerate-api.com/v4/latest/{kw.get('from_currency', 'USD')}")
-                rate = r.json().get("rates", {}).get(kw.get("to_currency", "EUR"), 1)
+                r = await c.get(f"https://api.exchangerate-api.com/v4/latest/{src}")
+                rates = r.json().get("rates") or {}
+            # No made-up rate of 1: a code the table lacks is an error, not
+            # a "conversion" that returns the amount unchanged.
+            if dst not in rates:
+                return {"status": "error", "message": f"No exchange rate from {src} to {dst}"}
+            rate = rates[dst]
             return {
                 "status": "success",
-                "amount": kw.get("amount", 1),
-                "from": kw.get("from_currency", "USD"),
-                "to": kw.get("to_currency", "EUR"),
+                "amount": amount,
+                "from": src,
+                "to": dst,
                 "rate": rate,
-                "converted": round(kw.get("amount", 1) * rate, 2),
+                "converted": round(amount * rate, 2),
             }
         except Exception as e:
             return {"status": "error", "message": str(e)}
