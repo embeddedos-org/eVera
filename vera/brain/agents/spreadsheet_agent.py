@@ -119,18 +119,25 @@ class ConvertFormatTool(Tool):
             import pandas as pd
 
             inp, out = kw["input"], kw["output"]
+            # Extensions are matched without case, so "DATA.CSV" or "out.JSON" work too.
+            in_name, out_name = inp.lower(), out.lower()
+            if not out_name.endswith((".csv", ".xlsx", ".json")):
+                return {
+                    "status": "error",
+                    "message": f"Unsupported output format: {out} (use .csv, .xlsx or .json)",
+                }
             df = (
                 pd.read_csv(inp)
-                if inp.endswith(".csv")
+                if in_name.endswith(".csv")
                 else pd.read_excel(inp)
-                if inp.endswith((".xlsx", ".xls"))
+                if in_name.endswith((".xlsx", ".xls"))
                 else pd.read_json(inp)
             )
-            if out.endswith(".csv"):
+            if out_name.endswith(".csv"):
                 df.to_csv(out, index=False)
-            elif out.endswith(".xlsx"):
+            elif out_name.endswith(".xlsx"):
                 df.to_excel(out, index=False)
-            elif out.endswith(".json"):
+            else:
                 df.to_json(out, orient="records", indent=2)
             return {"status": "success", "input": inp, "output": out, "rows": len(df)}
         except Exception as e:
