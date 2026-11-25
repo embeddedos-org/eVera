@@ -39,6 +39,22 @@ def _save_json(path: Path, data: Any) -> None:
     path.write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
 
 
+def _new_id(items: list[dict]) -> str:
+    """Return a timestamp ID that no item in ``items`` already uses.
+
+    Two items added in the same second would otherwise share an ID, and
+    removing or completing one by ID would also hit the other.
+    """
+    base = datetime.now().strftime("%Y%m%d%H%M%S")
+    used = {str(item.get("id")) for item in items}
+    new_id = base
+    n = 2
+    while new_id in used:
+        new_id = f"{base}-{n}"
+        n += 1
+    return new_id
+
+
 # --- Tool implementations ---
 
 
@@ -100,7 +116,7 @@ class AddSourceTool(Tool):
                 return {"status": "error", "message": f"Source already exists: {s.get('name')}"}
 
         source = {
-            "id": datetime.now().strftime("%Y%m%d%H%M%S"),
+            "id": _new_id(sources),
             "name": name,
             "type": source_type,
             "url": url,
@@ -430,7 +446,7 @@ class ReadingListTool(Tool):
                 return {"status": "error", "message": "Provide at least a title or URL"}
 
             item = {
-                "id": datetime.now().strftime("%Y%m%d%H%M%S"),
+                "id": _new_id(reading_list),
                 "title": title or url,
                 "url": url,
                 "added_at": datetime.now().isoformat(),
