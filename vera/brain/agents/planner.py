@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import calendar
 import json
 import logging
 from datetime import datetime, timedelta
@@ -239,13 +240,29 @@ class MonthlyReviewTool(Tool):
         if month_str == "this_month":
             month_str = datetime.now().strftime("%Y-%m")
 
+        try:
+            first_day = datetime.strptime(month_str, "%Y-%m")
+        except ValueError:
+            return {"status": "error", "message": f"Invalid month '{month_str}': use YYYY-MM or 'this_month'"}
+        year, month = first_day.year, first_day.month
+        month_str = f"{year:04d}-{month:02d}"  # "2026-1" is saved as "2026-01"
+
         _ensure_dirs()
+
+        # Weekly reviews are saved as "<%Y-W%V>.json" (see WeeklyReviewTool), so
+        # name every week that has a day in this month the same way.
+        week_ids: list[str] = []
+        for day_num in range(1, calendar.monthrange(year, month)[1] + 1):
+            week_id = first_day.replace(day=day_num).strftime("%Y-W%V")
+            if week_id not in week_ids:
+                week_ids.append(week_id)
 
         weekly_dir = REVIEWS_DIR / "weekly"
         weekly_reviews = []
-        if weekly_dir.exists():
-            for f in sorted(weekly_dir.glob(f"{month_str[:4]}-W*.json")):
-                weekly_reviews.append(_load_json(f))
+        for week_id in week_ids:
+            week_file = weekly_dir / f"{week_id}.json"
+            if week_file.exists():
+                weekly_reviews.append(_load_json(week_file))
 
         goals = _load_json(DATA_DIR / "goals.json")
         completed_goals = [g for g in goals if g.get("status") == "completed"]
