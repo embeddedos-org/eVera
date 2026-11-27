@@ -199,7 +199,7 @@ class WeeklyReviewTool(Tool):
         daily_dir = REVIEWS_DIR / "daily"
         daily_reviews = []
 
-        start_of_week = now - timedelta(days=now.weekday())
+        start_of_week = datetime.strptime(week_str + "-1", "%G-W%V-%u")
         for i in range(7):
             day = start_of_week + timedelta(days=i)
             day_file = daily_dir / f"{day.strftime('%Y-%m-%d')}.json"
